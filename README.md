@@ -2,7 +2,7 @@
 
 Un compagnon de bureau pour les utilisateurs de Claude Code : une petite créature en pixel art qui vit en bas de l'écran et réagit à ta façon de travailler avec Claude.
 
-Statut : prototype, testé sur Mac. Windows est prévu.
+Statut : prototype, testé sur Mac. Windows est prévu. Où en est le projet (décisions, à trancher, à faire) : [NOTES.md](NOTES.md).
 
 ## Vision
 
