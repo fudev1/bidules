@@ -1,0 +1,875 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<style>
+html,body{margin:0;background:transparent;overflow:hidden;width:176px;height:176px;user-select:none;-webkit-user-select:none}
+img{position:absolute;left:24px;bottom:0;width:128px;height:128px;image-rendering:pixelated;display:block;cursor:grab;-webkit-user-drag:none;transform-origin:50% 60%}
+img.walk{animation:bob .5s steps(2) infinite}
+img.hop{animation:hop .45s ease-out}
+img.land{animation:land .3s ease-out}
+img.wall{animation:wall .25s ease-out}
+img.struggle{transform-origin:50% 8%;animation:struggle .22s ease-in-out infinite}
+@keyframes bob{50%{translate:0 -3px}}
+@keyframes hop{40%{translate:0 -22px}}
+@keyframes land{35%{scale:calc(var(--sx) * 1.18) .78;translate:0 6px}70%{scale:calc(var(--sx) * .94) 1.08}}
+@keyframes wall{40%{scale:calc(var(--sx) * .8) 1.12}}
+@keyframes struggle{0%,100%{rotate:-11deg}50%{rotate:11deg}}
+img.giggle{animation:giggle .12s linear infinite}
+@keyframes giggle{0%,100%{rotate:-4deg}50%{rotate:4deg}}
+img.shake{animation:shake .08s linear infinite}
+@keyframes shake{0%,100%{translate:-2px 0}50%{translate:2px 0}}
+#fx{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+#el{position:absolute;left:0;top:0;width:352px;height:420px;image-rendering:pixelated;pointer-events:none}
+img.recoil{transform-origin:50% 100%;animation:recoil .5s ease-out}
+@keyframes recoil{20%{scale:calc(var(--sx) * .82) 1.3}45%{scale:calc(var(--sx) * 1.18) .84}70%{scale:calc(var(--sx) * .95) 1.07}}
+body[data-mood="guilleret"] img.walk{animation:bobHappy .36s ease-in-out infinite}
+@keyframes bobHappy{50%{translate:0 -7px}}
+body[data-mood="ronchon"] img.walk{animation:bobHeavy .9s steps(2) infinite}
+@keyframes bobHeavy{50%{translate:0 -1px}}
+body[data-mood="vaseux"] img.walk{animation:swayTired 2.2s ease-in-out infinite}
+@keyframes swayTired{0%,100%{rotate:-5deg}50%{rotate:5deg}}
+body[data-mood="stresse"] img.walk{animation:jitter .09s linear infinite}
+@keyframes jitter{0%,100%{translate:-1px 0}50%{translate:1px -1px}}
+body[data-mood="lune"] img.walk{animation:floaty 2.4s ease-in-out infinite}
+@keyframes floaty{50%{translate:0 -6px}}
+body.sheet img.walk,body.sheet[data-mood] img.walk{animation:none}
+img.woozy{animation:woozy 1s ease-in-out infinite}
+@keyframes woozy{0%,100%{rotate:-9deg}50%{rotate:9deg}}
+img.breathe{animation:breathe 2.6s ease-in-out infinite}
+@keyframes breathe{50%{scale:var(--sx) .94;translate:0 4px}}
+img.dangle{transform-origin:50% 8%;animation:dangle 2s ease-in-out infinite}
+@keyframes dangle{0%,100%{rotate:-4deg}50%{rotate:4deg}}
+.zz{position:absolute;left:112px;top:84px;font:800 16px -apple-system,system-ui,sans-serif;color:#2a2238;text-shadow:0 0 2px #fff,0 0 3px #fff}
+.drop{position:absolute;width:6px;height:6px;background:#4aa8e0;border:1px solid #2a2238}
+.heart{position:absolute;top:86px;width:21px;height:18px;image-rendering:pixelated}
+.bub{position:absolute;left:50%;top:8px;transform:translateX(-50%);background:#fff;color:#2a2238;border:2px solid #2a2238;border-radius:8px;padding:2px 7px;font:700 13px -apple-system,system-ui,sans-serif;white-space:nowrap}
+</style></head>
+<body><img id="b" alt=""><canvas id="el" width="176" height="210" hidden></canvas><div id="fx"></div>
+<script src="bidule64.js"></script>
+<script src="monstre64.js"></script>
+<script>
+const COL = {k:"#2a2238", p:"#ff7fa0"};
+const T = window.__TAURI__;
+const img = document.getElementById("b"), fx = document.getElementById("fx");
+const say = m => { try { T.core.invoke("log", {msg: String(m)}); } catch (e) {} };
+window.onerror = m => say("erreur: " + m);
+const bid = {pal:"menthe", parts:{tete:"antennes", pattes:"longues", bras:"bras", queue:"touffue"}}, ACCS = {tete:"bonnet"};
+const FRAME_STATES = {normal:"forme", p1:"panique", p2:"panique2", d1:"etourdi", d2:"etourdi2", content:"content", rire:"rire",
+  fache:"fache", ooh:"ooh", n1:"nausee", n2:"nausee2", dort:"dort", remue:"remue", baille:"baille"};
+const EYE_Y = {classique:123, louche:135, depareille:135, paupieres:136, dessus:115};
+for (const id in MONSTRES) EYE_Y[id] = 48 + MONSTRES[id].eyeY * 2;
+EYE_Y.limace = 138;
+let style = "goutte", FR = {}, LOOK = {}, FRONT = new Set(), HALF = null, faceSeq = null;
+// prochaine image : à partir de l'heure prévue de la précédente, sauf gros retard (l'écart ne s'accumule pas)
+const nextAt = (prev, dur, now) => (now - prev > 60 ? now : prev) + dur;
+// Persos dessinés à la main dans Aseprite : on lit la feuille et ses balises (crawl, turn).
+const SHEETS = {limace:{png:"persos/limace/sheet.png", json:"persos/limace/sheet.json"}}, SHEET_DATA = {};
+async function loadSheet(id) {
+  const meta = await (await fetch(SHEETS[id].json)).json();
+  const im = new Image(); im.src = SHEETS[id].png; await im.decode();
+  const list = Object.entries(meta.frames).sort((a, b) => parseInt(a[0].match(/(\d+)\.aseprite$/)?.[1] || 0) - parseInt(b[0].match(/(\d+)\.aseprite$/)?.[1] || 0));
+  const frames = list.map(([, f]) => {
+    const cv = document.createElement("canvas"); cv.width = f.frame.w; cv.height = f.frame.h;
+    const g = cv.getContext("2d"); g.drawImage(im, f.frame.x, f.frame.y, f.frame.w, f.frame.h, 0, 0, f.frame.w, f.frame.h);
+    const px = g.getImageData(0, 0, f.frame.w, f.frame.h).data; let bot = 0, l = f.frame.w, r = 0;
+    for (let i = 3; i < px.length; i += 4) if (px[i]) { const X = (i >> 2) % f.frame.w; if (px[i - 3] + px[i - 2] + px[i - 1] < 60) bot = Math.floor((i >> 2) / f.frame.w); l = Math.min(l, X); r = Math.max(r, X); }
+    // appui au sol : les deux bouts de la ligne juste au-dessus du bas
+    let tail = f.frame.w, head = 0;
+    for (let X = 0; X < f.frame.w; X++) if (bot > 0 && px[((bot - 1) * f.frame.w + X) * 4 + 3]) { tail = Math.min(tail, X); head = Math.max(head, X); }
+    return {src:cv.toDataURL(), dur:f.duration || 100, bot, cx:(l + r) / 2, tail, head};
+  });
+  const tags = {};
+  for (const t of meta.meta.frameTags || []) tags[t.name] = frames.slice(t.from, Math.min(t.to, frames.length - 1) + 1);
+  const turn = tags.turn || frames, front = turn.reduce((a, b) => b.dur > a.dur ? b : a, turn[0]);
+  // axe du retournement gauche/droite : celui qui fait coïncider la reptation retournée avec la fin du demi-tour
+  // (pour la limace, c'est aussi le centre des images de face : elle ne se décale plus quand elle regarde à gauche puis à droite)
+  const axis = tags.crawl && tags.turn ? (tags.crawl[0].cx + tags.turn[tags.turn.length - 1].cx) / 2 : 31.5;
+  // pas de la reptation : d'une image à l'autre, un bout reste collé au sol, l'autre avance ; la fenêtre avance juste de quoi garder ce bout immobile
+  if (tags.crawl) { const c = tags.crawl, n = c.length; c.forEach((b, i) => { const a = c[(i - 1 + n) % n]; b.step = Math.max(0, -Math.min(b.tail - a.tail, b.head - a.head)); }); }
+  SHEET_DATA[id] = {frames, tags, front, axis};
+  say(`perso ${id} : ${frames.length} images, animations ${Object.keys(tags).join(", ")}`);
+}
+const isSheet = () => !!(SHEETS[style] && SHEET_DATA[style]);
+// --- Étirement collant : la base reste collée au sol, le haut suit la souris ; on la décolle en tirant fort ---
+const BIG_W = 352, BIG_H = 420, CW2 = 176, CH2 = 210, ORX = 56, ORY = 146, HANG_G = [88, 40];
+const pull = {on:false, phase:null, src:null, g:[0, 0], d:[0, 0], vd:[0, 0], b:[0, 0], vb:[0, 0], pw:[0, 0], pv:[0, 0], aw:[0, 0], skip:0};
+const pullCanvas = document.getElementById("el"), pullCtx = pullCanvas.getContext("2d");
+function captureFrame() {
+  const cv = document.createElement("canvas"); cv.width = 64; cv.height = 64; const g = cv.getContext("2d");
+  if (img.style.scale === "-1 1") { g.translate(2 * (SHEET_DATA[style].axis + .5), 0); g.scale(-1, 1); }
+  g.drawImage(img, 0, 0, 64, 64);
+  const px = g.getImageData(0, 0, 64, 64).data, mask = new Uint8Array(4096);
+  let top = 64, bot = 0, x0 = 64, x1 = 0;
+  for (let i = 0; i < 4096; i++) if (px[i * 4 + 3]) { mask[i] = 1; const X = i % 64, Y = (i - X) / 64; top = Math.min(top, Y); bot = Math.max(bot, Y); x0 = Math.min(x0, X); x1 = Math.max(x1, X); }
+  // le contour d'origine est redessiné autour de la forme étirée ; à sa place, on met la couleur voisine de l'intérieur
+  const col = new Uint8ClampedArray(px), edge = i => mask[i] && [1, -1, 64, -64].some(o => !mask[i + o]);
+  for (let i = 0; i < 4096; i++) if (edge(i)) {
+    const n = [1, -1, 64, -64, 65, 63, -63, -65].map(o => i + o).find(j => j >= 0 && j < 4096 && mask[j] && !edge(j));
+    if (n !== undefined) for (let k = 0; k < 4; k++) col[i * 4 + k] = px[n * 4 + k];
+  }
+  // palette du perso (encre, couleur de base, ombre, reflet) et visage découpé en tampons de pixels
+  const count = new Map();
+  for (let i = 0; i < 4096; i++) if (mask[i]) { const k = px[i * 4] + "," + px[i * 4 + 1] + "," + px[i * 4 + 2]; count.set(k, (count.get(k) || 0) + 1); }
+  const cols = [...count.keys()].map(k => k.split(",").map(Number)), lum = c => c[0] * .3 + c[1] * .59 + c[2] * .11;
+  const ink = cols.reduce((a, b) => lum(b) < lum(a) ? b : a), light = cols.reduce((a, b) => lum(b) > lum(a) ? b : a);
+  const byFreq = [...count.entries()].sort((a, b) => b[1] - a[1]).map(e => e[0].split(",").map(Number));
+  const base = byFreq.find(c => c.join() !== ink.join()) || ink;
+  const shade = byFreq.find(c => ![ink, light, base].some(k => k.join() === c.join())) || base;
+  const isInk = i => mask[i] && px[i * 4] === ink[0] && px[i * 4 + 1] === ink[1] && px[i * 4 + 2] === ink[2];
+  const face = [];
+  // le visage : l'encre à l'intérieur, sans les marches du contour (encre collée à un pixel de bord)
+  const nearEdge = i => [1, -1, 64, -64, 65, 63, -63, -65].some(o => i + o >= 0 && i + o < 4096 && (!mask[i + o] || edge(i + o) && isInk(i + o)));
+  for (let i = 0; i < 4096; i++) if (isInk(i) && !edge(i) && !nearEdge(i)) face.push([i % 64, Math.floor(i / 64)]);
+  const stamps = [];
+  for (const p2 of face) {
+    const hits = stamps.filter(st => st.some(q => Math.abs(q[0] - p2[0]) <= 1 && Math.abs(q[1] - p2[1]) <= 1));
+    if (!hits.length) { stamps.push([p2]); continue; }
+    hits[0].push(p2);
+    for (const hh of hits.slice(1)) { hits[0].push(...hh); stamps.splice(stamps.indexOf(hh), 1); }
+  }
+  const faceStamps = stamps.map(st => { const cx2 = st.reduce((a, p2) => a + p2[0], 0) / st.length, cy2 = st.reduce((a, p2) => a + p2[1], 0) / st.length;
+    return {u:cx2 + .5, v:cy2 + .5, px:st.map(([a, b]) => [a - Math.round(cx2), b - Math.round(cy2)])}; });
+  const fcx = faceStamps.length ? faceStamps.reduce((a, st) => a + st.u, 0) / faceStamps.length : (x0 + x1) / 2 + .5;
+  const fcy = faceStamps.length ? faceStamps.reduce((a, st) => a + st.v, 0) / faceStamps.length : (top + bot) / 2;
+  const rowL = new Float32Array(64).fill(NaN), rowR = new Float32Array(64).fill(NaN);
+  for (let Y = 0; Y < 64; Y++) for (let X = 0; X < 64; X++) if (mask[Y * 64 + X]) { if (isNaN(rowL[Y])) rowL[Y] = X; rowR[Y] = X + 1; }
+  const faceBot = face.length ? Math.max(...face.map(p2 => p2[1])) + 1 : (top + bot) / 2;
+  return {col, mask, top, bot, cx:(x0 + x1) / 2, w:x1 - x0 + 1, ink, base, shade, light, faceStamps, fcx, fcy, rowL, rowR, faceBot};
+}
+// La taille et la position de la fenêtre changent en deux temps : on vide d'abord l'affichage,
+// pour que l'image ne se montre jamais au mauvais endroit entre les deux (au pire un blanc très court).
+let winChain = Promise.resolve();
+const nextPaint = () => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+function setBigWindow(on) { return winChain = winChain.then(() => resizeWin(on)).catch(e => say("fenetre: " + e)); }
+async function resizeWin(on) {
+  const {LogicalSize} = T.dpi, size = n => { for (const el of [document.documentElement, document.body]) { el.style.width = n ? BIG_W + "px" : ""; el.style.height = n ? BIG_H + "px" : ""; } };
+  want = null;
+  if (on) {
+    img.style.opacity = "0"; pullCanvas.hidden = false; size(true);
+    await nextPaint();
+    x -= (BIG_W - WW) / 2; y -= BIG_H - WH;
+    await win.setPosition(new LogicalPosition(Math.round(x), Math.round(y)));
+    await win.setSize(new LogicalSize(BIG_W, BIG_H));
+  } else {
+    // d'abord réduire sur place : l'image reste au bon endroit, juste recadrée ; puis déplacer et remettre l'image normale
+    const hung = pull.wasHang;
+    await win.setSize(new LogicalSize(WW, WH));
+    pullCanvas.hidden = true;
+    if (hung) await nextPaint();
+    await win.setPosition(new LogicalPosition(Math.round(x), Math.round(y)));
+    size(false);
+  }
+}
+function pullStart(e) {
+  const S0 = captureFrame();
+  const gu = Math.max(S0.cx - 12, Math.min(S0.cx + 12, (drag.gx - 24) / 2)), gv = Math.max(S0.top, Math.min(S0.bot - 3, (drag.gy - 48) / 2));
+  Object.assign(pull, {on:true, ready:false, phase:"ground", src:S0, srcImg:img.src, g:[gu, gv], d:[0, 0], vd:[0, 0]});
+  pullDraw(); setBigWindow(true).then(() => { pull.ready = true; });
+}
+// Position de la base (B) et du point tenu (G) dans le grand canevas, selon la phase.
+function pullGeom() {
+  const S0 = pull.src, B0 = [ORX + S0.cx + .5, ORY + S0.bot + 1], G0 = [ORX + pull.g[0], ORY + pull.g[1]];
+  if (pull.phase === "hang") return {B:[HANG_G[0] + pull.b[0], HANG_G[1] + pull.b[1]], G:[...HANG_G], G0, B0};
+  return {B:B0, G:[G0[0] + pull.d[0], G0[1] + pull.d[1]], G0, B0};
+}
+// Trois formes, sur le modèle du saut dessiné par le collègue :
+// un peu tirée, elle s'étire ; plus tirée, une boule monte avec la souris, reliée par un fil qui s'amincit à une flaque collée au sol ;
+// décollée, elle pend en goutte sous la souris.
+function pullDraw() {
+  const S0 = pull.src, geo = pullGeom(), H = S0.bot + 1 - S0.top, out = new Uint8Array(CW2 * CH2);
+  if (pull.phase === "hang") return styleRender(out, maskDrop(out, geo, H));
+  // ce qui compte, c'est de combien elle est allongée : écrasée vers le bas, elle ne forme jamais de boule
+  const dist = Math.max(0, Math.hypot(geo.G[0] - geo.B[0], geo.G[1] - geo.B[1]) - Math.hypot(geo.G0[0] - geo.B[0], geo.G0[1] - geo.B[1]));
+  // on fond progressivement l'étirement dans la forme boule + fil + flaque, ligne par ligne
+  const a0 = H * .15, a1 = H * .9, dD = H * 2.4;
+  const m0 = Math.max(0, Math.min(1, (dist - a0) / (a1 - a0))), m = m0 * m0 * (3 - 2 * m0);
+  const k = Math.max(0, Math.min(1, (dist - a1) / (dD - a1)));
+  const W = rowsWarp(geo), S = rowsStrand(geo, H, k);
+  // chaque forme est lue à la même hauteur relative (0 = sol, 1 = sommet), puis les deux sont mélangées
+  const topOf = R => { for (let Y = 0; Y < CH2; Y++) if (R.hw[Y] > .2) return Y; return CH2 - 1; };
+  const botOf = R => { for (let Y = CH2 - 1; Y >= 0; Y--) if (R.hw[Y] > .2) return Y + 1; return 0; };
+  const tW = topOf(W), bW = botOf(W), tS = topOf(S), bS = botOf(S), top = tW + (tS - tW) * m, bot = bW + (bS - bW) * m;
+  const at = (R, t0, b0, f) => { const yf = b0 - f * (b0 - t0) - .5, i = Math.max(t0, Math.min(b0 - 1, Math.floor(yf))), j = Math.min(b0 - 1, i + 1), a = Math.max(0, Math.min(1, yf - i));
+    const hw = R.hw[i] + (R.hw[j] - R.hw[i]) * a, c = isNaN(R.c[j]) ? R.c[i] : R.c[i] + (R.c[j] - R.c[i]) * a; return [c, hw]; };
+  for (let Y = Math.floor(top); Y < Math.ceil(bot); Y++) {
+    const f = (bot - (Y + .5)) / Math.max(1, bot - top); if (f < 0 || f > 1) continue;
+    const [c1, hw1] = at(W, tW, bW, f), [c2, hw2] = at(S, tS, bS, f), hw = hw1 + (hw2 - hw1) * m, c = c1 + (c2 - c1) * m;
+    if (hw <= .2) continue;
+    for (let X = Math.max(0, Math.floor(c - hw)); X <= Math.min(CW2 - 1, Math.ceil(c + hw)); X++) if (Math.abs(X + .5 - c) <= hw) out[Y * CW2 + X] = 1;
+  }
+  styleRender(out, (u, v) => { const [x1, y1] = W.face(u, v), [x2, y2] = S.face(u, v); return [x1 + (x2 - x1) * m, y1 + (y2 - y1) * m]; });
+}
+// Forme étirée, comme dans le saut du collègue : la tête (avec le visage) garde sa forme ronde,
+// seul le bas du corps s'allonge et s'amincit en cou.
+function rowsWarp({B, G}) {
+  const S0 = pull.src, H = S0.bot + 1 - S0.top, hs = Math.max(2, S0.bot + 1 - pull.g[1]), c = new Float32Array(CH2).fill(NaN), hw = new Float32Array(CH2);
+  const hA = Math.max(2, B[1] - G[1]), s = hA / hs, restOff = pull.g[0] - S0.cx - .5, lean = (G[0] - B[0]) - restOff;
+  const wt = (1 / Math.sqrt(Math.max(s, .3))) * (1 - .3 * Math.min(1, Math.max(0, s - 1))), wb = s >= 1 ? 1 + .35 * (s - 1) : wt;
+  const hb = Math.max(2, Math.min(H * .55, S0.bot - S0.faceBot)), Ht = Math.max(H * .4, hA + (H - hs));
+  const capF = s >= 1 ? Math.max(.72, Math.min(1, wt)) : 1, capW = s >= 1 ? capF : wt;
+  let bodyOut = Ht - (H - hb) * capF, capH = capF;
+  if (bodyOut < hb * .5) { bodyOut = Math.min(hb * .5, Ht * .3); capH = (Ht - bodyOut) / (H - hb); }
+  // le pied (les dernières lignes) reste à plat au sol, comme une flaque
+  const foot = Math.min(3, hb * .4); bodyOut = Math.max(foot + 1, bodyOut);
+  const at = h => { if (h <= foot) return [h, 0, wb];
+    if (h <= bodyOut) { const t = (h - foot) / (bodyOut - foot); return [foot + t * (hb - foot), lean * Math.pow(t, 1.6), wb + (wt - wb) * Math.pow(t, .8)]; }
+    return [hb + (h - bodyOut) / capH, lean, capW]; };
+  for (let Y = 0; Y < CH2; Y++) {
+    const h = B[1] - (Y + .5); if (h < -.5) continue;
+    // ligne source lue entre deux lignes voisines, pour que le contour reste lisse quand on la resserre
+    const [hs0, ln, w] = at(h), vf = S0.bot + .5 - hs0, i = Math.floor(vf), a = vf - i;
+    const ok = j => j >= 0 && j < 64 && !isNaN(S0.rowL[j]);
+    if (!ok(i) && !ok(i + 1)) continue;
+    if (!ok(i) && a < .5 || !ok(i + 1) && a >= .5) continue;
+    const i0 = ok(i) ? i : i + 1, i1 = ok(i + 1) ? i + 1 : i;
+    const rl = S0.rowL[i0] + (S0.rowL[i1] - S0.rowL[i0]) * a, rr = S0.rowR[i0] + (S0.rowR[i1] - S0.rowR[i0]) * a;
+    const xl = B[0] + ln + (rl - (S0.cx + .5)) * w, xr = B[0] + ln + (rr - (S0.cx + .5)) * w;
+    c[Y] = (xl + xr) / 2; hw[Y] = (xr - xl) / 2;
+  }
+  const face = (u, v) => {
+    const hsrc = S0.bot + 1 - v, h2 = hsrc <= foot ? hsrc : hsrc <= hb ? foot + (hsrc - foot) / (hb - foot) * (bodyOut - foot) : bodyOut + (hsrc - hb) * capH, [, ln, w] = at(h2);
+    return [B[0] + ln + (u - (S0.cx + .5)) * w, B[1] - h2];
+  };
+  return {c, hw, face};
+}
+// Forme boule + fil + flaque : pour chaque ligne, l'union des trois morceaux.
+function rowsStrand({B, G}, H, k) {
+  const S0 = pull.src, r = H * (.46 - .06 * k), C = [G[0], G[1] + r * .35], c = new Float32Array(CH2).fill(NaN), hw = new Float32Array(CH2);
+  const pry = 2.5 + 3.5 * (1 - k), prx = S0.w * .5 * (1 + .35 * k), P = [B[0], B[1] - 1 - pry * .6], Pn = P[1] - pry * .3;
+  const wa = r * (1.5 - 1.25 * k) + 1, wbn = S0.w * .3 * (1 - k) + 1.6, fl = S0.w * .35;
+  for (let Y = 0; Y < CH2; Y++) {
+    const y = Y + .5; let l = Infinity, rr = -Infinity;
+    const add = (cx2, h2) => { if (h2 > 0) { l = Math.min(l, cx2 - h2); rr = Math.max(rr, cx2 + h2); } };
+    if (Math.abs(y - C[1]) <= r) add(C[0], Math.sqrt(r * r - (y - C[1]) ** 2));
+    if (y >= C[1] && y <= Pn) { const t = (y - C[1]) / Math.max(1, Pn - C[1]); add(C[0] + (P[0] - C[0]) * t, (wa + (wbn - wa) * t + fl * Math.pow(t, 6)) / 2); }
+    if (Math.abs(y - P[1]) <= pry) add(P[0], prx * Math.sqrt(1 - ((y - P[1]) / pry) ** 2));
+    if (l < rr) { c[Y] = (l + rr) / 2; hw[Y] = (rr - l) / 2; }
+  }
+  return {c, hw, face:(u, v) => [C[0] + (u - S0.fcx), C[1] + (v - S0.fcy)]};
+}
+function fillShape(out, test, y0, y1) {
+  for (let Y = Math.max(0, Math.floor(y0)); Y <= Math.min(CH2 - 1, Math.ceil(y1)); Y++) for (let X = 0; X < CW2; X++) if (test(X + .5, Y + .5)) out[Y * CW2 + X] = 1;
+}
+function taper(ax, ay, bx, by, wa, wb2, flare = 0) {
+  const dx = bx - ax, dy = by - ay, L2 = dx * dx + dy * dy || 1;
+  return (X, Y) => { const t = Math.max(0, Math.min(1, ((X - ax) * dx + (Y - ay) * dy) / L2)); const hw = (wa + (wb2 - wa) * t + flare * Math.pow(t, 6)) / 2;
+    return Math.hypot(X - ax - t * dx, Y - ay - t * dy) <= hw; };
+}
+function maskDrop(out, {B, G}, H) {
+  const S0 = pull.src, r = H * .44;
+  fillShape(out, (X, Y) => Math.hypot(X - B[0], Y - B[1]) <= r, B[1] - r - 1, B[1] + r + 1);
+  fillShape(out, taper(G[0], G[1], B[0], B[1], 1.4, r * 1.9), Math.min(G[1], B[1]) - 2, Math.max(G[1], B[1]) + 2);
+  return (u, v) => [B[0] + (u - S0.fcx), B[1] + (v - S0.fcy) + 1];
+}
+function styleRender(out, faceAt) {
+  const S0 = pull.src, imd = pullCtx.createImageData(CW2, CH2), d = imd.data;
+  const inn = (X, Y) => X >= 0 && Y >= 0 && X < CW2 && Y < CH2 && out[Y * CW2 + X];
+  const inner = (X, Y) => inn(X, Y) && inn(X + 1, Y) && inn(X - 1, Y) && inn(X, Y + 1) && inn(X, Y - 1);
+  let t0 = CH2, b0 = 0, xa = CW2, xb = 0;
+  for (let i = 0; i < CW2 * CH2; i++) if (out[i]) { const X = i % CW2, Y = (i - X) / CW2; t0 = Math.min(t0, Y); b0 = Math.max(b0, Y); xa = Math.min(xa, X); xb = Math.max(xb, X); }
+  const c0 = (xa + xb) / 2, put = (X, Y, c) => { if (X < 0 || Y < 0 || X >= CW2 || Y >= CH2) return; const i = (Y * CW2 + X) * 4; d[i] = c[0]; d[i + 1] = c[1]; d[i + 2] = c[2]; d[i + 3] = 255; };
+  for (let Y = t0; Y <= b0; Y++) for (let X = xa; X <= xb; X++) {
+    if (!out[Y * CW2 + X]) continue;
+    let c = S0.base;
+    if (!inner(X, Y)) c = S0.ink;
+    else if (!inner(X, Y + 3) || !inner(X + 2, Y)) c = S0.shade;
+    else if ((!inner(X - 3, Y - 1) && X < c0 && Y < b0 - 7) || (!inner(X - 1, Y - 3) && X < c0 + 3 && Y < t0 + 6)) c = S0.light;
+    put(X, Y, c);
+  }
+  for (const st of S0.faceStamps) { const [fx2, fy2] = faceAt(st.u, st.v); for (const [a2, b2] of st.px) put(Math.floor(fx2) + a2, Math.floor(fy2) + b2, S0.ink); }
+  pullCtx.putImageData(imd, 0, 0);
+}
+function pullStep(dt) {
+  dt = Math.min(.05, Math.max(.008, dt));
+  const S0 = pull.src, hs = Math.max(2, S0.bot + 1 - pull.g[1]);
+  if (pull.phase === "ground") {
+    // il décolle quand on a tiré assez loin
+    if (Math.hypot(pull.d[0], pull.d[1]) > (S0.bot + 1 - S0.top) * 2.4) {
+      const {B, G} = pullGeom();
+      pull.phase = "hang"; pull.b = [0, (S0.bot + 1 - S0.top) * .44 + 3]; pull.vb = [0, 160];
+      x += (G[0] - HANG_G[0]) * 2; y += (G[1] - HANG_G[1]) * 2; push();
+      drag.x0 = x - (drag.lastX - drag.sx); drag.y0 = y - (drag.lastY - drag.sy);
+      pull.pw = [x, y]; pull.pv = [0, 0]; pull.aw = [0, 0]; pull.skip = 2;
+      say("il se decolle du sol"); bubble("Plop !", 900);
+    }
+  } else if (pull.phase === "hang") {
+    if (pull.skip) { pull.skip--; pull.pw = [x, y]; pull.pv = [0, 0]; }
+    else {
+      const vw = [(x - pull.pw[0]) / dt / 2, (y - pull.pw[1]) / dt / 2];
+      pull.aw = pull.aw.map((a, k) => a * .5 + (vw[k] - pull.pv[k]) / dt * .5); pull.pw = [x, y]; pull.pv = vw;
+    }
+    const L = (S0.bot + 1 - S0.top) * .44 + 3, len = Math.hypot(pull.b[0], pull.b[1]) || 1, f = 110 * (L - len) / len;
+    const ax = f * pull.b[0] - 6 * pull.vb[0] - Math.max(-4000, Math.min(4000, pull.aw[0]));
+    const ay = 900 + f * pull.b[1] - 6 * pull.vb[1] - Math.max(-4000, Math.min(4000, pull.aw[1]));
+    pull.vb[0] += ax * dt; pull.vb[1] += ay * dt; pull.b[0] += pull.vb[0] * dt; pull.b[1] += pull.vb[1] * dt;
+    const l2 = Math.hypot(pull.b[0], pull.b[1]), lmax = Math.min(CH2 - HANG_G[1] - 20, L * 3.2);
+    if (pull.b[1] < 3) { pull.b[1] = 3; pull.vb[1] = Math.max(0, pull.vb[1]); }
+    if (l2 > lmax) { pull.b = pull.b.map(v => v * lmax / l2); pull.vb = pull.vb.map(v => v * .5); }
+  } else if (pull.phase === "back") {
+    // relâché sans être décollé : le haut revient en place en oscillant
+    const a = pull.d.map((v, k) => -320 * v - 10 * pull.vd[k]);
+    pull.vd = pull.vd.map((v, k) => v + a[k] * dt); pull.d = pull.d.map((v, k) => v + pull.vd[k] * dt);
+    if (Math.hypot(...pull.d) < .3 && Math.hypot(...pull.vd) < 3) { pullFinish(); return; }
+  }
+  pullDraw();
+}
+function pullFinish() {
+  if (pull.phase === "hang") {
+    const {B} = pullGeom(), S0 = pull.src;
+    const nx = x + B[0] * 2 - (24 + (S0.cx + .5) * 2) - 0, ny = y + B[1] * 2 - (48 + (S0.bot + 1) * 2);
+    x = nx + (BIG_W - WW) / 2 - (BIG_W - WW) / 2; y = ny;
+  } else { x += (BIG_W - WW) / 2; y += BIG_H - WH; }
+  // pull.on reste vrai tant que la fenêtre n'est pas revenue à sa taille : rien d'autre ne la déplace entre-temps
+  const hung = pull.wasHang = pull.phase === "hang"; pull.phase = "closing"; pull.ready = false;
+  // relâché sur place : on réaffiche l'image qu'il avait quand on l'a pris (pas celle de la prise en main)
+  return setBigWindow(false).then(() => { pull.on = false; pull.phase = null; if (!hung) {
+    img.src = pull.srcImg; mode = "walk"; pose("walk"); img.style.opacity = "";
+    // la souris est encore sur lui : il continue de la regarder au lieu de reprendre sa marche une image avant
+    watching = true; idleUntil = Date.now() + 700; lookKey = "";
+  } });
+}// Un perso dessiné joue l'animation qui correspond à ce qu'il fait ; sheetOnce joue une animation une fois (saut, atterrissage, choc).
+const SHEET_MODE_TAG = {held:"attrape", fly:"vol", dizzy:"etourdi", nausea:"nausee", recover:"remis", pet:"caresse", laugh:"rire", angry:"fache",
+  sulk:"boude", ooh:"intrigue", sleep:"dort", sleepfall:"porte-endormi", carried:"porte-endormi", waking:"reveil", evolving:"fier"};
+let sheetOnce = null, sheetLoop = {tag:null, i:0, next:0}, fall = null, burpAt = 0, peakY = null;
+const bigFall = () => peakY !== null && floorY - peakY >= (floorY + WH - minY) * 2 / 3;
+const tagDur = t => (isSheet() && SHEET_DATA[style].tags[t] || []).reduce((a, f) => a + f.dur, 0);
+// une animation jouée sur place (sans avancer), puis il reprend sa marche
+// de face quand il te regarde ou fait une pause, de profil quand il avance ; le passage de l'un à l'autre joue le demi-tour
+function faceStep(now) {
+  if (faceSeq) {
+    if (now >= faceSeq.next) {
+      // revenu de profil : la reptation repart de sa première image, celle qui ressemble au début du demi-tour
+      if (faceSeq.i >= faceSeq.frames.length) { if (faceSeq.frames[faceSeq.frames.length - 1] === HALF[0]) { crawlIdx = 0; crawlNext = now; } faceSeq = null; return false; }
+      const f = faceSeq.frames[faceSeq.i++]; img.src = f.src; faceSeq.next = nextAt(faceSeq.next, f.dur, now);
+    }
+    return true;
+  }
+  const want = watching ? (mood === "ronchon" ? "side" : "front") : now < idleUntil ? "front" : "side";
+  if (want === (FRONT.has(img.src) ? "front" : "side")) return false;
+  faceSeq = {frames:want === "front" ? HALF : HALF.slice().reverse(), i:0, next:0};
+  return faceStep(now);
+}
+function playInPlace(tag) { mode = "still"; pose(""); watching = false; lookKey = ""; playOnce(tag); }
+function playOnce(tag) {
+  const fr = isSheet() && SHEET_DATA[style].tags[tag]; if (!fr) return;
+  if (mode !== "fly") img.style.translate = "";
+  img.src = fr[0].src; sheetOnce = {tag, i:1, next:Date.now() + fr[0].dur, mode};
+}
+function sheetAnim(now) {
+  const T2 = SHEET_DATA[style].tags;
+  // si son état a changé entre-temps (on l'énerve, on l'attrape...), l'animation en cours s'arrête : une seule animation à la fois
+  if (sheetOnce && sheetOnce.mode !== mode) sheetOnce = null;
+  if ((mode !== "fly" || sheetOnce) && img.style.translate) img.style.translate = "";
+  if (sheetOnce) {
+    const fr = T2[sheetOnce.tag];
+    if (now >= sheetOnce.next) {
+      if (sheetOnce.i >= fr.length) sheetOnce = null;
+      else { img.src = fr[sheetOnce.i].src; sheetOnce.next = nextAt(sheetOnce.next, fr[sheetOnce.i].dur, now); sheetOnce.i++; }
+    }
+    if (sheetOnce) return;
+  }
+  if (mode === "fly" && T2.vol && T2.chute) {
+    let f;
+    // petite chute : la goutte du saut du collègue ; grande chute (au moins les deux tiers de l'écran) : l'animation de Thibault, il a peur
+    const L2 = T2["chute-legere"];
+    if (vy < 3) { f = T2.vol[0]; fall = null; }
+    else if (!bigFall() && L2) { f = vy < 9 ? L2[0] : L2[L2.length - 1]; fall = null; }
+    else {
+      const C = T2.chute;
+      if (!fall) fall = {i:0, next:now + C[0].dur};
+      else if (now >= fall.next) { fall.i = fall.i + 1 >= C.length ? Math.min(2, C.length - 1) : fall.i + 1; fall.next = nextAt(fall.next, C[fall.i].dur, now); }
+      f = C[fall.i];
+    }
+    // calé sur le sol ; pendant la boucle de chute, un calage fixe pour garder le mouvement dessiné par Thibault
+    const C2 = T2.chute.slice(2), lb = fall && fall.i >= 2 && C2.length ? Math.max(...C2.map(c => c.bot)) : f.bot;
+    const lift = (SHEET_DATA[style].front.bot - lb) * 2 + "px";
+    if (img.src !== f.src) img.src = f.src;
+    if (img.style.translate !== "0px " + lift) img.style.translate = "0px " + lift;
+    return;
+  }
+  if (mode === "turning") return;
+  let tag = SHEET_MODE_TAG[mode];
+  if (mode === "held" && drag && drag.shaken) tag = "secoue";
+  if (mode === "fly" && vy > 0 && T2.chute) tag = "chute";
+  if ((mode === "sleep" || mode === "carried") && wake > 35) tag = "remue";
+  if (mode === "walk") { if (watching || now >= idleUntil || faceSeq || !FRONT.has(img.src)) return; tag = "repos"; }
+  if (!tag || !T2[tag]) { if (tag === "boude" && T2.crawl) tag = "crawl"; else return; }
+  if (sheetLoop.tag !== tag) sheetLoop = {tag, i:0, next:0};
+  if (now >= sheetLoop.next) { const fr = T2[tag], k2 = sheetLoop.i % fr.length; img.src = fr[k2].src; sheetLoop.next = nextAt(sheetLoop.next, fr[k2].dur, now); sheetLoop.i++; }
+}
+let crawlIdx = 0, crawlNext = 0, turnSeq = null, turnIdx = 0, turnNext = 0, pendingDir = 1;
+let moodMode = "auto", mood = null, moodReason = "";
+const MOOD_LABEL = {guilleret:"Guilleret", ronchon:"Ronchon", vaseux:"Vaseux", stresse:"Stressé", lune:"Dans la lune"};
+const MOOD_MOVE = {normal:{speed:1.6, idle:.008, flip:.004}, guilleret:{speed:2.4, idle:.004, flip:.006}, ronchon:{speed:.9, idle:.016, flip:.003},
+  vaseux:{speed:.7, idle:.012, flip:.003, sleepAfter:15000}, stresse:{speed:3.2, idle:.002, flip:.03}, lune:{speed:1, idle:.01, flip:.004}};
+const MV = () => MOOD_MOVE[mood] || MOOD_MOVE.normal;
+const partsBy = {classique:{tete:"antennes", pattes:"longues", bras:"bras", queue:"touffue"}, louche:{}, depareille:{}, paupieres:{}, dessus:{}};
+for (const id in MONSTRES) partsBy[id] = {};
+partsBy.limace = {};
+const PART_NAME = {"tete:antennes":"antennes", "tete:cornes":"cornes", "bouche:crocs":"crocs", "bouche:langue":"langue gourmande", "bras:bras":"petits bras",
+  "bras:pinces":"pinces", "pattes:longues":"longues pattes", "pattes:palmees":"pattes palmées", "dos:ailes":"ailes", "dos:fourrure":"fourrure",
+  "queue:touffue":"queue touffue", "queue:lezard":"queue de lézard"};
+function buildFrames(s) {
+  document.body.classList.toggle("sheet", !!SHEETS[s]);
+  img.style.transformOrigin = SHEETS[s] ? (SHEET_DATA[s].axis + .5) / 64 * 100 + "% 60%" : "";
+  if (SHEETS[s]) {
+    const D = SHEET_DATA[s], T2 = D.tags, front = D.front.src, nf = {}, nl = {};
+    const pick = (tag, i = 0) => T2[tag] ? T2[tag][Math.min(i, T2[tag].length - 1)].src : front;
+    for (const k of Object.keys(FRAME_STATES)) nf[k] = front;
+    Object.assign(nf, {normal:pick("repos"), p1:pick("attrape"), p2:pick("attrape", 1), d1:pick("etourdi"), d2:pick("etourdi", 1), content:pick("caresse"),
+      rire:pick("rire"), fache:pick("fache"), ooh:pick("intrigue"), n1:pick("nausee"), n2:pick("nausee", 1), dort:pick("dort"), remue:pick("remue"), baille:pick("baille", 1)});
+    const LOOK_ORDER = ["0,-1", "0,0", "0,1", "1,-1", "1,0", "1,1"];
+    for (const lx of [0, 1]) for (const ly of [-1, 0, 1]) { const key = lx + "," + ly; nl[key] = T2.regard ? T2.regard[LOOK_ORDER.indexOf(key)].src : front; }
+    // images de face ; HALF = début du demi-tour, du profil jusqu'à l'image de face
+    const mid = T2.turn ? T2.turn.reduce((b, f, i) => f.dur > T2.turn[b].dur ? i : b, 0) : -1;
+    FRONT = new Set(["repos", "regard", "baille", "reforme", "atterrissage", "intrigue", "caresse", "rire", "fache", "remis", "reveil", "fier"].flatMap(t => (T2[t] || []).map(f => f.src)));
+    if (mid > 0) FRONT.add(T2.turn[mid].src);
+    HALF = mid > 0 ? T2.turn.slice(0, mid + 1) : null; faceSeq = null;
+    FR = nf; LOOK = nl; style = s; return;
+  }
+  const G = MONSTRES[s] ? (st, look) => monstreURL(s, st, look, partsBy[s], mood)
+    : s === "classique" ? (st, look) => bidule64({...bid, parts:partsBy.classique, look, mood}, st, ACCS) : (st, look) => blobFace64(s, st, look, "menthe", partsBy[s], mood);
+  const nf = {}, nl = {};
+  for (const [k, st] of Object.entries(FRAME_STATES)) nf[k] = G(st);
+  for (const lx of [0, 1]) for (const ly of [-1, 0, 1]) nl[lx + "," + ly] = G("forme", [lx, ly]);
+  FR = nf; LOOK = nl; style = s;
+}
+buildFrames("goutte");
+const SLEEP_AFTER = 40000, PET_BOOST = 5, AUTO_WAKE = 180000, GENTLE = 300;
+img.src = FR.normal;
+const HEART = (() => {
+  const rows = [".kk.kk.", "kppkppk", "kpppppk", ".kpppk.", "..kpk..", "...k..."];
+  const c = document.createElement("canvas"); c.width = 7; c.height = 6; const g = c.getContext("2d");
+  rows.forEach((r, j) => [...r].forEach((ch, i) => { if (ch !== ".") { g.fillStyle = COL[ch]; g.fillRect(i, j, 1, 1); } }));
+  return c.toDataURL();
+})();
+const win = T.window.getCurrentWindow(), {LogicalPosition} = T.dpi;
+const WW = 176, WH = 176;
+const REACT = new Set(["pet", "laugh", "angry", "sulk", "eat", "ooh"]);
+let scale = 2, watching = false, lookKey = "", cursor = null;
+let x = 600, y = 200, minX = 0, maxX = 1200, minY = 0, floorY = 700;
+let mode = "fly", dir = 1, vx = 0, vy = 0, angle = 0, idleUntil = 0, dizzyUntil = 0, bounces = 0, maxImpact = 0, ticks = 0;
+let calm = 0, wake = 0, sleepSince = 0, nextZ = 0, stirred = false;
+let reactUntil = 0, nextFx = 0, nausea = false, nextDrop = 0, clicks = [], pet = {dir:0, flips:[], last:null};
+let drag = null, samples = [], want = null, sending = false, flap = null;
+function face() { img.style.setProperty("--sx", dir < 0 ? -1 : 1); img.style.scale = dir < 0 ? "-1 1" : "1 1"; }
+function pose(c) { img.className = c; }
+function squash(c = "land") { pose(c); setTimeout(() => { if (img.className === c) pose(mode === "walk" ? "walk" : mode === "nausea" ? "woozy" : ""); }, 300); }
+function bubble(text, ms = 1200) { const b = document.createElement("div"); b.className = "bub"; b.textContent = text; fx.appendChild(b); setTimeout(() => b.remove(), ms); }
+function heart() {
+  const h = document.createElement("img"); h.src = HEART; h.className = "heart"; h.style.left = (62 + Math.random() * 40) + "px"; fx.appendChild(h);
+  h.animate([{transform:"translate(0,0)", opacity:1}, {transform:`translate(${(Math.random() - .5) * 40}px,-54px)`, opacity:0}], {duration:1000, easing:"ease-out"}).finished.then(() => h.remove());
+}
+function drop() {
+  const d = document.createElement("div"); d.className = "drop"; d.style.left = (80 + Math.random() * 16) + "px"; d.style.top = (112 + Math.random() * 20) + "px"; fx.appendChild(d);
+  const a = Math.random() * Math.PI * 2, r = 50 + Math.random() * 40;
+  d.animate([{transform:"translate(0,0)", opacity:1}, {transform:`translate(${Math.cos(a) * r}px,${Math.sin(a) * r}px)`, opacity:0}], {duration:600, easing:"ease-out"}).finished.then(() => d.remove());
+}
+function zz() {
+  const z = document.createElement("div"); z.className = "zz"; z.textContent = Math.random() < .5 ? "z" : "Z"; fx.appendChild(z);
+  z.animate([{transform:"translate(0,0) scale(.7)", opacity:0}, {opacity:1, offset:.2}, {transform:`translate(${14 + Math.random() * 16}px,-58px) scale(1.2)`, opacity:0}], {duration:1800, easing:"ease-out"}).finished.then(() => z.remove());
+}
+function disturb() { calm = 0; }
+function fallAsleep() { mode = "sleep"; img.src = FR.dort; pose("breathe"); sleepSince = Date.now(); wake = 0; stirred = false; say("il s'endort"); }
+function wakeUp(why) {
+  mode = "waking"; reactUntil = Date.now() + 1100; img.src = FR.baille; pose("shake"); wake = 0; calm = 0;
+  bubble(why === "seul" ? "*s'étire*" : "Hein ?", 1000); say(`il se reveille (${why})`);
+}
+function react(m, ms, frame, cls = "") { mode = m; reactUntil = Date.now() + ms; img.src = frame; pose(cls); img.style.rotate = "0deg"; watching = false; lookKey = ""; }
+function toWalk() { mode = "walk"; img.src = FR.normal; pose("walk"); }
+async function bounds() {
+  const m = await T.window.currentMonitor(); if (!m) return;
+  const s = m.scaleFactor; scale = s; const a = m.workArea || {position:m.position, size:m.size};
+  minX = a.position.x / s; maxX = (a.position.x + a.size.width) / s - WW;
+  minY = a.position.y / s; floorY = (a.position.y + a.size.height) / s - WH;
+}
+function push() { want = [x, y]; if (!sending) flush(); }
+async function flush() {
+  while (want) { const [a, b] = want; want = null; sending = true;
+    try { await win.setPosition(new LogicalPosition(Math.round(a), Math.round(b))); } catch (e) { say("setPosition: " + e); }
+    sending = false; }
+}
+function land() {
+  if (vx) { dir = vx < 0 ? -1 : 1; face(); }
+  vx = vy = 0; angle = 0; img.style.rotate = "0deg"; bounces = 0;
+  if (nausea) {
+    mode = "nausea"; reactUntil = Date.now() + 3500; img.src = FR.n1; bubble("Beurk...", 1400); say("secoue : il a la nausee");
+  } else if (isSheet() && SHEET_DATA[style].tags.ecrase && bigFall()) {
+    mode = "splat"; reactUntil = Date.now() + tagDur("ecrase") + 1500 + Math.random() * 1500; say(`chute de haut (${Math.round(floorY - peakY)} px) : il s'ecrase`);
+  } else if (maxImpact > 24 && !isSheet()) {
+    mode = "dizzy"; dizzyUntil = Date.now() + 2400; img.src = FR.d1; say(`atterrissage brutal (${Math.round(maxImpact)}) : il est etourdi`);
+  } else { mode = "walk"; img.src = FR.normal; say("atterrissage en douceur"); }
+  playOnce(mode === "splat" ? "ecrase" : "atterrissage"); fall = null; peakY = null;
+  nausea = false; maxImpact = 0; if (!isSheet()) squash();
+}
+let lastT = performance.now();
+function tick() {
+  ticks++;
+  const t2 = performance.now(), dtMs = Math.min(200, t2 - lastT), k = Math.min(4, (t2 - lastT) / 33); lastT = t2;
+  if (isSheet()) sheetAnim(Date.now());
+  if (drag) {
+    if (pull.on && pull.ready) pullStep(dtMs / 1000);
+    if (mode === "carried") {
+      wake = Math.max(0, wake - 45 * dtMs / 1000);
+      if (wake < 20 && img.src === FR.remue) img.src = FR.dort;
+    }
+    return;
+  }
+  // juste lâché : le temps de lire l'écran, il reste où il est (sinon la marche le recolle au sol)
+  if (mode === "held" || mode === "carried") return;
+  if (mode === "walk") calm += dtMs;
+  if (mode === "pet") calm += dtMs * PET_BOOST;
+  if ((mode === "walk" || mode === "pet") && calm > (MV().sleepAfter || SLEEP_AFTER)) {
+    mode = "drowsy"; reactUntil = Date.now() + (tagDur("baille") ? tagDur("baille") + 300 : 2600); img.src = FR.baille; pose(""); watching = false; lookKey = ""; playOnce("baille");
+    bubble("*bâille*", 1300); say("il a sommeil");
+  }
+  if (mode === "fly") {
+    peakY = peakY === null ? y : Math.min(peakY, y);
+    vy += 1.3 * k; vx *= Math.pow(0.985, k); x += vx * k; y += vy * k; angle += vx * 1.2 * k;
+    if (x < minX) { x = minX; vx = -vx * 0.25; squash("wall"); playOnce("choc-bord"); }
+    if (x > maxX) { x = maxX; vx = -vx * 0.25; squash("wall"); playOnce("choc-bord"); }
+    if (y < minY) { y = minY; vy = -vy * 0.4; }
+    if (y >= floorY) {
+      y = floorY; const impact = Math.abs(vy); maxImpact = Math.max(maxImpact, impact);
+      if (impact > 7 && bounces < 4 && !isSheet()) { vy = -impact * 0.45; vx *= 0.7; angle *= 0.4; bounces++; squash(); }
+      else land();
+    }
+    img.style.rotate = (mode === "fly" && !isSheet() ? angle : 0).toFixed(1) + "deg";
+    push(); return;
+  }
+  const now = Date.now();
+  if (mode === "splat") { if (now > reactUntil) { mode = "reform"; playOnce("reforme"); say("il se reforme"); } return; }
+  if (mode === "reform" || mode === "still") { if (!sheetOnce) { if (mode === "reform") toWalk(); else { mode = "walk"; pose("walk"); } } return; }
+  if (mode === "dizzy") {
+    if (now > dizzyUntil) toWalk();
+    else if (!isSheet() && Math.random() < 0.18 * k) img.src = img.src === FR.d1 ? FR.d2 : FR.d1;
+    return;
+  }
+  if (mode === "springback") { if (!pull.on) { mode = "walk"; pose("walk"); } else if (pull.ready) pullStep(dtMs / 1000); return; }
+  if (mode === "evolving") return;
+  if (mode === "turning") {
+    if (now >= turnNext) {
+      if (turnIdx >= turnSeq.length) {
+        mode = "walk"; dir = pendingDir; face(); pose("walk");
+        const cr = SHEET_DATA[style].tags.crawl || SHEET_DATA[style].frames;
+        crawlIdx = 1 % cr.length; img.src = cr[crawlIdx].src; crawlNext = now + cr[crawlIdx].dur;
+      }
+      else { img.src = turnSeq[turnIdx].src; turnNext = nextAt(turnNext, turnSeq[turnIdx].dur, now); turnIdx++; }
+    }
+    return;
+  }
+  if (mode === "drowsy") { if (now > reactUntil && !sheetOnce) fallAsleep(); return; }
+  if (mode === "sleep") {
+    wake = Math.max(0, wake - 30 * dtMs / 1000);
+    if (now > nextZ) { zz(); nextZ = now + 1100; }
+    if (now - sleepSince > AUTO_WAKE) wakeUp("seul");
+    return;
+  }
+  if (mode === "sleepfall") {
+    y += 3 * k;
+    if (y >= floorY) { y = floorY; fallAsleep(); say("pose au sol sans le reveiller"); }
+    if (now > nextZ) { zz(); nextZ = now + 1100; }
+    push(); return;
+  }
+  if (mode === "waking") { if (now > reactUntil) toWalk(); return; }
+  if (mode === "nausea") {
+    if (now > reactUntil) { mode = "recover"; reactUntil = now + 500; img.src = FR.normal; pose("shake"); bubble("Ça va mieux", 1000); return; }
+    if (now > nextFx) { if (!isSheet()) img.src = img.src === FR.n1 ? FR.n2 : FR.n1; nextFx = now + 220; if (Math.random() < 0.35) { dir = -dir; face(); } }
+    x += dir * 0.8 * k; y = floorY; x = Math.max(minX, Math.min(maxX, x)); push(); return;
+  }
+  if (mode === "recover") { if (now > reactUntil) toWalk(); return; }
+  if (REACT.has(mode)) {
+    if (mode === "ooh") return;
+    if (mode === "pet") { if (now > reactUntil) toWalk(); else if (now > nextFx) { heart(); nextFx = now + 320; } return; }
+    if (mode === "laugh") { if (now > reactUntil) toWalk(); else if (!isSheet() && Math.random() < 0.25 * k) img.src = img.src === FR.rire ? FR.content : FR.rire; return; }
+    if (mode === "angry") {
+      if (now > reactUntil) { dir = cursor && cursor.x < x + 88 ? 1 : -1; face(); react("sulk", 2000, FR.fache, "walk"); say("il boude et s'en va"); }
+      return;
+    }
+    if (mode === "sulk") {
+      if (now > reactUntil) { toWalk(); return; }
+      x += dir * 4.5 * k; y = floorY;
+      if (x < minX || x > maxX) { x = Math.max(minX, Math.min(maxX, x)); dir = -dir; face(); }
+      push(); return;
+    }
+    if (mode === "eat") {
+      if (now > reactUntil && !sheetOnce) {
+        toWalk();
+        if (!isSheet()) bubble("Burp !", 900);
+        else if (Math.random() < .5) { playInPlace("rot"); bubble("Burp !", 900); }
+        else burpAt = now + 2000 + Math.random() * 3000;
+      }
+      else if (!isSheet() && now > nextFx) { img.src = img.src === FR.rire ? FR.content : FR.rire; nextFx = now + 170; }
+      return;
+    }
+  }
+  if (burpAt && now > burpAt && isSheet() && !sheetOnce) { burpAt = 0; playInPlace("rot"); bubble("Burp !", 900); return; }
+  if (isSheet() && HALF && !sheetOnce && faceStep(now)) return;
+  if (now < idleUntil) { if (img.className === "walk") pose(""); return; }
+  if (img.className === "") pose("walk");
+  if (Math.random() < 0.0025 * k) moodExtra();
+  if (Math.random() < MV().idle * k) { idleUntil = now + 1500 + Math.random() * 2500; return; }
+  if (!sheetOnce && Math.random() < MV().flip * k) { turnTo(-dir); if (mode === "turning") return; }
+  if (!isSheet()) x += dir * MV().speed * k;
+  y = floorY;
+  if (isSheet() && mode === "walk" && !sheetOnce && Math.random() < .004 * k) playOnce("saut");
+  if (isSheet() && mode === "walk" && !sheetOnce && now >= crawlNext) {
+    // l'humeur change la cadence des images, pas la longueur du pas
+    const cr = SHEET_DATA[style].tags.crawl || SHEET_DATA[style].frames;
+    crawlIdx = (crawlIdx + 1) % cr.length; img.src = cr[crawlIdx].src; crawlNext = nextAt(crawlNext, cr[crawlIdx].dur * MOOD_MOVE.normal.speed / MV().speed, now);
+    x += dir * 2 * (cr[crawlIdx].step || 0);
+  }
+  if (x < minX) { x = minX; turnTo(1); }
+  if (x > maxX) { x = maxX; turnTo(-1); }
+  push();
+}
+function struggle(on) {
+  clearInterval(flap); flap = null;
+  if (on) { pose("struggle"); img.style.rotate = "0deg"; let f = 0; img.src = FR.p1; if (!isSheet()) flap = setInterval(() => { f = 1 - f; img.src = f ? FR.p2 : FR.p1; }, 160); }
+}
+function clicked() {
+  const now = Date.now();
+  if (mode === "sleep") {
+    wake += 40;
+    if (wake >= 100) wakeUp("clics");
+    else { img.src = FR.remue; bubble("Hm...", 700); setTimeout(() => { if (mode === "sleep") img.src = FR.dort; }, 700); }
+    return;
+  }
+  disturb();
+  clicks = clicks.filter(t => now - t < 1500); clicks.push(now);
+  if (!["walk", "pet", "laugh"].includes(mode)) return;
+  if (clicks.length >= 7) { clicks = []; react("angry", 1300, FR.fache, "shake"); bubble("Grrr !", 1300); say("chatouilles : il se fache"); }
+  else if (clicks.length >= 3) {
+    if (mode !== "laugh") { say("chatouilles : il rit"); bubble("Hi hi !", 900); }
+    react("laugh", 1400, FR.rire, "giggle");
+  } else if (isSheet()) playOnce(watching || Date.now() < idleUntil ? "saut-face" : "saut");
+  else { pose("hop"); setTimeout(() => { if (mode === "walk") pose("walk"); }, 450); }
+}
+img.addEventListener("pointerdown", e => {
+  if (e.button !== 0 || pull.on) return;
+  img.setPointerCapture(e.pointerId);
+  drag = {sx:e.screenX, sy:e.screenY, x0:x, y0:y, gx:e.clientX, gy:e.clientY, moved:false, rev:[], sign:0, shaken:false, asleep:mode === "sleep" || mode === "sleepfall"};
+  samples = [{t:performance.now(), x:e.screenX, y:e.screenY}];
+  img.style.cursor = "grabbing";
+});
+img.addEventListener("pointermove", e => {
+  if (!drag) return;
+  const dx = e.screenX - drag.sx, dy = e.screenY - drag.sy;
+  if (!drag.moved && Math.abs(dx) + Math.abs(dy) > 3) {
+    drag.moved = true;
+    if (isSheet() && !drag.asleep && !["fly", "splat", "reform"].includes(mode) && y >= floorY - 4) pullStart();
+    if (drag.asleep) { mode = "carried"; pose("dangle"); img.src = FR.dort; say("porte endormi"); }
+    else { mode = "held"; struggle(true); disturb(); }
+  }
+  if (!drag.moved) return;
+  drag.lastX = e.screenX; drag.lastY = e.screenY;
+  if (pull.on && pull.phase === "ground") { pull.d = [(e.screenX - drag.sx) / 2, (e.screenY - drag.sy) / 2]; return; }
+  if (drag.asleep) {
+    const pv = samples[samples.length - 1], dtm = Math.max(8, performance.now() - pv.t);
+    const speed = Math.hypot(e.screenX - pv.x, e.screenY - pv.y) / dtm * 1000;
+    if (speed > GENTLE) wake += (speed - GENTLE) * dtm / 1000 * 0.25;
+    if (wake > 35 && img.src !== FR.remue) { img.src = FR.remue; if (!stirred) { stirred = true; bubble("Hm ?", 800); say("il commence a se reveiller"); } }
+    if (wake >= 100) { drag.asleep = false; mode = "held"; struggle(true); bubble("Hé !", 900); say("reveille : porte trop vite"); calm = 0; wake = 0; }
+  }
+  const prev = samples[samples.length - 1], ddx = e.screenX - prev.x;
+  if (Math.abs(ddx) > 6) {
+    const sg = Math.sign(ddx), t = performance.now();
+    if (drag.sign && sg !== drag.sign) {
+      drag.rev = drag.rev.filter(r => t - r < 1200); drag.rev.push(t);
+      if (drag.asleep && drag.rev.length >= 3) { drag.asleep = false; mode = "held"; struggle(true); bubble("Hein ?!", 900); say("reveille : secoue"); calm = 0; wake = 0; }
+      if (drag.rev.length >= 5 && !drag.shaken) {
+        drag.shaken = true; say("il se fait secouer"); bubble("Ouaaah !", 1100);
+        clearInterval(flap); if (!isSheet()) flap = setInterval(() => { img.src = img.src === FR.n1 ? FR.n2 : FR.n1; }, 90);
+      }
+    }
+    drag.sign = sg;
+  }
+  if (drag.shaken && performance.now() > nextDrop) { drop(); drop(); nextDrop = performance.now() + 80; }
+  samples.push({t:performance.now(), x:e.screenX, y:e.screenY}); if (samples.length > 8) samples.shift();
+  x = drag.x0 + dx; y = drag.y0 + dy; push();
+});
+img.addEventListener("pointerup", async () => {
+  if (!drag) return;
+  const {moved, shaken, asleep} = drag; drag = null; img.style.cursor = "grab"; struggle(false);
+  if (pull.on && pull.phase === "ground") { pull.phase = "back"; pull.vd = [0, 0]; mode = "springback"; return; }
+  const now = performance.now(), last = samples[samples.length - 1];
+  const old = samples.find(s => now - s.t < 90) || last, dt = Math.max(16, last.t - old.t);
+  const tvx = Math.max(-28, Math.min(28, (last.x - old.x) / dt * 33 * 0.55)), tvy = Math.max(-28, Math.min(28, (last.y - old.y) / dt * 33 * 0.55));
+  const fromPull = pull.on && pull.phase === "hang";
+  if (fromPull) await pullFinish();
+  if (!moved) { clicked(); return; }
+  vx = tvx; vy = tvy;
+  nausea = shaken;
+  await bounds();
+  if (asleep) {
+    if (Math.hypot(vx, vy) > 10) { bubble("Hein ?!", 900); say("reveille : lance"); calm = 0; wake = 0; }
+    else { vx = vy = 0; mode = "sleepfall"; img.src = wake > 35 ? FR.remue : FR.dort; pose("breathe"); if (wake <= 35) img.src = FR.dort; say("lache doucement, il dort toujours"); return; }
+  }
+  disturb();
+  say(`lance : vitesse ${Math.round(vx)}, ${Math.round(vy)}`);
+  if (!isSheet()) img.src = FR.p1; pose(""); mode = "fly"; bounces = 0; maxImpact = 0;
+  if (isSheet()) sheetAnim(Date.now());
+  if (fromPull) img.style.opacity = "";
+});
+function stopWatch() { watching = false; lookKey = ""; if (mode === "walk" && !isSheet()) img.src = FR.normal; }
+async function watchCursor() {
+  if (drag || !(mode === "walk" || mode === "pet" || mode === "sleep")) { if (watching) stopWatch(); pet.last = null; return; }
+  let c;
+  try { c = await T.window.cursorPosition(); } catch (e) { say("cursorPosition: " + e); clearInterval(watchT); return; }
+  const cx = c.x / scale, cy = c.y / scale; cursor = {x:cx, y:cy};
+  const inside = cx > x + 54 && cx < x + 122 && cy > y + 96 && cy < y + WH;
+  if (inside && pet.last !== null) {
+    const ddx = cx - pet.last;
+    if (Math.abs(ddx) >= 3) {
+      const sg = Math.sign(ddx), t = Date.now();
+      if (pet.dir && sg !== pet.dir) { pet.flips = pet.flips.filter(f => t - f < 1200); pet.flips.push(t); }
+      pet.dir = sg;
+    }
+    if (pet.flips.length >= 2 && mode === "sleep") {
+      if (Date.now() > nextFx) { heart(); nextFx = Date.now() + 450; }
+    } else if (pet.flips.length >= 2) {
+      if (mode !== "pet") { say("caresse : il est content"); react("pet", 900, FR.content, ""); }
+      else reactUntil = Date.now() + 900;
+    }
+  }
+  if (!inside) { pet.flips = []; pet.dir = 0; }
+  pet.last = inside ? cx : null;
+  if (mode === "pet" || mode === "sleep") return;
+  if (isSheet() && sheetOnce) { lookKey = ""; return; }
+  const eyeY = EYE_Y[style] - (style !== "classique" && partsBy[style].pattes === "longues" ? 14 : 0);
+  const dx = cx - (x + 88), dy = cy - (y + eyeY), dist = Math.hypot(dx, dy);
+  if (dist < 240 && mood === "ronchon") {
+    if (!watching) { say("il te tourne le dos"); bubble("Laisse-moi...", 1100); }
+    watching = true; idleUntil = Date.now() + 700;
+    const away = dx < 0 ? 1 : -1; if (away !== dir) { dir = away; face(); }
+    return;
+  }
+  if (dist < 240) {
+    if (!watching) say("il te regarde");
+    watching = true; idleUntil = Date.now() + 700;
+    // perso dessiné encore de profil ou en train de se tourner : on attend qu'il soit de face pour changer son regard
+    const turning = isSheet() && (faceSeq || !FRONT.has(img.src));
+    const nd = dx < 0 ? -1 : 1; if (!turning && nd !== dir && Math.abs(dx) > 12) { dir = nd; face(); }
+    const key = (Math.abs(dx) > 20 ? 1 : 0) + "," + (dy < -30 ? -1 : dy > 30 ? 1 : 0);
+    if (turning) lookKey = ""; else if (key !== lookKey) { lookKey = key; img.src = LOOK[key]; }
+  } else if (watching) stopWatch();
+}
+let watchT = setInterval(watchCursor, 60);
+try {
+  T.webview.getCurrentWebview().onDragDropEvent(ev => {
+    const p = ev.payload;
+    if (p.type === "enter" || p.type === "over") {
+      if (mode === "walk" || mode === "pet") { react("ooh", 600000, FR.ooh, ""); bubble("Oh ?", 900); say("un fichier approche"); }
+    } else if (p.type === "leave") { if (mode === "ooh") toWalk(); }
+    else if (p.type === "drop") {
+      const paths = p.paths || [], name = (paths[0] || "").split("/").pop();
+      say(`il fait semblant de manger ${name}${paths.length > 1 ? ` et ${paths.length - 1} autre(s)` : ""} (fichier non touche)`);
+      disturb(); react("eat", tagDur("mange") || 1800, FR.rire, ""); playOnce("mange"); bubble("Miam !", 1000);
+    }
+  });
+} catch (e) { say("drag-drop: " + e); }
+function sendState() { T.event.emit("etat", {style, partsBy, thumb:FR.normal, mood, moodMode, moodReason}); }
+function refreshSprite() {
+  const cur = {sleep:"dort", sleepfall:"dort", carried:"dort", dizzy:"d1", nausea:"n1", pet:"content", laugh:"rire", angry:"fache",
+    sulk:"fache", eat:"rire", ooh:"ooh", drowsy:"baille", waking:"baille", fly:"p1", held:"p1"}[mode];
+  img.src = FR[cur || "normal"];
+}
+function moodExtra() {
+  if (mood === "guilleret") { pose("hop"); setTimeout(() => { if (mode === "walk") pose("walk"); }, 450); if (Math.random() < .4) bubble("Youpi !", 900); }
+  else if (mood === "ronchon") bubble(Math.random() < .5 ? "Pff..." : "Mouais.", 1000);
+  else if (mood === "vaseux" && isSheet()) { playInPlace("baille"); bubble("*bâille*", 1100); }
+  else if (mood === "vaseux") { img.src = FR.baille; bubble("*bâille*", 1100); setTimeout(() => { if (mode === "walk") img.src = FR.normal; }, 1100); }
+  else if (mood === "stresse") { drop(); drop(); drop(); if (Math.random() < .4) bubble("Vite, vite !", 900); }
+  else if (mood === "lune") {
+    idleUntil = Date.now() + 2500; lookKey = "0,-1"; img.src = LOOK["0,-1"]; if (Math.random() < .5) bubble("Oh... un nuage.", 1300);
+    setTimeout(() => { if (mode === "walk" && !watching) img.src = FR.normal; }, 2500);
+  }
+}
+function applyMood(m) {
+  mood = m; document.body.dataset.mood = m || ""; buildFrames(style); lookKey = ""; refreshSprite(); sendState();
+}
+// Humeur devinée d'après le rythme : l'app ne reçoit que les heures des prompts, jamais leur texte.
+async function guessMood() {
+  let times = [];
+  try { times = await T.core.invoke("prompt_times"); } catch (e) { say("prompt_times: " + e); }
+  times.sort((a, b) => a - b);
+  const now = Date.now() / 1000, h = new Date().getHours(), lastT = times.length ? times[times.length - 1] : null;
+  const last10 = times.filter(t => now - t < 600).length;
+  let start = lastT;
+  for (let i = times.length - 1; i > 0; i--) { if (times[i] - times[i - 1] > 1200) break; start = times[i - 1]; }
+  const sessionH = lastT && now - lastT < 1200 ? (lastT - start) / 3600 : 0;
+  if (h >= 20 || h < 7) return ["vaseux", "il est tard"];
+  if (sessionH >= 3) return ["vaseux", `tu travailles depuis ${Math.floor(sessionH)} h sans vraie pause`];
+  if (last10 > 10) return ["stresse", `${last10} prompts en 10 minutes`];
+  if (!lastT || now - lastT > 2700) return ["lune", lastT ? `pas de prompt depuis ${Math.round((now - lastT) / 60)} min` : "pas de prompt récent"];
+  return ["guilleret", "rythme régulier"];
+}
+async function autoMood() {
+  if (moodMode !== "auto") return;
+  const [m, why] = await guessMood(); moodReason = why;
+  if (m !== mood) { say(`humeur devinee : ${m} (${why})`); applyMood(m); } else sendState();
+}
+T.event.listen("mood", e => {
+  moodMode = e.payload;
+  if (moodMode === "auto") { mood = null; autoMood(); }
+  else { moodReason = "choisie à la main"; say("humeur choisie : " + moodMode); applyMood(moodMode); bubble(MOOD_LABEL[moodMode], 1200); }
+});
+setInterval(autoMood, 60000);
+T.event.listen("demande-etat", sendState);
+T.event.listen("style", async e => {
+  if (SHEETS[e.payload] && !SHEET_DATA[e.payload]) { try { await loadSheet(e.payload); } catch (err) { say("perso : " + err); return; } }
+  if (mode === "turning") { mode = "walk"; dir = pendingDir; face(); }
+  buildFrames(e.payload); lookKey = ""; say("piste : " + e.payload); refreshSprite(); sendState();
+});
+// Demi-tour : avec un perso dessiné, on joue son animation "turn" au lieu de retourner l'image.
+function turnTo(nd) {
+  if (nd === dir) return;
+  if (isSheet() && mode === "walk" && SHEET_DATA[style].tags.turn) {
+    const t = SHEET_DATA[style].tags.turn;
+    turnSeq = dir > 0 ? t : t.slice().reverse(); turnIdx = 0; turnNext = 0; pendingDir = nd;
+    mode = "turning"; img.style.scale = "1 1"; pose("");
+    img.src = turnSeq[0].src; turnIdx = 1; turnNext = Date.now() + turnSeq[0].dur; return;
+  }
+  dir = nd; face();
+}
+function sparkle() {
+  for (let i = 0; i < 14; i++) {
+    const d = document.createElement("div"); d.className = "drop"; d.style.background = i % 2 ? "#ffd23f" : "#ffffff"; d.style.left = "85px"; d.style.top = "115px"; fx.appendChild(d);
+    const a = i / 14 * Math.PI * 2, r = 55 + Math.random() * 25;
+    d.animate([{transform:"translate(0,0)", opacity:1}, {transform:`translate(${Math.cos(a) * r}px,${Math.sin(a) * r}px)`, opacity:0}], {duration:800, easing:"ease-out"}).finished.then(() => d.remove());
+  }
+}
+function evolve(msg) {
+  const before = FR.normal; buildFrames(style); const after = FR.normal;
+  mode = "evolving"; pose(""); img.style.rotate = "0deg"; watching = false; lookKey = "";
+  let n = 0;
+  const iv = setInterval(() => {
+    img.src = n % 2 ? before : after; img.style.filter = n % 2 ? "" : "brightness(1.9)"; n++;
+    if (n > 9) { clearInterval(iv); img.style.filter = ""; img.src = after; sparkle(); bubble(msg, 1700); toWalk(); sendState(); }
+  }, 130);
+}
+T.event.listen("evo", e => {
+  if (SHEETS[style]) { bubble("Pas encore de parties", 1300); return; }
+  const id = e.payload, P = partsBy[style];
+  if (id === "evo:reset") { partsBy[style] = style === "classique" ? {} : {}; say("retour a la forme de depart"); evolve("Retour au départ"); return; }
+  let key = id.startsWith("part:") ? id.slice(5) : null;
+  if (id === "evo:random") {
+    const free = Object.keys(PART_NAME).filter(k => P[k.split(":")[0]] !== k.split(":")[1]);
+    key = free[Math.floor(Math.random() * free.length)];
+  }
+  if (!key) return;
+  const [slot, part] = key.split(":");
+  if (P[slot] === part) { delete P[slot]; say("partie retiree : " + key); evolve(`Adieu ${PART_NAME[key]}`); }
+  else { const replaced = P[slot]; P[slot] = part; say("nouvelle partie : " + key); evolve(replaced ? `${PART_NAME[key]} à la place !` : `Nouvelle partie : ${PART_NAME[key]} !`); }
+});
+img.addEventListener("contextmenu", e => { e.preventDefault(); say("fermeture"); win.close(); });
+(async () => {
+  try {
+    const s = await win.scaleFactor(), p = await win.outerPosition();
+    x = p.x / s; y = p.y / s; await bounds(); face();
+    setInterval(() => { try { tick(); } catch (e) { say("tick: " + e); } }, 16);
+    say("demarre");
+    try { await loadSheet("limace"); buildFrames("limace"); refreshSprite(); } catch (err) { say("perso : " + err); }
+    autoMood();
+  } catch (e) { say("init: " + e); }
+})();
+</script></body></html>

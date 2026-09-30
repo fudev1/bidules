@@ -1,0 +1,608 @@
+<meta charset="utf-8">
+<title>Bidule</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Pixelify+Sans:wght@500;700&display=swap">
+<style>
+:root{
+  --bg:#efeae3; --ink:#2a2238; --muted:#6b6275; --panel:#fffdf9; --line:#e2d9cc;
+  --chrome:#34506b; --chrome-ink:#eef5fb; --accent:#f0643f; --coin:#a8780a;
+  --good:#2f9e6e; --mid:#d4901a; --bad:#c8455c;
+  --pixel:"Pixelify Sans", ui-monospace, Menlo, monospace;
+  --text:"Atkinson Hyperlegible", system-ui, -apple-system, "Segoe UI", sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--ink);font-family:var(--text);font-size:15px;line-height:1.45;padding:0 16px 48px}
+.menubar{margin:0 -16px 18px;background:#1f1a2b;color:#e9e4f7;display:flex;justify-content:space-between;align-items:center;gap:12px;padding:5px 16px;font-size:12.5px}
+.menubar .mb-right{display:flex;align-items:center;gap:8px}
+.menubar img{width:20px;height:21px;image-rendering:pixelated}
+.wrap{max-width:1100px;margin:0 auto;display:grid;gap:16px}
+header{display:grid;gap:6px}
+h1{font-family:var(--pixel);font-weight:700;font-size:40px;line-height:1;margin:0;letter-spacing:.5px}
+.lede{margin:0;color:var(--muted);max-width:72ch}
+.lede b{color:var(--ink)}
+.sim{background:#fff7e0;border:2px dashed #d9b85c;border-radius:12px;padding:10px 12px;display:grid;gap:8px}
+.sim-head{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;align-items:baseline}
+.sim-head b{font-family:var(--pixel);font-size:16px}
+.sim-stats{display:flex;flex-wrap:wrap;gap:14px;font-size:13px;color:var(--muted)}
+.sim-stats b{color:var(--ink);font-variant-numeric:tabular-nums;font-family:var(--text);font-size:13px}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.note{font-size:12.5px;color:var(--muted);margin:0;max-width:78ch}
+.btn{font:inherit;font-weight:700;font-size:14px;border:2px solid var(--ink);background:#fff;color:var(--ink);border-radius:8px;padding:7px 12px;box-shadow:0 3px 0 var(--ink);cursor:pointer;line-height:1.2}
+.btn:active{transform:translateY(2px);box-shadow:0 1px 0 var(--ink)}
+.btn.primary{background:var(--accent);color:#fff}
+.btn.on{background:var(--ink);color:#fff}
+.btn:disabled{opacity:.45;cursor:not-allowed;transform:none;box-shadow:0 3px 0 var(--ink)}
+.btn.small{font-size:13px;padding:4px 9px}
+:focus-visible{outline:3px solid #6b5bd6;outline-offset:2px}
+.win{background:var(--panel);border:2px solid var(--chrome);border-radius:12px;overflow:hidden;box-shadow:0 4px 0 rgba(42,34,56,.14)}
+.win-bar{background:var(--chrome);color:var(--chrome-ink);font-family:var(--pixel);font-size:16px;padding:6px 12px;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.coins{color:#ffd66b;font-variant-numeric:tabular-nums}
+.tag-ex{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;background:#fff3c4;color:#6b5200;border-radius:6px;padding:2px 7px;font-family:var(--text);margin-left:6px}
+.app{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:0}
+@media (max-width:960px){.app{grid-template-columns:minmax(0,1fr)}}
+.left{padding:14px;display:grid;gap:12px;align-content:start}
+.right{padding:14px;display:grid;gap:14px;align-content:start;border-left:2px solid var(--line)}
+@media (max-width:960px){.right{border-left:0;border-top:2px solid var(--line)}}
+.room{position:relative;height:360px;border-radius:10px;overflow:hidden;border:2px solid var(--ink)}
+@media (max-width:560px){.room{height:290px}}
+.wall{position:absolute;left:0;right:0;top:0;bottom:32%}
+.wall.w-lilas{background:repeating-linear-gradient(90deg,#ece4fb 0 22px,#e3d8f8 22px 44px)}
+.wall.w-menthe{background:radial-gradient(circle at 12px 12px,#c9ecdf 3px,transparent 4px) 0 0/28px 28px,#e3f6ee}
+.wall.w-ciel{background:linear-gradient(#d4e9fb,#eaf4fd)}
+.floor{position:absolute;left:0;right:0;bottom:0;height:32%;border-top:3px solid var(--ink)}
+.floor.f-parquet{background:repeating-linear-gradient(90deg,#d29a67 0 46px,#b8804f 46px 49px)}
+.floor.f-moquette{background:radial-gradient(circle at 4px 4px,#eea7ba 1px,transparent 2px) 0 0/9px 9px,#f6bfcd}
+.floor.f-carrelage{background:conic-gradient(#f4f1ea 25%,#d9d3c6 0 50%,#f4f1ea 0 75%,#d9d3c6 0) 0 0/36px 36px}
+.window{position:absolute;left:7%;top:9%;width:118px;height:96px;border:6px solid #fff;outline:2px solid var(--ink);box-shadow:0 3px 0 rgba(0,0,0,.08)}
+.window::before,.window::after{content:"";position:absolute;background:#fff}
+.window::before{left:50%;top:0;bottom:0;width:5px;transform:translateX(-50%)}
+.window::after{top:50%;left:0;right:0;height:5px;transform:translateY(-50%)}
+.window.x-simple{background:linear-gradient(#8fcbff,#d5eeff)}
+.window.x-etoiles{background:radial-gradient(circle at 20% 30%,#fff 1.5px,transparent 2px),radial-gradient(circle at 70% 20%,#fff 1.5px,transparent 2px),radial-gradient(circle at 80% 70%,#ffe89a 2px,transparent 3px),radial-gradient(circle at 35% 75%,#fff 1px,transparent 2px),#2b2f63}
+.shelf{position:absolute;right:7%;top:34%;width:130px;height:9px;background:#8a5a3b;border:2px solid var(--ink);border-radius:2px}
+.shelf img{position:absolute;bottom:7px;left:50%;transform:translateX(-50%);width:64px;height:64px;image-rendering:pixelated}
+.bed{position:absolute;left:5%;bottom:7%;image-rendering:pixelated}
+.bed.b-coussin{width:112px;height:112px}
+.bed.b-lit{width:192px;height:128px}
+.bidule{position:absolute;left:52%;bottom:4%;transform:translateX(-50%);width:192px;height:204px;image-rendering:pixelated;z-index:2}
+@media (max-width:560px){.bidule{width:150px;height:159px}.bed.b-lit{width:144px;height:96px}.window{width:90px;height:74px}.shelf{width:100px}}
+.bidule.bob{animation:bob 1.4s ease-in-out infinite}
+.bidule.slow{animation:sway 3s ease-in-out infinite}
+.bidule.egg{width:128px;height:136px;animation:wiggle 1.6s ease-in-out infinite}
+.bidule.munch{animation:munch .4s ease-in-out 2}
+@keyframes bob{0%,100%{transform:translate(-50%,0)}50%{transform:translate(-50%,-6px)}}
+@keyframes sway{0%,100%{transform:translate(-50%,0) rotate(-2deg)}50%{transform:translate(-50%,0) rotate(2deg)}}
+@keyframes wiggle{0%,70%,100%{transform:translate(-50%,0) rotate(0)}78%{transform:translate(-50%,0) rotate(-7deg)}86%{transform:translate(-50%,0) rotate(6deg)}94%{transform:translate(-50%,0) rotate(-3deg)}}
+@keyframes munch{50%{transform:translate(-50%,0) scale(1.06,.94)}}
+.poop{position:absolute;width:44px;height:44px;image-rendering:pixelated;cursor:pointer;z-index:3;background:none;border:0;padding:0}
+.poop img{width:100%;height:100%;image-rendering:pixelated}
+.poop:hover{transform:scale(1.1)}
+.float{position:absolute;left:52%;bottom:52%;z-index:4;font-family:var(--pixel);font-size:18px;color:var(--ink);pointer-events:none}
+.state{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between}
+.state h2{font-family:var(--pixel);font-size:24px;margin:0;line-height:1}
+.chip{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;padding:3px 8px;border-radius:999px;color:#fff}
+.chip.forme{background:var(--good)}.chip.affaibli{background:var(--mid)}.chip.malade{background:var(--bad)}.chip.oeuf{background:#8a7fa3}
+.say{margin:0;font-weight:700}
+.needs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+@media (max-width:560px){.needs{grid-template-columns:minmax(0,1fr)}}
+.need .l{display:flex;justify-content:space-between;font-size:13px}
+.need .l span:last-child{color:var(--muted);font-variant-numeric:tabular-nums}
+.bar{height:12px;border-radius:6px;background:#ebe4da;overflow:hidden;border:2px solid var(--ink)}
+.bar i{display:block;height:100%;transition:width .4s}
+.acts{display:flex;flex-wrap:wrap;gap:8px}
+.hint{font-size:14px;font-weight:700;color:var(--accent);min-height:1.45em;margin:0}
+.card{border:2px solid var(--line);border-radius:10px;background:#fff;padding:12px;display:grid;gap:8px}
+.card h3{font-family:var(--pixel);font-size:17px;margin:0}
+.card.choice{border-color:var(--accent);background:#fff5f0}
+.opts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.opt{font:inherit;border:2px solid var(--ink);background:#fff;border-radius:10px;padding:6px 4px 8px;box-shadow:0 3px 0 var(--ink);cursor:pointer;display:grid;justify-items:center;gap:2px;text-align:center}
+.opt:active{transform:translateY(2px);box-shadow:0 1px 0 var(--ink)}
+.opt img{width:72px;height:77px;image-rendering:pixelated}
+.opt b{font-size:13px;line-height:1.2}
+.opt small{font-size:11.5px;color:var(--muted);line-height:1.25}
+.sbar{height:10px;border-radius:5px;background:#ebe4da;overflow:hidden;border:2px solid var(--ink)}
+.sbar i{display:block;height:100%;background:var(--chrome)}
+.stats{display:flex;flex-wrap:wrap;gap:6px}
+.stat{font-size:12.5px;border:1.5px solid var(--line);border-radius:999px;padding:2px 9px;font-variant-numeric:tabular-nums}
+.tabs{display:flex;gap:4px;border-bottom:2px solid var(--line)}
+.tab{font:inherit;font-family:var(--pixel);font-size:15px;border:0;border-radius:8px 8px 0 0;padding:6px 11px;background:transparent;color:var(--muted);cursor:pointer}
+.tab[aria-selected="true"]{background:var(--chrome);color:var(--chrome-ink)}
+.pane{display:grid;gap:10px}
+.slot{display:grid;gap:6px}
+.slot h4{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:0}
+.slot .row{gap:6px}
+.coll{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px}
+.coll div{border:2px solid var(--line);border-radius:10px;background:#fff;display:grid;justify-items:center;padding:6px;text-align:center;gap:2px}
+.coll img{width:72px;height:77px;image-rendering:pixelated}
+.coll b{font-family:var(--pixel);font-size:13px}
+.coll small{font-size:11px;color:var(--muted);line-height:1.25}
+@media (prefers-reduced-motion:reduce){.bidule.bob,.bidule.slow,.bidule.egg,.bidule.munch{animation:none}}
+</style>
+
+<div class="menubar" aria-label="Aperçu de la barre de menus">
+  <span>Aperçu de ta barre de menus</span>
+  <span class="mb-right"><img id="mbImg" alt=""><span id="mbTxt"></span></span>
+</div>
+
+<div class="wrap">
+  <header>
+    <h1>Bidule</h1>
+    <p class="lede">Prototype. Ton Bidule vit le temps d'un sprint : tes tokens Claude lui font gagner des parties et te rapportent des pièces, et tu t'occupes de lui dans sa chambre. <b>Seul le rythme est réel</b> : il est calibré sur tes 21 derniers jours actifs. La chambre et les anciens Bidules sont des exemples.</p>
+  </header>
+
+  <section class="sim" aria-label="Simulateur">
+    <div class="sim-head"><b>Simulateur, pas dans la vraie app</b>
+      <div class="sim-stats"><span>Heure : <b id="sClock"></b></span><span>Tokens comptés : <b id="sTokens"></b></span><span>Prochaine partie : <b id="sPart"></b></span></div>
+    </div>
+    <div class="row">
+      <button class="btn primary" id="bPrompt">Envoyer un prompt</button>
+      <button class="btn" id="bHour">+1 h de travail</button>
+      <button class="btn" id="bDay">+1 journée</button>
+      <button class="btn" id="bEnd">Aller à la fin du sprint</button>
+      <button class="btn small" id="bExample">Revenir à l'exemple</button>
+    </div>
+    <p class="note">Un prompt = Claude écrit environ 7 300 tokens, ta moyenne réelle (350 000 tokens comptés et 48 prompts par jour actif, comptés comme PokéBurn). Une journée = 48 prompts sur 8 h.</p>
+  </section>
+
+  <div class="win">
+    <div class="win-bar"><span id="wTitle">Ton Bidule</span><span class="coins" id="sCoins"></span></div>
+    <div class="app">
+      <div class="left">
+        <div class="room" id="room">
+          <div class="wall" id="wall"></div>
+          <div class="window" id="window"></div>
+          <div class="shelf" id="shelf"><img id="shelfImg" alt="" hidden></div>
+          <div class="floor" id="floor"></div>
+          <img class="bed" id="bed" alt="">
+          <img class="bidule" id="bid" alt="Ton Bidule">
+          <div id="poops"></div>
+        </div>
+        <div class="state"><h2 id="sName"></h2><span class="chip" id="sChip"></span></div>
+        <p class="say" id="say"></p>
+        <div class="needs" id="needs">
+          <div class="need"><div class="l"><span>Nourri</span><span id="nFood"></span></div><div class="bar"><i id="bFood"></i></div></div>
+          <div class="need"><div class="l"><span>Hydraté</span><span id="nDrink"></span></div><div class="bar"><i id="bDrink"></i></div></div>
+          <div class="need"><div class="l"><span>Propre</span><span id="nClean"></span></div><div class="bar"><i id="bClean"></i></div></div>
+        </div>
+        <div class="acts">
+          <button class="btn" id="aFeed">Nourrir · 60</button>
+          <button class="btn" id="aDrink">Donner à boire · 30</button>
+          <button class="btn" id="aClean">Tout nettoyer</button>
+          <button class="btn" id="aCure">Médicament · 400</button>
+        </div>
+        <p class="hint" id="hint" aria-live="polite"></p>
+      </div>
+
+      <div class="right">
+        <div class="card">
+          <h3 id="spName"></h3>
+          <div class="sbar"><i id="spBar"></i></div>
+          <p class="note" id="spTxt"></p>
+        </div>
+        <div class="card choice" id="choice" hidden>
+          <h3>Nouvelle partie à choisir</h3>
+          <p class="note" id="choiceTxt"></p>
+          <div class="opts" id="opts"></div>
+        </div>
+        <div class="card" id="statsCard">
+          <h3>Caractéristiques</h3>
+          <div class="stats" id="stats"></div>
+          <p class="note">Elles viennent des parties choisies et serviront plus tard (compétences, jeu de rétro).</p>
+        </div>
+        <div class="tabs" role="tablist">
+          <button class="tab" role="tab" data-tab="room" aria-selected="true">Chambre</button>
+          <button class="tab" role="tab" data-tab="acc" aria-selected="false">Accessoires</button>
+          <button class="tab" role="tab" data-tab="coll" aria-selected="false">Collection</button>
+        </div>
+        <div class="pane" id="p-room" role="tabpanel"></div>
+        <div class="pane" id="p-acc" role="tabpanel" hidden></div>
+        <div class="pane" id="p-coll" role="tabpanel" hidden></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const TOK_PER_PROMPT = 7300, TOK_PER_COIN = 100;
+const PART_TOKENS = 500000, SPRINT_DAYS = 15, SICK_AFTER = 350000, HATCH_NEED = 50000;
+const DROP = {food:3500, drink:2500, clean:5000};
+const PRICE = {feed:60, drink:30, cure:400};
+const $ = id => document.getElementById(id);
+const fmt = n => Math.floor(n).toLocaleString("fr-FR");
+const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+const COL = {k:"#2a2238",K:"#4a3d6e",y:"#ffd23f",e:"#f6eedb",r:"#e04b3a",R:"#ff8a75",u:"#4aa8e0",U:"#bfe6f5",p:"#ff7fa0",o:"#f29b38",W:"#ffffff",
+  b:"#8a5a3b",B:"#b07a4f",g:"#3f8f3a",G:"#6cc24a",P:"#ffc7d6",v:"#c9b8f5"};
+const BODY = {
+  menthe:{a:"#9ad7c4",A:"#6fb8a3",l:"#d6f2e9",w:"#eafaf4"},
+  peche:{a:"#ffc29e",A:"#f09a6e",l:"#ffe6d6",w:"#fff4ec"},
+  lilas:{a:"#c9b8f5",A:"#a38ee0",l:"#ece5ff",w:"#f7f3ff"},
+  ciel:{a:"#a9d4f7",A:"#7fb5e6",l:"#e0f0ff",w:"#f3f9ff"},
+  malade:{a:"#c9d98f",A:"#a5b866",l:"#e8f0c6",w:"#f3f7df"}
+};
+const PARTS = {
+  antennes:{slot:"tete", name:"Antennes", stat:"Malice"},
+  cornes:{slot:"tete", name:"Cornes", stat:"Force"},
+  crocs:{slot:"bouche", name:"Crocs de carnivore", stat:"Force"},
+  langue:{slot:"bouche", name:"Langue gourmande", stat:"Charme"},
+  bras:{slot:"bras", name:"Petits bras", stat:"Charme"},
+  pinces:{slot:"bras", name:"Pinces", stat:"Force"},
+  longues:{slot:"pattes", name:"Longues pattes", stat:"Vitesse"},
+  palmees:{slot:"pattes", name:"Pattes palmées", stat:"Malice"},
+  ailes:{slot:"dos", name:"Ailes", stat:"Vitesse"},
+  fourrure:{slot:"dos", name:"Fourrure", stat:"Charme"},
+  touffue:{slot:"queue", name:"Queue touffue", stat:"Charme"},
+  lezard:{slot:"queue", name:"Queue de lézard", stat:"Vitesse"}
+};
+const SLOT_NAME = {tete:"tête", bouche:"bouche", bras:"bras", pattes:"pattes", dos:"dos", queue:"queue"};
+const STATS = ["Force", "Vitesse", "Charme", "Malice"];
+
+function drawBidule(b, state = "forme", acc = {}) {
+  const W = 32, H = 34, px = new Map();
+  const body = BODY[state === "malade" ? "malade" : b.pal], C = {...COL, ...body};
+  const P = b.parts || {}, cy = P.pattes === "longues" ? 19 : 23;
+  const set = (x, y, c) => { if (x >= 0 && y >= 0 && x < W && y < H) px.set(x + "," + y, c); };
+  const both = (x, y, c) => { set(x, y, c); set(31 - x, y, c); };
+  const inside = (x, y) => ((x + .5 - 16) / 7) ** 2 + ((y + .5 - cy) / 6) ** 2 <= 1;
+  if (P.dos === "ailes") {
+    for (let i = 0; i < 6; i++) for (let x = 8 - i; x <= 8; x++) both(x, cy - 5 + i, x === 8 - i ? "k" : "U");
+    for (let x = 5; x <= 8; x++) both(x, cy + 1, x === 5 ? "k" : "U");
+  }
+  if (P.queue === "touffue") {
+    [[23, cy + 2], [24, cy + 1], [25, cy]].forEach(([x, y]) => set(x, y, "A"));
+    for (let y = cy - 4; y <= cy; y++) for (let x = 24; x <= 28; x++) {
+      const edge = y === cy - 4 || y === cy || x === 24 || x === 28;
+      if ((y === cy - 4 || y === cy) && (x === 24 || x === 28)) continue;
+      set(x, y, edge ? "k" : "l");
+    }
+  } else if (P.queue === "lezard") {
+    [[23, cy + 3], [24, cy + 3], [25, cy + 2], [26, cy + 2], [27, cy + 1], [28, cy]].forEach(([x, y]) => { set(x, y, "A"); set(x, y + 1, "k"); });
+    set(29, cy, "k");
+  }
+  if (P.pattes === "longues") {
+    for (let y = cy + 6; y <= cy + 10; y++) { both(11, y, "k"); both(12, y, "A"); both(13, y, "A"); both(14, y, "k"); }
+    for (let x = 11; x <= 14; x++) both(x, cy + 11, "k");
+  } else if (P.pattes === "palmees") {
+    for (let x = 10; x <= 14; x++) both(x, cy + 6, "o");
+    for (let x = 9; x <= 14; x++) { both(x, cy + 7, "o"); both(x, cy + 8, "k"); }
+  } else {
+    for (let x = 11; x <= 13; x++) { both(x, cy + 6, "A"); both(x, cy + 7, "k"); }
+  }
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+    if (!inside(x, y)) continue;
+    const edge = !inside(x - 1, y) || !inside(x + 1, y) || !inside(x, y - 1) || !inside(x, y + 1);
+    let c = "a";
+    if (((x + .5 - 16) / 4.2) ** 2 + ((y + .5 - (cy + 2.5)) / 3) ** 2 <= 1) c = "w";
+    else if ((x + .5 - 16) + (y + .5 - cy) * .8 > 5) c = "A";
+    set(x, y, edge ? "k" : c);
+  }
+  [[11, cy - 3], [11, cy - 4], [12, cy - 4]].forEach(([x, y]) => set(x, y, "l"));
+  if (P.dos === "fourrure") {
+    for (let x = 10; x <= 21; x += 2) { let y = 0; while (y < H && !inside(x, y)) y++; set(x, y - 1, "A"); }
+    for (let y = cy - 3; y <= cy + 3; y += 2) { set(8, y, "A"); set(23, y, "A"); }
+  }
+  if (P.tete === "antennes") {
+    [[13, cy - 7], [12, cy - 8], [12, cy - 9]].forEach(([x, y]) => both(x, y, "k"));
+    [[11, cy - 10], [12, cy - 10], [11, cy - 11], [12, cy - 11]].forEach(([x, y]) => both(x, y, "y"));
+  } else if (P.tete === "cornes") {
+    [[13, cy - 7], [12, cy - 7], [12, cy - 8], [11, cy - 8], [11, cy - 9]].forEach(([x, y]) => both(x, y, "e"));
+    both(10, cy - 10, "k"); both(11, cy - 10, "k");
+  }
+  if (P.bras === "bras") {
+    [[7, cy], [8, cy], [7, cy + 1], [8, cy + 1]].forEach(([x, y]) => both(x, y, "a"));
+    [[6, cy], [6, cy + 1], [7, cy - 1], [8, cy - 1], [7, cy + 2], [8, cy + 2]].forEach(([x, y]) => both(x, y, "k"));
+  } else if (P.bras === "pinces") {
+    [[8, cy], [7, cy], [6, cy - 1], [5, cy - 2], [6, cy + 1], [5, cy + 2]].forEach(([x, y]) => both(x, y, "r"));
+    both(4, cy - 2, "k"); both(4, cy + 2, "k");
+  }
+  const eyes = [[12, cy - 2], [18, cy - 2]];
+  for (const [x, y] of eyes) {
+    if (state === "forme") { set(x, y, "W"); set(x + 1, y, "k"); set(x, y + 1, "k"); set(x + 1, y + 1, "k"); }
+    else { set(x, y + 1, "k"); set(x + 1, y + 1, "k"); }
+  }
+  if (state === "malade") { set(12, cy, "u"); set(19, cy, "u"); }
+  if (state === "affaibli") { set(23, cy - 6, "U"); set(23, cy - 5, "u"); }
+  if (P.bouche === "crocs") { for (let x = 13; x <= 18; x++) set(x, cy + 1, "k"); set(14, cy + 2, "W"); set(17, cy + 2, "W"); }
+  else if (P.bouche === "langue") { for (let x = 14; x <= 17; x++) set(x, cy + 1, "k"); set(15, cy + 2, "p"); set(16, cy + 2, "p"); }
+  else { set(14, cy + 1, "k"); set(15, cy + 2, "k"); set(16, cy + 2, "k"); set(17, cy + 1, "k"); }
+  if (acc.cou === "noeud") {
+    [12, 13, 14].forEach(x => both(x, cy + 3, "r")); [12, 13].forEach(x => both(x, cy + 4, "r"));
+    [15, 16].forEach(x => { set(x, cy + 3, "R"); set(x, cy + 4, "R"); });
+  } else if (acc.cou === "echarpe") {
+    for (let x = 10; x <= 21; x++) set(x, cy + 3, x % 3 ? "u" : "U");
+    for (let x = 11; x <= 20; x++) set(x, cy + 4, "u");
+    [[18, cy + 5], [19, cy + 5], [18, cy + 6], [19, cy + 6]].forEach(([x, y]) => set(x, y, "u"));
+  }
+  if (acc.visage === "rondes") {
+    for (const x0 of [11, 17]) { for (let y = cy - 3; y <= cy; y++) { set(x0, y, "k"); set(x0 + 3, y, "k"); } set(x0 + 1, cy - 3, "k"); set(x0 + 2, cy - 3, "k"); set(x0 + 1, cy, "k"); set(x0 + 2, cy, "k"); }
+    set(15, cy - 2, "k"); set(16, cy - 2, "k");
+  } else if (acc.visage === "soleil") {
+    for (const x0 of [11, 17]) for (let y = cy - 3; y <= cy - 1; y++) for (let x = x0; x <= x0 + 3; x++) set(x, y, "k");
+    set(12, cy - 3, "U"); set(18, cy - 3, "U"); set(15, cy - 3, "k"); set(16, cy - 3, "k");
+  }
+  if (acc.tete === "bonnet") {
+    for (let x = 11; x <= 20; x++) { set(x, cy - 6, "R"); set(x, cy - 7, "r"); }
+    for (let x = 12; x <= 19; x++) set(x, cy - 8, "r");
+    for (let x = 13; x <= 18; x++) set(x, cy - 9, "r");
+    [[15, cy - 10], [16, cy - 10], [15, cy - 11], [16, cy - 11]].forEach(([x, y]) => set(x, y, "W"));
+  } else if (acc.tete === "haut") {
+    for (let x = 10; x <= 21; x++) set(x, cy - 7, "k");
+    for (let y = cy - 12; y <= cy - 8; y++) for (let x = 12; x <= 19; x++) set(x, y, y === cy - 8 ? "r" : x === 13 ? "K" : "k");
+  }
+  const c = document.createElement("canvas"); c.width = W; c.height = H;
+  const x = c.getContext("2d");
+  for (const [k, v] of px) { const [i, j] = k.split(",").map(Number); x.fillStyle = C[v] || v; x.fillRect(i, j, 1, 1); }
+  return c.toDataURL();
+}
+function drawEgg() {
+  const c = document.createElement("canvas"); c.width = 32; c.height = 34;
+  const x = c.getContext("2d");
+  const inside = (i, j) => ((i + .5 - 16) / 6) ** 2 + ((j + .5 - 23) / 8) ** 2 <= 1;
+  const spots = new Set(["13,19", "14,19", "13,20", "18,22", "19,22", "18,23", "19,23", "14,26", "15,26", "17,17"]);
+  for (let j = 0; j < 34; j++) for (let i = 0; i < 32; i++) {
+    if (!inside(i, j)) continue;
+    const edge = !inside(i - 1, j) || !inside(i + 1, j) || !inside(i, j - 1) || !inside(i, j + 1);
+    x.fillStyle = edge ? COL.k : spots.has(i + "," + j) ? COL.v : (i === 12 && j < 22 && j > 17) ? "#fffaf0" : COL.e;
+    x.fillRect(i, j, 1, 1);
+  }
+  return c.toDataURL();
+}
+function sprite(rows, w = 16) {
+  const c = document.createElement("canvas"); c.width = w; c.height = 16;
+  const x = c.getContext("2d");
+  rows.forEach((row, j) => [...row.padEnd(w, ".").slice(0, w)].forEach((ch, i) => { if (ch !== "." && COL[ch]) { x.fillStyle = COL[ch]; x.fillRect(i, j, 1, 1); } }));
+  return c.toDataURL();
+}
+const IMG = {
+  egg: drawEgg(),
+  poop: sprite(["", "", "", "", ".......k........", "......kbk.......", ".....kbBbk......", ".....kbbbk......", ".....kbbBbk.....", "....kbBbbbBk....", "...kbbbbbbbbk...", "..kbBbbbbbBbbk..", "..kkkkkkkkkkkk.."]),
+  coussin: sprite(["", "", "", "", "", "", "", "", "...kkkkkkkkkk...", "..kPPPPPPPPPPk..", ".kPPpPPPPPPpPPk.", ".kPPPPPPPPPPPPk.", ".kpPPPPPPPPPPpk.", "..kppppppppppk..", "...kkkkkkkkkk..."]),
+  lit: sprite(["", "", "", ".kkkk...................", ".kBBk...................", ".kBBk...................", ".kBBkkkkkkkkkkkkkkkkkk..", ".kBBkWWWWkUUUUUUUUUUUk..", ".kBBkWWWWkUuUUUuUUUuUk..", ".kBBkkkkkkUUUUUUUUUUUk..", ".kBBBBBBBBBBBBBBBBBBBk..", ".kkkkkkkkkkkkkkkkkkkkk..", ".kbk...............kbk..", ".kkk...............kkk.."], 24),
+  plante: sprite(["", "", "", "......G.G.......", ".....GgGgG......", "....GgGGGgG.....", ".....GgGgG......", "......GgG.......", ".......g........", ".....kkkkkk.....", ".....kooook.....", "......kook......", "......kkkk......"]),
+  livres: sprite(["", "", "", "......kkk.......", "..kkk.kuk.......", "..krk.kuk.kkk...", "..krk.kuk.kgk...", "..kyk.kUk.kgk...", "..krk.kuk.kyk...", "..krk.kuk.kgk...", "..kkk.kkk.kkk..."])
+};
+
+const DECO = {
+  mur:{label:"Mur", items:{lilas:{name:"Rayures lilas", price:0}, menthe:{name:"Pois menthe", price:300}, ciel:{name:"Bleu ciel", price:300}}},
+  sol:{label:"Sol", items:{parquet:{name:"Parquet", price:0}, moquette:{name:"Moquette rose", price:350}, carrelage:{name:"Carrelage", price:350}}},
+  lit:{label:"Lit", items:{coussin:{name:"Coussin", price:0}, lit:{name:"Lit douillet", price:800}}},
+  fenetre:{label:"Fenêtre", items:{simple:{name:"Ciel de jour", price:0}, etoiles:{name:"Nuit étoilée", price:500}}},
+  etagere:{label:"Étagère", items:{vide:{name:"Vide", price:0}, plante:{name:"Plante", price:250}, livres:{name:"Livres", price:250}}}
+};
+const ACC = {
+  tete:{label:"Tête", items:{bonnet:{name:"Bonnet", price:400}, haut:{name:"Haut-de-forme", price:900}}},
+  visage:{label:"Visage", items:{rondes:{name:"Lunettes rondes", price:350}, soleil:{name:"Lunettes de soleil", price:500}}},
+  cou:{label:"Cou", items:{noeud:{name:"Nœud papillon", price:300}, echarpe:{name:"Écharpe", price:400}}}
+};
+
+let state, ui = {tab:"room"};
+const clock = () => `Jour ${Math.floor(state.min / 1440) + 1}, ${String(Math.floor(state.min % 1440 / 60)).padStart(2, "0")}:${String(state.min % 60).padStart(2, "0")}`;
+const sprintDay = () => Math.floor(state.min / 1440) - state.sprint.startDay + 1;
+function condition() {
+  const b = state.bidule; if (!b) return "oeuf";
+  if (b.sick) return "malade";
+  return Math.min(b.food, b.drink, b.clean) <= 0 ? "affaibli" : "forme";
+}
+const MULT = {forme:1, affaibli:.5, malade:.25, oeuf:1};
+function statsOf(parts) {
+  const s = Object.fromEntries(STATS.map(k => [k, 0]));
+  for (const p of Object.values(parts || {})) s[PARTS[p].stat] += 2;
+  return s;
+}
+
+function emptyRoom() { return {owned:["lilas", "parquet", "coussin", "simple", "vide"], deco:{mur:"lilas", sol:"parquet", lit:"coussin", fenetre:"simple", etagere:"vide"}, acc:{}, accOwned:[]}; }
+function exampleState() {
+  const s = {v:1, example:true, min:5 * 1440 + 9 * 60, tokens:1850000, coins:2400, partTok:350000, pending:[],
+    sprint:{num:42, startDay:0, weeks:3, start:"lundi 21 septembre"},
+    bidule:{pal:"menthe", parts:{tete:"antennes", pattes:"longues"}, food:55, drink:30, clean:50, zero:0, sick:false},
+    egg:null, poops:[{x:22, y:14}, {x:74, y:8}], log:[], collection:[], ...emptyRoom()};
+  s.owned.push("menthe", "plante"); s.deco.mur = "menthe"; s.deco.etagere = "plante";
+  s.accOwned = ["bonnet"]; s.acc = {tete:"bonnet"};
+  s.pending = drawChoices(s.bidule);
+  s.collection = [
+    {sprint:41, pal:"lilas", parts:{tete:"cornes", bouche:"langue", bras:"bras", pattes:"palmees", dos:"ailes", queue:"touffue"}, acc:{visage:"rondes", cou:"noeud"}},
+    {sprint:40, pal:"peche", parts:{tete:"antennes", bouche:"crocs", bras:"pinces", dos:"fourrure", queue:"lezard"}, acc:{tete:"haut"}}
+  ];
+  return s;
+}
+const KEY = "bidule-v1";
+function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+function load() { try { const s = JSON.parse(localStorage.getItem(KEY)); return s && s.v === 1 ? s : null; } catch (e) { return null; } }
+
+function drawChoices(b) {
+  const keys = Object.keys(PARTS).filter(k => !Object.values(b.parts).includes(k));
+  for (let i = keys.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [keys[i], keys[j]] = [keys[j], keys[i]]; }
+  return keys.slice(0, 3);
+}
+function syncPoops() {
+  const b = state.bidule, target = b ? Math.min(4, Math.floor((100 - b.clean) / 25)) : 0;
+  while (state.poops.length > target) state.poops.pop();
+  while (state.poops.length < target) state.poops.push({x:14 + Math.random() * 72, y:4 + Math.random() * 14});
+}
+function promptOnce() {
+  state.min += 10;
+  const t = Math.round(TOK_PER_PROMPT * (0.35 + Math.random() * 1.3));
+  state.tokens += t;
+  state.coins += t / TOK_PER_COIN * MULT[condition()];
+  const b = state.bidule;
+  if (b) {
+    b.food = Math.max(0, b.food - t / DROP.food);
+    b.drink = Math.max(0, b.drink - t / DROP.drink);
+    b.clean = Math.max(0, b.clean - t / DROP.clean);
+    syncPoops();
+    if (Math.min(b.food, b.drink, b.clean) <= 0) {
+      b.zero += t;
+      if (b.zero >= SICK_AFTER && !b.sick) { b.sick = true; hint("Ton Bidule est tombé malade : il lui faut un médicament."); }
+    } else b.zero = 0;
+    state.partTok += t;
+    while (state.partTok >= PART_TOKENS) { state.partTok -= PART_TOKENS; b.earned = (b.earned || 0) + 1; if (!state.pending.length) state.pending = drawChoices(b); else b.queued = (b.queued || 0) + 1; }
+  } else if (state.egg) {
+    state.egg.progress += t;
+    if (state.egg.progress >= state.egg.need) hatch();
+  }
+}
+function hatch() {
+  const pals = ["menthe", "peche", "lilas", "ciel"];
+  state.egg = null;
+  state.bidule = {pal:pals[Math.floor(Math.random() * pals.length)], parts:{}, food:100, drink:100, clean:100, zero:0, sick:false};
+  state.partTok = 0; state.poops = [];
+  hint(`L'œuf a éclos : voici ton Bidule du sprint ${state.sprint.num} !`);
+}
+function endSprint() {
+  const b = state.bidule;
+  if (b) state.collection.unshift({sprint:state.sprint.num, pal:b.pal, parts:{...b.parts}, acc:{...state.acc}});
+  state.sprint = {num:state.sprint.num + 1, startDay:Math.floor(state.min / 1440), weeks:state.sprint.weeks, start:"aujourd'hui"};
+  state.bidule = null; state.pending = []; state.poops = [];
+  state.egg = {progress:0, need:HATCH_NEED};
+  hint(b ? `Fin du sprint : ton Bidule est rangé dans ta collection. Un nouvel œuf arrive.` : "Nouveau sprint : un nouvel œuf arrive.");
+}
+function run(n) { for (let i = 0; i < n; i++) promptOnce(); state.example = false; save(); renderAll(); }
+function nextDay() {
+  state.min = (Math.floor(state.min / 1440) + 1) * 1440 + 9 * 60;
+  if (sprintDay() > SPRINT_DAYS) endSprint();
+}
+
+// Rendering
+function renderRoom() {
+  const d = state.deco;
+  $("wall").className = "wall w-" + d.mur;
+  $("floor").className = "floor f-" + d.sol;
+  $("window").className = "window x-" + d.fenetre;
+  $("bed").className = "bed b-" + d.lit; $("bed").src = IMG[d.lit];
+  $("shelfImg").hidden = d.etagere === "vide"; if (d.etagere !== "vide") $("shelfImg").src = IMG[d.etagere];
+  const img = $("bid"), cond = condition();
+  if (!state.bidule) { img.src = IMG.egg; img.className = "bidule egg"; }
+  else { img.src = drawBidule(state.bidule, cond, state.acc); if (!img.classList.contains("munch")) img.className = "bidule " + (cond === "forme" ? "bob" : "slow"); }
+  $("poops").innerHTML = state.poops.map((p, i) => `<button class="poop" data-poop="${i}" style="left:${p.x}%;bottom:${p.y}%" aria-label="Ramasser ce caca"><img src="${IMG.poop}" alt=""></button>`).join("");
+}
+function sayLine() {
+  const b = state.bidule, c = condition();
+  if (!b) return `L'œuf du sprint ${state.sprint.num} éclot après ${fmt(state.egg.need)} tokens, soit quelques prompts : ${fmt(state.egg.progress)} pour l'instant.`;
+  const low = [["food", "faim"], ["drink", "soif"], ["clean", "besoin qu'on nettoie sa chambre"]].filter(([k]) => b[k] <= 0).map(([, t]) => t);
+  if (c === "malade") return "Il est malade : un médicament le remet sur pied. En attendant, tu gagnes quatre fois moins de pièces.";
+  if (c === "affaibli") return `Il est affaibli : il a ${low.join(" et ")}. Tu gagnes moitié moins de pièces. S'il reste comme ça une journée de travail, il tombe malade.`;
+  if (state.pending.length) return "Il a gagné une nouvelle partie : choisis-la à droite.";
+  if (b.drink < 30 || b.food < 30) return `Il commence à avoir ${b.drink < b.food ? "soif" : "faim"}.`;
+  if (state.poops.length) return "Il va bien. Pense à ramasser ses cacas pour garder sa chambre propre.";
+  return "Il va bien.";
+}
+function renderState() {
+  const b = state.bidule, c = condition();
+  $("wTitle").innerHTML = `Ton Bidule · Sprint ${state.sprint.num}` + (state.example ? `<span class="tag-ex">Exemple</span>` : "");
+  $("sCoins").textContent = `${fmt(state.coins)} pièces`;
+  $("sName").textContent = b ? `Bidule du sprint ${state.sprint.num}` : "Un œuf";
+  $("sChip").className = "chip " + c;
+  $("sChip").textContent = {forme:"En forme", affaibli:"Affaibli", malade:"Malade", oeuf:"Éclosion"}[c];
+  $("say").textContent = sayLine();
+  $("needs").hidden = !b;
+  if (b) {
+    [["Food", "food"], ["Drink", "drink"], ["Clean", "clean"]].forEach(([id, k]) => {
+      const v = b[k]; $("n" + id).textContent = `${Math.round(v)} / 100`;
+      $("b" + id).style.width = v + "%"; $("b" + id).style.background = v <= 0 ? "var(--bad)" : v < 30 ? "var(--mid)" : "var(--good)";
+    });
+  }
+  $("aFeed").disabled = !b || state.coins < PRICE.feed;
+  $("aDrink").disabled = !b || state.coins < PRICE.drink;
+  $("aClean").disabled = !b || !state.poops.length;
+  $("aCure").disabled = !b || !b.sick || state.coins < PRICE.cure;
+  $("mbImg").src = b ? drawBidule(b, c, state.acc) : IMG.egg;
+  $("mbTxt").textContent = b ? `Bidule · ${$("sChip").textContent}` : "Œuf en cours d'éclosion";
+}
+function renderSide() {
+  const d = Math.min(SPRINT_DAYS, sprintDay());
+  $("spName").textContent = `Sprint ${state.sprint.num} · jour ${d} sur ${SPRINT_DAYS}`;
+  $("spBar").style.width = (d / SPRINT_DAYS * 100) + "%";
+  $("spTxt").textContent = `Dates lues dans le fichier du maître : début ${state.sprint.start}, ${state.sprint.weeks} semaines. À la fin, ton Bidule est figé et rangé dans ta collection.`;
+  const b = state.bidule;
+  $("choice").hidden = !(b && state.pending.length);
+  if (b && state.pending.length) {
+    const used = Object.keys(b.parts).length;
+    $("choiceTxt").textContent = `Une partie tous les ${fmt(PART_TOKENS)} tokens. ${used} place${used > 1 ? "s" : ""} sur 6 occupée${used > 1 ? "s" : ""}.` + (b.queued ? ` Encore ${b.queued} à choisir ensuite.` : "");
+    $("opts").innerHTML = state.pending.map(k => {
+      const p = PARTS[k], cur = b.parts[p.slot];
+      const preview = drawBidule({...b, parts:{...b.parts, [p.slot]:k}}, condition(), state.acc);
+      return `<button class="opt" data-part="${k}"><img src="${preview}" alt=""><b>${p.name}</b><small>+2 ${p.stat}${cur ? `<br>remplace : ${PARTS[cur].name.toLowerCase()}` : `<br>${SLOT_NAME[p.slot]}`}</small></button>`;
+    }).join("");
+  }
+  $("statsCard").hidden = !b;
+  if (b) $("stats").innerHTML = Object.entries(statsOf(b.parts)).map(([k, v]) => `<span class="stat">${k} ${v}</span>`).join("");
+}
+function shopRows(groups, owned, equipped, kind) {
+  return Object.entries(groups).map(([slot, g]) => `<div class="slot"><h4>${g.label}</h4><div class="row">${Object.entries(g.items).map(([k, it]) => {
+    const has = owned.includes(k), on = equipped[slot] === k;
+    if (on) return `<button class="btn small on" data-${kind}="${slot}:${k}" ${kind === "acc" ? "" : "disabled"}>${it.name}${kind === "acc" ? " · retirer" : ""}</button>`;
+    if (has) return `<button class="btn small" data-${kind}="${slot}:${k}">${it.name}</button>`;
+    return `<button class="btn small" data-${kind}="${slot}:${k}" ${state.coins < it.price ? "disabled" : ""}>${it.name} · ${fmt(it.price)}</button>`;
+  }).join("")}</div></div>`).join("");
+}
+function renderTabs() {
+  $("p-room").innerHTML = `<p class="note">Un clic pour acheter, un clic pour mettre en place. Tes achats restent quand un nouveau Bidule arrive.</p>` + shopRows(DECO, state.owned, state.deco, "deco");
+  $("p-acc").innerHTML = `<p class="note">Un accessoire par emplacement. Il passe au Bidule suivant à la fin du sprint.</p>` + shopRows(ACC, state.accOwned, state.acc, "acc");
+  $("p-coll").innerHTML = state.collection.length
+    ? `<p class="note">Un Bidule par sprint, figé tel qu'il était le dernier jour.</p><div class="coll">${state.collection.map(c => { const s = statsOf(c.parts); return `<div><img src="${drawBidule(c, "forme", c.acc)}" alt=""><b>Sprint ${c.sprint}</b><small>${Object.keys(c.parts).length} parties<br>${STATS.filter(k => s[k]).map(k => `${k} ${s[k]}`).join(" · ") || "aucune partie"}</small></div>`; }).join("")}</div>`
+    : `<p class="note">Ta collection est vide : ton premier Bidule y sera rangé à la fin du sprint.</p>`;
+}
+function renderSim() {
+  $("sClock").textContent = clock();
+  $("sTokens").textContent = fmt(state.tokens);
+  $("sPart").textContent = state.bidule ? `${fmt(state.partTok)} / ${fmt(PART_TOKENS)}` : "après l'éclosion";
+}
+function renderAll() { renderSim(); renderRoom(); renderState(); renderSide(); renderTabs(); }
+
+let hintT;
+function hint(t) { $("hint").textContent = t; clearTimeout(hintT); hintT = setTimeout(() => $("hint").textContent = "", 4000); }
+function floatUp(t) {
+  if (reduced) return;
+  const f = document.createElement("span"); f.className = "float"; f.textContent = t; $("room").appendChild(f);
+  f.animate([{transform:"translate(-50%,0)", opacity:1}, {transform:"translate(-50%,-50px)", opacity:0}], {duration:1100, easing:"ease-out"}).finished.then(() => f.remove());
+}
+function munch() { const i = $("bid"); i.className = "bidule munch"; setTimeout(() => { i.classList.remove("munch"); renderRoom(); }, 850); }
+function care(key, price, gain, label) {
+  const b = state.bidule; if (!b || state.coins < price) return;
+  state.coins -= price; b[key] = Math.min(100, b[key] + gain);
+  if (Math.min(b.food, b.drink, b.clean) > 0) b.zero = 0;
+  floatUp(label); munch(); state.example = false; save(); renderAll();
+}
+$("aFeed").onclick = () => care("food", PRICE.feed, 50, "+50 nourri");
+$("aDrink").onclick = () => care("drink", PRICE.drink, 50, "+50 hydraté");
+$("aClean").onclick = () => { const b = state.bidule; if (!b) return; b.clean = 100; state.poops = []; if (Math.min(b.food, b.drink) > 0) b.zero = 0; floatUp("Tout propre"); state.example = false; save(); renderAll(); };
+$("aCure").onclick = () => { const b = state.bidule; if (!b || !b.sick || state.coins < PRICE.cure) return; state.coins -= PRICE.cure; b.sick = false; b.zero = 0; floatUp("Guéri"); hint("Ton Bidule est guéri."); state.example = false; save(); renderAll(); };
+document.addEventListener("click", e => {
+  const el = e.target.closest("button"); if (!el) return;
+  const b = state.bidule;
+  if (el.dataset.poop !== undefined && b) {
+    state.poops.splice(+el.dataset.poop, 1);
+    b.clean = Math.min(100, b.clean + 25);
+    if (Math.min(b.food, b.drink, b.clean) > 0) b.zero = 0;
+    syncPoops(); floatUp("+25 propre"); state.example = false; save(); renderAll();
+  } else if (el.dataset.part && b) {
+    const k = el.dataset.part; b.parts[PARTS[k].slot] = k;
+    state.pending = b.queued ? (b.queued--, drawChoices(b)) : [];
+    hint(`${PARTS[k].name} : +2 ${PARTS[k].stat}.`); state.example = false; save(); renderAll();
+  } else if (el.dataset.deco) {
+    const [slot, k] = el.dataset.deco.split(":"), it = DECO[slot].items[k];
+    if (!state.owned.includes(k)) { if (state.coins < it.price) return; state.coins -= it.price; state.owned.push(k); }
+    state.deco[slot] = k; state.example = false; save(); renderAll();
+  } else if (el.dataset.acc) {
+    const [slot, k] = el.dataset.acc.split(":"), it = ACC[slot].items[k];
+    if (state.acc[slot] === k) delete state.acc[slot];
+    else { if (!state.accOwned.includes(k)) { if (state.coins < it.price) return; state.coins -= it.price; state.accOwned.push(k); } state.acc[slot] = k; }
+    state.example = false; save(); renderAll();
+  } else if (el.dataset.tab) {
+    document.querySelectorAll(".tab").forEach(t => t.setAttribute("aria-selected", t === el));
+    ["room", "acc", "coll"].forEach(k => $("p-" + k).hidden = k !== el.dataset.tab);
+  }
+});
+$("bPrompt").onclick = () => run(1);
+$("bHour").onclick = () => run(6);
+$("bDay").onclick = () => { for (let i = 0; i < 48; i++) promptOnce(); nextDay(); state.example = false; save(); renderAll(); };
+$("bEnd").onclick = () => { endSprint(); state.example = false; save(); renderAll(); };
+$("bExample").onclick = () => { state = exampleState(); save(); renderAll(); };
+
+function start(data) { state = (data && data.state) || load() || exampleState(); renderAll(); }
+try { window.claude?.hot?.snapshot?.(() => ({state})); } catch (e) {}
+if (window.claude?.hot?.ready) window.claude.hot.ready(start); else start(window.claude?.hot?.data ?? {});
+</script>

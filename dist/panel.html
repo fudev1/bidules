@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bidule, panneau de test</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Luckiest+Guy&family=Fredoka:wght@500;600;700&display=swap">
+<style>
+:root{--ink:#1e1b3a;--pink:#f0305a;--pink-deep:#a8173a;--plum:#3d1f55;--yellow:#ffd94a;--lime:#a6d23a;--cream:#fff8ec;--white:#ffffff;
+  --display:"Luckiest Guy","Arial Rounded MT Bold","Arial Black",system-ui,sans-serif;--text:"Fredoka","Arial Rounded MT Bold",system-ui,-apple-system,sans-serif}
+*{box-sizing:border-box}
+html,body{margin:0;background:transparent;font:500 13px/1.35 var(--text);color:var(--ink);-webkit-user-select:none;user-select:none}
+.card{margin:10px;height:calc(100vh - 20px);background:var(--pink);border:3px solid var(--ink);border-radius:20px;box-shadow:0 6px 0 var(--ink);display:flex;flex-direction:column;overflow:hidden;
+  background-image:radial-gradient(circle at 18% 12%,rgba(255,255,255,.10) 0 22%,transparent 23%),radial-gradient(circle at 88% 80%,rgba(255,255,255,.08) 0 18%,transparent 19%)}
+header{display:flex;gap:10px;align-items:center;padding:12px 14px 8px}
+header img{width:56px;height:56px;image-rendering:pixelated;background:var(--white);border:3px solid var(--ink);border-radius:14px;padding:2px}
+header h1{font:400 26px/1 var(--display);margin:0;color:var(--white);letter-spacing:1px;text-shadow:0 3px 0 var(--pink-deep),0 3px 0 var(--pink-deep)}
+header p{margin:4px 0 0;color:var(--white);font-weight:600;font-size:12px}
+.tabs{display:flex;gap:6px;padding:4px 12px 10px}
+.tab{flex:1;font:400 14px/1 var(--display);letter-spacing:.8px;border:2.5px solid var(--ink);background:var(--white);color:var(--ink);padding:8px 4px 6px;border-radius:999px;cursor:pointer;box-shadow:0 3px 0 var(--ink)}
+.tab[aria-selected="true"]{background:var(--yellow)}
+.tab:active{transform:translateY(2px);box-shadow:0 1px 0 var(--ink)}
+main{flex:1;overflow:auto;padding:4px 12px 12px}
+.pane{display:grid;gap:10px;background:var(--cream);border:3px solid var(--ink);border-radius:16px;padding:12px;box-shadow:inset 0 0 0 3px var(--yellow)}
+.pane[hidden]{display:none}
+.hint{margin:0;color:var(--ink);opacity:.75;font-size:12px}
+.styles{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.st{font:inherit;border:2.5px solid var(--ink);background:var(--plum);border-radius:14px;padding:6px 4px 7px;display:grid;justify-items:center;gap:3px;cursor:pointer;color:var(--white);box-shadow:0 3px 0 var(--ink)}
+.st:nth-child(3n+2){background:var(--lime);color:var(--ink)}
+.st:nth-child(3n){background:var(--yellow);color:var(--ink)}
+.st img{width:64px;height:64px;image-rendering:pixelated;filter:drop-shadow(1.5px 0 0 #fff) drop-shadow(-1.5px 0 0 #fff) drop-shadow(0 1.5px 0 #fff) drop-shadow(0 -1.5px 0 #fff)}
+.st span{font:400 12px/1.1 var(--display);letter-spacing:.5px;text-align:center}
+.st.on{outline:3px solid var(--white);outline-offset:-6px;transform:translateY(-2px);box-shadow:0 5px 0 var(--ink)}
+.slot{display:grid;grid-template-columns:62px 1fr;gap:8px;align-items:center}
+.slot b{font:400 12px/1 var(--display);letter-spacing:.6px;color:var(--pink)}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font:600 12.5px/1 var(--text);border:2px solid var(--ink);background:var(--white);border-radius:999px;padding:6px 11px;cursor:pointer;color:var(--ink)}
+.chip.on{background:var(--pink);color:var(--white)}
+.row{display:flex;gap:8px;flex-wrap:wrap}
+.btn{font:400 13px/1 var(--display);letter-spacing:.6px;border:2.5px solid var(--ink);background:var(--white);border-radius:12px;padding:9px 12px 7px;cursor:pointer;color:var(--ink);box-shadow:0 3px 0 var(--ink)}
+.btn:active{transform:translateY(2px);box-shadow:0 1px 0 var(--ink)}
+.btn.primary{background:var(--yellow)}
+.btn:disabled{opacity:.45;cursor:default}
+.moods{display:grid;grid-template-columns:repeat(2,1fr);gap:6px}
+.moods .chip{border-radius:12px;text-align:left;padding:8px 11px}
+.soon{border:2px dashed var(--ink);border-radius:12px;padding:9px 10px;font-size:12.5px;background:var(--white)}
+.soon b{color:var(--pink)}
+footer{padding:10px 14px 12px;display:flex;justify-content:space-between;align-items:center}
+footer small{color:var(--white);font-weight:600}
+footer .btn{background:var(--plum);color:var(--white)}
+:focus-visible{outline:3px solid var(--yellow);outline-offset:2px}
+</style></head>
+<body>
+<div class="card">
+  <header><img id="thumb" alt=""><div><h1 id="title">Bidule</h1><p id="sub"></p></div></header>
+  <nav class="tabs" role="tablist">
+    <button class="tab" role="tab" data-tab="piste" aria-selected="true">Piste</button>
+    <button class="tab" role="tab" data-tab="evo" aria-selected="false">Évolution</button>
+    <button class="tab" role="tab" data-tab="humeur" aria-selected="false">Humeur</button>
+  </nav>
+  <main>
+    <section class="pane" id="p-piste">
+      <p class="hint">Choisis une direction artistique : le Bidule change tout de suite, sans perdre ce qu'il fait.</p>
+      <div class="styles" id="styles"></div>
+    </section>
+    <section class="pane" id="p-evo" hidden>
+      <div class="row"><button class="btn primary" id="random">Gagner une partie au hasard</button><button class="btn" id="reset">Revenir au départ</button></div>
+      <p class="hint">Un clic ajoute la partie, un second clic la retire. Une partie du même emplacement remplace l'ancienne.</p>
+      <div id="slots" class="pane"></div>
+    </section>
+    <section class="pane" id="p-humeur" hidden>
+      <p class="hint">L'humeur est devinée d'après ton rythme de travail (heure, pauses, cadence), sans lire tes messages. Tu peux la forcer ici.</p>
+      <div class="soon" id="moodNow"></div>
+      <div class="moods" id="moods"></div>
+    </section>
+  </main>
+  <footer><small id="foot">Panneau de test</small><button class="btn" id="quit">Quitter le Bidule</button></footer>
+</div>
+<script src="bidule64.js"></script>
+<script src="monstre64.js"></script>
+<script>
+const T = window.__TAURI__;
+const STYLES = [...Object.keys(MONSTRES).map(id => [id, MONSTRES[id].name]), ["limace", "Limace (essai)"], ["classique", "Classique"], ["louche", "Il louche"], ["depareille", "Yeux dépareillés"], ["paupieres", "Paupières lourdes"], ["dessus", "Yeux dessus"]];
+const SLOTS = [["tete", "Tête", [["antennes", "Antennes"], ["cornes", "Cornes"]]], ["bouche", "Bouche", [["crocs", "Crocs"], ["langue", "Langue"]]],
+  ["bras", "Bras", [["bras", "Petits bras"], ["pinces", "Pinces"]]], ["pattes", "Pattes", [["longues", "Longues"], ["palmees", "Palmées"]]],
+  ["dos", "Dos", [["ailes", "Ailes"], ["fourrure", "Fourrure"]]], ["queue", "Queue", [["touffue", "Touffue"], ["lezard", "Lézard"]]]];
+const $ = id => document.getElementById(id);
+let st = {mood:null, moodMode:"auto", moodReason:"", style:"goutte", partsBy:{classique:{tete:"antennes", pattes:"longues", bras:"bras", queue:"touffue"}, louche:{}, depareille:{}, paupieres:{}, dessus:{}, ...Object.fromEntries(Object.keys(MONSTRES).map(id => [id, {}])), limace:{}}, thumb:""};
+const send = (ev, payload) => { if (T) T.event.emit(ev, payload); else console.log(ev, payload); };
+const MOODS = [["auto", "Automatique"], ["guilleret", "Guilleret"], ["ronchon", "Ronchon"], ["vaseux", "Vaseux"], ["stresse", "Stressé"], ["lune", "Dans la lune"]];
+const render64 = (s, parts) => s === "limace" ? "persos/limace/thumb.png" : MONSTRES[s] ? monstreURL(s, "forme", [0, 0], parts, st.mood) : s === "classique" ? bidule64({pal:"menthe", parts, mood:st.mood}, "forme", {tete:"bonnet"}) : blobFace64(s, "forme", [0, 0], "menthe", parts, st.mood);
+function render() {
+  const parts = st.partsBy[st.style] || {}, n = Object.keys(parts).length;
+  $("thumb").src = st.thumb || render64(st.style, parts);
+  $("title").textContent = "Bidule · " + STYLES.find(s => s[0] === st.style)[1];
+  const ml = st.mood ? MOODS.find(m => m[0] === st.mood)[1] : "sans humeur";
+  $("sub").textContent = (n ? `${n} partie${n > 1 ? "s" : ""} sur 6` : "Forme de départ") + " · " + ml;
+  $("moodNow").innerHTML = `Humeur actuelle : <b>${ml}</b>` + (st.moodReason ? ` (${st.moodMode === "auto" ? "devinée : " : ""}${st.moodReason})` : "");
+  $("moods").innerHTML = MOODS.map(([id, name]) => `<button class="chip ${st.moodMode === id ? "on" : ""}" data-mood="${id}">${name}</button>`).join("");
+  $("styles").innerHTML = STYLES.map(([id, name]) => `<button class="st ${id === st.style ? "on" : ""}" data-style="${id}"><img src="${render64(id, st.partsBy[id] || {})}" alt=""><span>${name}</span></button>`).join("");
+  $("slots").innerHTML = SLOTS.map(([slot, label, opts]) => `<div class="slot"><b>${label}</b><div class="chips">${opts.map(([p, name]) =>
+    `<button class="chip ${parts[slot] === p ? "on" : ""}" data-part="${slot}:${p}">${name}</button>`).join("")}</div></div>`).join("");
+}
+document.addEventListener("click", e => {
+  const b = e.target.closest("button"); if (!b || b.disabled) return;
+  if (b.dataset.tab) { document.querySelectorAll(".tab").forEach(t => t.setAttribute("aria-selected", t === b)); ["piste", "evo", "humeur"].forEach(k => $("p-" + k).hidden = k !== b.dataset.tab); }
+  else if (b.dataset.style) send("style", b.dataset.style);
+  else if (b.dataset.part) send("evo", "part:" + b.dataset.part);
+  else if (b.dataset.mood) send("mood", b.dataset.mood);
+  else if (b.id === "random") send("evo", "evo:random");
+  else if (b.id === "reset") send("evo", "evo:reset");
+  else if (b.id === "quit") { if (T) T.core.invoke("quit"); }
+});
+document.addEventListener("keydown", e => { if (e.key === "Escape" && T) T.core.invoke("hide_panel"); });
+if (T) { T.event.listen("etat", e => { st = e.payload; render(); }); send("demande-etat"); }
+render();
+</script>
+</body></html>

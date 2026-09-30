@@ -1,0 +1,7 @@
+# compilation Rust et fichiers que Tauri régénère
+src-tauri/target/
+src-tauri/gen/schemas/
+
+# fichiers système et caches
+.DS_Store
+__pycache__/

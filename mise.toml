@@ -1,0 +1,8 @@
+[tools]
+rust = "stable"
+
+# Temporaire : lance le Bidule de test
+[tasks.bidule]
+description = "Compile et lance le Bidule"
+dir = "{{config_root}}/src-tauri"
+run = "cargo build && ./target/debug/bidule-desktop"
