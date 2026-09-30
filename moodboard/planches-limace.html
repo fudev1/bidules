@@ -1,0 +1,313 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Planches de la limace</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&display=swap">
+<style>
+/* une colonne de lecture ; la liste numérotée est l'ordre de priorité, chaque ligne montre l'image actuelle à remplacer */
+:root{--bg:#f4f1ec;--paper:#fffdf9;--ink:#2a2238;--muted:#6a6375;--line:#e3dbcf;--accent:#2f7d6d;--accent-soft:#e1f2eb;--img-bg:#efeae3;
+  --f1:#b3372e;--f1-bg:#fbe4e1;--f2:#9a5b00;--f2-bg:#fdf0d9;--f3:#2f6d8a;--f3-bg:#e1eef5;--f4:#6a6375;--f4-bg:#ece8e2;
+  --display:"Bricolage Grotesque",system-ui,-apple-system,"Segoe UI",sans-serif;--text:"Atkinson Hyperlegible",system-ui,-apple-system,"Segoe UI",sans-serif;--mono:ui-monospace,Menlo,Consolas,monospace}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#1b1822;--paper:#24202c;--ink:#ece8f3;--muted:#a8a0b5;--line:#3a3445;--accent:#6fcfb6;--accent-soft:#1f3a33;--img-bg:#efeae3;
+  --f1:#ff9d92;--f1-bg:#46211e;--f2:#f3cf87;--f2-bg:#3b2f17;--f3:#8fcbe8;--f3-bg:#1d3440;--f4:#b8b0c4;--f4-bg:#302b38;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#1b1822;--paper:#24202c;--ink:#ece8f3;--muted:#a8a0b5;--line:#3a3445;--accent:#6fcfb6;--accent-soft:#1f3a33;--img-bg:#efeae3;
+  --f1:#ff9d92;--f1-bg:#46211e;--f2:#f3cf87;--f2-bg:#3b2f17;--f3:#8fcbe8;--f3-bg:#1d3440;--f4:#b8b0c4;--f4-bg:#302b38;color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:16px/1.55 var(--text);margin:0;padding-inline:16px;padding-block:32px 64px}
+.page{max-width:900px;margin:0 auto;display:grid;gap:28px}
+header{display:grid;gap:10px}
+h1{font:800 clamp(30px,6vw,42px)/1.05 var(--display);margin:0;text-wrap:balance}
+h2{font:700 22px/1.2 var(--display);margin:0;text-wrap:balance}
+p{margin:0;max-width:68ch}
+.lede{font-size:17px;color:var(--muted)}
+section{display:grid;gap:12px}
+code{font:13px var(--mono);background:var(--paper);border:1px solid var(--line);padding:1px 6px;border-radius:5px;color:var(--ink)}
+.done{display:flex;flex-wrap:wrap;gap:6px;margin:0;padding:0;list-style:none}
+.done li{font:700 13px var(--mono);background:var(--accent-soft);color:var(--accent);border-radius:999px;padding:3px 10px}
+.rules{margin:0;padding-left:20px;display:grid;gap:6px;max-width:72ch}
+.note{border-left:3px solid var(--accent);background:var(--accent-soft);padding:10px 14px;border-radius:0 10px 10px 0;max-width:72ch}
+.ref{display:flex;flex-wrap:wrap;gap:12px 20px;align-items:flex-end}
+.list{list-style:none;margin:0;padding:0;display:grid;gap:12px}
+.item{display:grid;grid-template-columns:2.2rem minmax(0,1fr) auto;gap:6px 16px;align-items:start;background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:16px}
+.rank{font:800 24px/1 var(--display);color:var(--muted);font-variant-numeric:tabular-nums;padding-top:2px}
+.body{display:grid;gap:8px;min-width:0}
+.item h3{margin:0;font:700 18px/1.25 var(--display);display:flex;flex-wrap:wrap;gap:4px 10px;align-items:baseline;text-wrap:balance}
+.facts{display:flex;flex-wrap:wrap;gap:6px 18px;margin:0}
+.facts div{display:grid;gap:1px}
+.facts dt{font-size:11.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted)}
+.facts dd{margin:0;font-size:14.5px}
+.freq{display:inline-block;font-weight:700;font-size:13px;border-radius:999px;padding:1px 9px}
+.f1{background:var(--f1-bg);color:var(--f1)}.f2{background:var(--f2-bg);color:var(--f2)}.f3{background:var(--f3-bg);color:var(--f3)}.f4{background:var(--f4-bg);color:var(--f4)}
+.small{font-size:14px;color:var(--muted)}
+figure{margin:0;display:grid;gap:6px;justify-items:start}
+figure img{display:block;max-width:100%;height:auto;image-rendering:pixelated;background:var(--img-bg);border-radius:8px;padding:6px}
+figcaption{font-size:12.5px;color:var(--muted)}
+.now{max-width:340px}
+@media (max-width:640px){.item{grid-template-columns:1.8rem minmax(0,1fr)}.now{grid-column:2}}
+</style>
+</head>
+<body>
+<div class="page">
+<header>
+  <h1>Planches de la limace</h1>
+  <p class="lede">Les animations que la limace affiche encore avec des images générées par le code. Elles sont classées de la plus vue à la moins vue sur le bureau : les deux premières suffisent à changer l'impression générale.</p>
+</header>
+
+<section>
+  <h2>Déjà dessiné et branché</h2>
+  <ul class="done"><li>crawl</li><li>turn</li><li>saut</li><li>baille</li><li>dort</li><li>mange</li><li>rot</li><li>chute</li></ul>
+  <div class="note">Dans chute, les images 12 et 13 (la goutte qui descend dans l'image) ne sont pas jouées : sur le bureau, c'est la fenêtre du Bidule qui descend, la goutte serait descendue deux fois. La boucle de chute utilise les images 2 à 11, l'écrasement les images 14 à 22.</div>
+</section>
+
+<section>
+  <h2>Pour que ça s'enchaîne</h2>
+  <ul class="rules">
+    <li><b>Format</b> : 64 × 64 pixels, fond transparent, comme tes feuilles actuelles. Une balise par animation, avec le nom de la liste (<code>regard</code>, <code>repos</code>...). Tu peux livrer comme pour <code>baille</code> : un dossier dans <code>animations/</code> avec la feuille et son JSON.</li>
+    <li><b>De profil</b> : tourné vers la droite, l'app le retourne pour la gauche. Même placement que la reptation, le bas du contour sur la ligne 60.</li>
+    <li><b>De face</b> : le corps au même endroit que l'image de face du demi-tour (image 6 de <code>turn</code>, centre vers x = 36-37, bas du contour sur la ligne 59). L'app retourne le Bidule autour de ce centre quand il regarde à gauche, donc un décalage se verrait.</li>
+    <li><b>Passage du profil à la face</b> : l'app joue le début du demi-tour, images 0 à 6 de <code>turn</code>. Une animation de face doit donc commencer et finir sur une pose proche de cette image de face.</li>
+    <li><b>Durées</b> : libres, l'app les respecte à 16 ms près. Les nombres d'images d'aujourd'hui ne sont qu'un point de départ.</li>
+  </ul>
+  <div class="ref">
+    <figure><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAYgAAABGCAYAAADW1gNWAAADWUlEQVR42u3dwU3sQBREUSdHJARBMGyJhTjIZJCQ2CBsbNP9+vXrcyXv/ooq153pme/ZNgAAAAAAAAAAAGTgEXRhrZ5AriAIxdITecsVJYvw/PoIuRStRk/e3s9dBkauIAiCMCSGRK5yrfKWcW/AfxahtSCeXj6+LsXK3Zurg3H2+iV/BO5Ar1wPxAGCIAiCIAiCIIhyR0d7Qfc6YvoeCKKoJYYGLxSQUPRXc/VCgCAIwqAQBEEQxMxvIUeLgChqDknAkSMGiKH3fS5fgiAIgjAgBCHfGcSQTQg3RIHCYjAktfOUL0EQhEExIPKU7wyFiPqaKkHU6k+WIZF/rTzlSxAEYVAMiDzlSwyP7o/kIIpcRxGGRJ7yJQiCMCgEIU/5EkOsIK7+e4LIcRQRnbsBic2TIAiCIEAQ8iSIlQrw11vJqMd0E8RaRxHRgjAkNY+W5EsQBEEQBEEQ8s10tBT9Qz8EsdZRBEE4WiIIgiAIg0IQBEEQVY6WshfAw/sMigHJn+ddoW++jEAQBGFQCIIgCMLRUjpBKFDMoDiCmHsX/pvnKEHImSAIgiAMB0HI2dESQRAEQcx4VEgQBEEQIAiCIIjKR0sLi0FxCEL+BAGCIAiCMBwEAWLYEYPCEIThqJOjnAmCIAyL4ZCjnHsEve18KF11+A+OkPYu3OjRluQhj4aDIORMEARBEIaDIOTc6kaeNdALw04AA4f/7NUrd4NBEPImCIIgCIIgCHm3CnaVD6F/GRbceAFxd/hbC8JgEIS8CYIgCMJgEIS8HS0RRGUhGAqC6HmELHeCIAiCIAiCIIiIDxVXE4Mb3lGjvuiRvAlCAQhCX/RI3meE4GZ3wxODnuiT3AnCjU8QeqJPcvehswIQhH7YncD/gCsoA0AQ+qEfdqeGIIjBABCEXuiNfhCEIXCj64Xe6IegRj3We8kbfe/vtOBPyeJCX7yQIAiCIAiCAEEQRP8/bKuBb30ZiGNRzDoIcteT1XtDEAThxicIPdGbfIIYNegEEfOlhyr5HhwtoqMoCvfHh9QEQRAEAYIgiDKDv/mpUcIghGH9qCKOSvtAEARBEARBEARxPqCsV8DAGwJ90wM90RuCMAz6pgd6ojcrFgYAQBAEAQAAAAAAAAAAAAAAAAAAMJZPm9gJBMJ7lF8AAAAASUVORK5CYII=" width="196" height="35" alt="Demi-tour : profil, milieu, face"><figcaption>Repère : images 0, 3 et 6 de turn (profil, milieu, face)</figcaption></figure>
+    <figure><img src="data:image/png;base64,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" width="526" height="35" alt="Sommeil de profil"><figcaption>Repère : ton sommeil (dort), de profil</figcaption></figure>
+  </div>
+</section>
+
+<section>
+  <h2>À dessiner, dans l'ordre</h2>
+  <ol class="list">
+<li class="item">
+  <span class="rank">1</span>
+  <div class="body">
+    <h3><span>Il regarde la souris</span> <code>regard</code></h3>
+    <p>La souris passe à moins de 240 px : il s&#x27;arrête, se tourne vers toi et suit la souris des yeux. C&#x27;est l&#x27;état qu&#x27;on voit le plus dès qu&#x27;on travaille à côté de lui.</p>
+    <dl class="facts">
+      <div><dt>Vu</dt><dd><span class="freq f1">Très souvent</span></dd></div>
+      <div><dt>Sens</dt><dd>De face</dd></div>
+      <div><dt>Lecture</dt><dd>Une image fixe, choisie selon la position de la souris</dd></div>
+    </dl>
+    <p class="small">6 images, dans cet ordre : souris devant lui en haut, au milieu, en bas, puis souris sur le côté en haut, au milieu, en bas. Regard dessiné vers la droite, l&#x27;app retourne pour la gauche.</p>
+  </div>
+  <figure class="now"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAxQAAABGCAYAAABVLdLwAAAEUUlEQVR42u3dy43CMBRA0TRHJRRBMWyphTroJCxQJLAUYwMhfva5kpczi3lH/gihmSZJkiRJkiRJkiRJkiRJkiRJkiSN2Fy5xAMPPPDAAw/iQTwIAPEgHsSDeBAP+nLQl+ucXYfT7WWBwQMPPPDAAw888MADDwAAIB7Eg3gQD+JB5QN/N+jSdTw/VgEM8cADDzzwwAMPPPDAAwAA8MADDzzwwAMPPPDAw3CD/9XA1wCkKwNCPPDAAw888MADDzzwAAAAPPDAAw888MADDzzwYPCVg61dIPDAAw888MADDzzwwAMAAPDAAw888MADDzzwwIPBbzdoEHjggQceeOCBBx544AEAAHjggQceeOCBBx7EAwDT7gMHgAceeOCBBx544IEHHgAAgAceeOCBBx544IEHHgx+fwAg8MADDzzwwAMPPPDAAwAA8MADDzzwwAMPPPDAw4gA9h48ADzwwAMPPPDAAw888AAAADzwwAMPPPDAAw888DDS4EsBLL+ndqCf/hwIbXuwMfDAAw+tnBs82B944IEHDwoAbAg88MCDB4UHhf3B/sADD1EBtHYwAMADD/E8OCB48KDggQcenBcAuEDywAMPDgi5QIoHOS/kAikexINcIHnggQceeHBhAIAHHnjgwYWBBx544IGHlgff+oUBBB544IGHmB48NHnggQceAHBh4IEHHnjgwYWBBx7Eg2J+eQaAGB5cIHnggQfnBQ8ukDzwAIADggcXSB54kPNCLpDiQQ4I8WC8HhQ82B944IEHDwoebAgA8MCDBwUP9gceeODBg8KDwoZgQ+CBBx544IEHHnjggQcAAOCBBx544IEHHnjggQcAABAP4kE8iAceeOABAAB44IEHHnjggQceeODh/wCWPxwAPPAgHsSDeBAPPAAAAA888MADDzzwwAMPPAAAAA888MADDzzwwAMPPAAAAA888MADDzzwwAMPPPQMYKsv0TwNIrsA4IEHHnjggQceeOCBBwAA4IEHHnjggQceeOCBBxDifERl8DzwwAMPPPDAAw888AAAADzwwAMPPPDAAw888NADgChfmgGABx544IEHHnjggQceAACABx544IEHHnjggQceIg886uArIADBAw888MADDzzwwAMPAADAAw888MADDzzwwAMPPory0RUPPPDAAw888MADDzwAAAAPPPDAAw888MADDzwMOPj0D5Ou3gYPAg888MADDzzwwAMPPAAAAA888MADDzzwwAMPPEQA0PuyIfDAAw888MADDzzwwAMAAPDAAw888MADDzzwwAMIBs8DDzzwwAMPPPDAAw8AAMADDzzwwAMPPPDAAw9jQkhXR4P2j0h44IEHHnjggQceeOABAAB44IEHHnjggQceeOAhPIxASzzwwAMPPPDAAw888AAAADzwwAMPPPDAAw888CBJkiRJkiRJkiRJkiRJkiRJkiRJkiRJkiRJkiRJkiRJkiRJkqRY3QHwYD7yQXoJSgAAAABJRU5ErkJggg==" width="394" height="35" alt="Images actuelles de regard"><figcaption>Aujourd'hui : 6 images, 400 ms</figcaption></figure>
+</li>
+<li class="item">
+  <span class="rank">2</span>
+  <div class="body">
+    <h3><span>Pause</span> <code>repos</code></h3>
+    <p>En marchant, il s&#x27;arrête plusieurs fois par minute, 1,5 à 4 secondes, tourné vers toi.</p>
+    <dl class="facts">
+      <div><dt>Vu</dt><dd><span class="freq f1">Très souvent</span></dd></div>
+      <div><dt>Sens</dt><dd>De face</dd></div>
+      <div><dt>Lecture</dt><dd>En boucle</dd></div>
+    </dl>
+    
+  </div>
+  <figure class="now"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAQQAAABGCAYAAAAq7+rZAAAB20lEQVR42u3dzY3CQAyA0TRHJRRBMVyphTroJBxQDgwkZMLkx9b7JB93D/jJGqGVtuskSZIkSZIk/VtfOZIcBAcBAADS7/127yfndHm8DScOghwEBwEAADLt/9fe5875+poZTuQgyEHgAwAADueg1f7HPJQz4UMOghwELlIcgAYAQAh4CMb2XDsOg4PgIDgIDkL0J2ErACDE8tB67zw4CAA4CDwAAEBED1vtnwcHAQAHgYejH4K9AIDAAw8AAMADD56GAPDAAwAA8MCDpyEIPPAAAAA88JD1aTj8ntpFLv05AHjgAQAAeOABAAB44AEAAHjgIeaXR1sDAIEHHgAAgAcejvw0BIAHHgAAgAceAPAHKTzwAAAAPPAAAAA88AAAADzwAAAAPPAAAADiQcMHNXxwAPDAAwAAiAcBIB4EgHjQHl8idZ//nPXrAMADDwAAwAMPkSB4GvLAAwAAiAcAujBfGgHAAw8AAMADD2suPOriKyAAwQMPAADAAw9pn4KejjzwAAAAPPCw5uLLD6acbIsHgQceAACABx5aAMg+DgIPPAAAAA88gGDxPPAAAAA88LAMQjmJFu0PUXjgAQAAeOBhdRiBRjzwAAAAPPAgSZIkSZIkSZIkSZLy9QRmyD212P9z/AAAAABJRU5ErkJggg==" width="130" height="35" alt="Images actuelles de repos"><figcaption>Aujourd'hui : 2 images, 520 ms</figcaption></figure>
+</li>
+<li class="item">
+  <span class="rank">3</span>
+  <div class="body">
+    <h3><span>Il se reforme après l&#x27;écrasement</span> <code>reforme</code></h3>
+    <p>Après une grande chute, la flaque reste 1,5 à 3 secondes, puis il reprend sa forme. Aujourd&#x27;hui, c&#x27;est la fin de l&#x27;animation saut qui sert de transition.</p>
+    <dl class="facts">
+      <div><dt>Vu</dt><dd><span class="freq f3">Parfois</span></dd></div>
+      <div><dt>Sens</dt><dd>Part de la flaque, finit de face</dd></div>
+      <div><dt>Lecture</dt><dd>Une fois</dd></div>
+    </dl>
+    <p class="small">Première image : la dernière de chute (la flaque presque plate). Dernière image : proche de la pose repos.</p>
+  </div>
+  <figure class="now"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAApAAAABMCAYAAADa1octAAAE1klEQVR42u3dwW3cOhRAUTaXSlJEivE2taSOdGIDA8xiBpZFSY8UyXcOwNVP8oMhJV2FY6kUAAAAAAAAAAAAAABgdp8HBwAAAlJAAgBQGYy/Pz4f4++/uiEoAQAEpIAEACAuGAUlAICAFJAAAGyH49lgfP6+vfH89b/+/H8MIQkAICAFJACAcDweirVDSAIACEgBCQAgHOPDUUgCAAhIAQkAICAFJHXrqHi1JQAISAGJgAQAvr3w3x2OAnLuUAx4taX5BgABKSAFpIAEgCVDYO/C3yscheQcwRj9SkuvuAQAASkgBaSABIDVw2C0cBSQY4RiqfxqQ+v1Umx1A4CAFJACUkACgIBsOgRDn3VwdGvajQUACEgBKSAFJABwLiBHCUcBOcaNhK82AAACEgEJANwTkOVt6zP61wvIPvM/yisshSQACEgBKSAFJAAIR1vZGdbBLOtCQAKAgBSQAlJAAsDqAVk6bWELyDbzP+vWtZAEAAEpIAVkuoD0Sp0FDyjzCQhIAZlx/mcJRgGJ+QQQkAJSQKYJyMdf8PkXtve+xoFkPqHqxursQEAKyEUDslx8PJOAtLAFJAhIASkgBaSAFJCCQ0D6eMgcgrWvNtsbAnTsgJhlq9J6iJn3rR+euTovdwXkTCEpOAQkCEgBKSAFpIAUkCEn5Lv/HBdG8wChIThgODhOBaR5D5p3ASlcHBDmAQQkAhIBmWwH0QnR5wch67/2wcCzPrbDV00EpPkWkAJSAPn8QEAKSAEpIAWkgAToeSF4P4GuEooXLhguHAKSgwG58PkAAAEpIAWk+RWQAhLg8Im/nNyqXi0cbW0LSASkgAQQkAJSQApIASkgYfZAaTAImJ/eW9Ul6EvuJfjL8gJyrICsPQ8ISAEpIEFACkgBKSAFpIAUkAISMgfi2ce/BL7Kjopw3JunVluGowekH66JXV+2rgWkgAQEpIAUkNaZgERAAseDsXUgNghMfjjhC0hb2gKSUQOydPpKg4AEASkgBaSAFJACUkAKSBygNy7gkGAsnV5NVRGU2ebvUECu/ngeAdnnxnLCx/iYzwQ3DsIRASkgBaSAFJACUkAKSAE5WKCsPqaal+dCvhBClz6vqAdM9wrIqK2QgPXzMn8DnZAEpIAUDIIh9Y2DGw0BKSAFpIAUkAJSQApIASkg7wi/Vj8MUQ5+Wf/q7wt8/MsoIVobILc+Tmf2E0PDxwcJyICw3/rvAwRG1tB4Wder3igIyRw3DpnXh4AUkAJSQApIASkgBYKAtD7qA3GWx6iMFpBXxw8XklYXlpc/9/3//x4o71vewjEmJLc+561AnCA4Ul8IbFnH3tjOGpR7x7HpznHjsGJICkgBKSAFpIAUkAJSQApIAXn9AI0a2QKh9efZ8QT0bVBGD/N/ed6HemxPSfal995b7QJSQGae96zXDQEpIAWkE4GANASkgBSQAnL6gKzawu4dRMZuKNx1QbFOcs67UBSWy/9Dx0I3/ubdOhGQhoA07wLSEJACUkC6Dkw+kVeHAMjxQHLrI2z+l5x3Nwfh6yZVUMy6jorHMoWeXxId92tOoAuHgBSQAtJ5QEAKSAEpIAXkFCFavMrQ+jD/5tl5wzoyr+bfcW/CXQgw/+bZsG4EJK4XAAAAAAAAAAAAAAAAAAAAjOkLoqWnhpthoO4AAAAASUVORK5CYII=" width="328" height="38" alt="Images actuelles de reforme"><figcaption>Aujourd'hui : 5 images, 70 à 90 ms</figcaption></figure>
+</li>
+<li class="item">
+  <span class="rank">4</span>
+  <div class="body">
+    <h3><span>Dérangé pendant son sommeil</span> <code>remue</code></h3>
+    <p>On clique sur lui ou on le porte trop vite pendant qu&#x27;il dort : il entrouvre un œil, quelques instants. L&#x27;image actuelle est de face, alors que ton sommeil est de profil : le changement se voit.</p>
+    <dl class="facts">
+      <div><dt>Vu</dt><dd><span class="freq f3">Parfois</span></dd></div>
+      <div><dt>Sens</dt><dd>De profil, sur la pose de dort</dd></div>
+      <div><dt>Lecture</dt><dd>Fixe, quelques instants</dd></div>
+    </dl>
+    
+  </div>
+  <figure class="now"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAABACAYAAADS1n9/AAABK0lEQVR42u3czQ2CQBCAUZqzEouwGK/WYh12gvHAARNYNvwNO+9L5urBeQFZjV0nSZKkX33lCAA1s+DXu5+d2+MzGkAAAOBKCy8tuHbuz/EsACIAdNjit154CUAFCAGgsIsvLbZ2QAAAgEiL33rBIAAAQGQAZy0cAAAAiHDpjwIABAAAOPJoN9riHR0DAEDES/7wum4JAACQ8XEPAAAAyPy4dzYAEAAA4Myj3loA3cSPQAEAAIDMX/YAAAAAAAAAAAD7ABjeGAAAAAAAAAAAwIfAPQHsdeADAAAArIHQyiXf4gEAAAAAAABgfuGtLt7PxAEAYMnBz9S0DiDzrQGApAAWLT77tAwBgOQAQPAZAAAAJh4D/6fhBfvzaQAAWA3kgiMAJEmSJEmStu8L40ttu0d5/B0AAAAASUVORK5CYII=" width="64" height="32" alt="Images actuelles de remue"><figcaption>Aujourd'hui : 1 image, 600 ms</figcaption></figure>
+</li>
+<li class="item">
+  <span class="rank">5</span>
+  <div class="body">
+    <h3><span>Tenu en l&#x27;air</span> <code>attrape</code></h3>
+    <p>Rattrapé en l&#x27;air, ou pris quand il est écrasé : il pend sous la souris et se débat. Au sol, c&#x27;est l&#x27;étirement collant qui joue, pas cette animation.</p>
+    <dl class="facts">
+      <div><dt>Vu</dt><dd><span class="freq f3">Parfois</span></dd></div>
+      <div><dt>Sens</dt><dd>De face</dd></div>
+      <div><dt>Lecture</dt><dd>En boucle</dd></div>
+    </dl>
+    <p class="small">L&#x27;app le fait déjà balancer de gauche à droite, inutile de dessiner ce balancement.</p>
+  </div>
+  <figure class="now"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAgwAAABsCAYAAAAG7ep8AAAFEElEQVR42u3d0WnjQBSFYTeXSlKEi8lrakkd7sQBg8AytmRZ0sy9ut8PelgIu2HP2X/OKGFzOgEAAAAAAAAAAAAAACAD14cHeqAP0AfoAwwGEAL0AfqAhcF/nS+jp2MhFLBjH37/rrdnog/QB37QB34wGAiBEAgBBgP4AU+Cf/X0EsTw54up7WD8oAfgh+a94AeDAQYDIRgMMBj4wWBARiF0KMbt9x1QwNoHA/iBH+L3gR8IgRD0gBD0gh9gMGC6AN8/46dBMSY/HwXscyAM+ROCXkz5oUE/+CHwOcEPimAwOBgIQS8MBn3gBwVYJoSGghh9fooXYzASg1509gI/GI4wGAjBYIDBwA8GAw4nhNZiEFeswUgIesEP+sAPikAI8icEvTAYYDBg28GgIDUPBHnzAi/whPwVghiIQN76wQt6wBMgBrmn+FIUDuAFfeEJuSuEYhCBvPVDX/RA7l41EYPc5a0nvKAHBoMiGAxyNxhgMMBgQA8hKIiDQN4Gpb7ogbwdHAoid3k7KPhBDwwGhSAEuctbP/bzgr7U7IG8FUJB5C5v/dAXPZC3V03EIHd568k+XtCXmp6Qt0IoiNzlbTDoC0/ImxCIQe5y1hODQf7yVgiDQe4GAwwGGAwwGGAwYG0/DAb5GwyKYTDI3WCAwQCDAesPjuHj54ow93GKUuMgkDMv8IILBU8QAzEYDETAC7wgf55wcOwrBkWplbecDQZeqJs/PzhAiEHehODA4AX5GwwK0eZRlNh5Gwx60sMP+nKsiwU/GAzEYDAQggODF+RvMDhADAZ5y1lPeEH+PAFikDcRgBfAEyAGEAGyekFveELeiqEgRCBnPdEb+ctbMRRE3vLWE32Rv7wVQ0HkLW89MRjkL2+FIAYikLOeGAzyNxhgMMjdYIDBAIMBOYWgKAaDnPVEX+Qvb4VQFLnLWU/0Rf7yVghFyZ63wYD7ngy5GAw8YTDAYJC3wQCDAQYD2g+Gu0BHj6IYiHI+zmBwkeAJuSuGwSBvIoDBAJ7AfsV4NRQ+HQ4KkuMgkDMvLPkx53O/1heDQe4GAzEYDHI2GAwGg8FgUAwHSLXBYCDW9sPWQ2GuL/rhYiF/g0ExDAa5GwwGg8HAD149efVkIMpdX/jBxWLdxULuhKAYBoPc+UFPDAa5EwIhHPFVs7x5QV/k70sSikEIcpc3DAYYDBgXIaoQ3iiIohiKKDYU9MXFQt4Gg8FgMBCCwaAvBoO8M4ogihAUpeaBIG+90BcXCzkbDIriYJC3XuiLwSDnLMFH+wevKLW/FCF3XtCTeH045fumV7kTAyEYDHLnBT0xGAwGQiAGPZB71z4Mf6/8gHcuFL7p1UFBCHogd4OBH2AwEMLl6ZNNAApS+2CQPz/wgwsFLxACIRgMxMAP/GAw8EJUIUQVw9znqxjb9IAY9IIfkH0w8AMhEILBQAj8wA8GAz9EFUOWRxFqHAyEwA/8YDDwAyEQgsFACPzADwYDP0QtwuOT6B++/5jDwUAI/MAPHf1gMBACIRCCwQB+gMGAnAeIoA0H/dAT+ctbTxRE0HLXDz2Rv7z15AivIgM98AraD5nhB34wGAwGQiAEg8Fg4Ad+MBgMBsAB4YAAXChcKACDwWAADAaDAQAAuFAAAACDAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMAU/4jWATyxqlacAAAAAElFTkSuQmCC" width="262" height="54" alt="Images actuelles de attrape"><figcaption>Aujourd'hui : 4 images, 110 ms</figcaption></figure>
+</li>
+<li class="item">
+  <span class="rank">6</span>
+  <div class="body">
+    <h3><span>Caressé</span> <code>caresse</code></h3>
+    <p>La souris va et vient sur lui : il est content. Les cœurs sont ajoutés par l&#x27;app.</p>
+    <dl class="facts">
+      <div><dt>Vu</dt><dd><span class="freq f3">Parfois</span></dd></div>
+      <div><dt>Sens</dt><dd>De face</dd></div>
+      <div><dt>Lecture</dt><dd>En boucle</dd></div>
+    </dl>
+    
+  </div>
+  <figure class="now"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAQQAAABECAYAAABnJ0vSAAACBElEQVR42u3cwW3CMBiGYS/HJAzBMFyZhTnYJBwQB4JCnMRY9u/nlXxsD/XTLwKqpiRJkiRJkiTpaNPGI8kgGAQAAAh/77f79POcLo+Pw4lBkEEwCFF/4QsCAKEjB2v3nnvO19fJcCKDIIPARciLnwMAoS8PpR0sechwIYMgg8BDqItfAwBCLA9r95x7eDAIABgEHnofglIAQOjLQ+l758EgAGAQeHDxIPToggODAAIXHLj4Ng4IbT0geDAIAPBgEFx8WwcEDwgODAIIBoEDFw9CLQcBHxBcGAQZBIMwxEsFw8ADDwAAwAMPXioA0OsQvL9vra/jwiC4eIPABQAAtPxgmN9n7v3u/ToeDAIABoEHAADw0pEHgwCAQeABAAB44AEAAHjgAQAAeOABAAB44AEAANrz8P658WAQAODBIAAAgOp5SCsfK6dCf6DGg0EAwCDwAAAAPb6ETN//uKSoAx4MAgAGgQcAAKjhwktHg2AQuDAIowLo9U1EAHjgAQAAeOABAAD+df9RHPi37AbBIBgEg7D3wgEAItKDwIPDIBgEg2AQ9l74/AewdKJf/NIZcBiGcsGBQQCBCw6OXvyoxyA4BsExCO5+7PcSQPDusmHgwCCAYBA42P4xZOCL9nHjgY+lOTAIBoEHg6A0BTviggODAAIXHEiSJEmSJEmSJEmSpDg9AYnqkNAG/MdeAAAAAElFTkSuQmCC" width="130" height="34" alt="Images actuelles de caresse"><figcaption>Aujourd'hui : 2 images, 300 ms</figcaption></figure>
+</li>
+<li class="item">
+  <span class="rank">7</span>
+  <div class="body">
+    <h3><span>Chatouilles</span> <code>rire</code></h3>
+    <p>Trois clics rapides : il rit pendant 1,4 seconde.</p>
+    <dl class="facts">
+      <div><dt>Vu</dt><dd><span class="freq f3">Parfois</span></dd></div>
+      <div><dt>Sens</dt><dd>De face</dd></div>
+      <div><dt>Lecture</dt><dd>En boucle pendant 1,4 s</dd></div>
+    </dl>
+    
+  </div>
+  <figure class="now"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAQQAAABOCAYAAADGvGi0AAACUElEQVR42u3dzVHDMBBAYTVHJRRBMVyphTroJDlkcsAzTmTHcrS735vREQ7Zpxf5Z6A1AAAAAAAAAK9y2bgACIIgAOk3/s/v5eH6+Pr7t4QCEARBADIF4NnG712f37fVEQoAgiAIwHQhOCoAa0FYrgeBACAIggCEDcLaRu9dggAIgiAAkUPw6sYXBEAQBCG7OM2rqqWCMCoEwiAIEARByLLxD3xV1aAFQRAEQRAEQRDSbfy9j6O8supmojAIgiAIgiBkEGHUq6oG71KBF4Jg8IIgCBlDQACXCsIgCIIgCIJQOQQEcKkgCIIgCIIgCAQgAB/4QAAC8IEPBj+jAESI4cP992yd696f44MgEEAQ+FA9BESY+1JhuaF7N/jen+OBIBBBEHhQ9aYREXjBA4MnAi94YPBE4AUPDJ4IvOBBrpuJZz9mIoQgmL8gEEIQzH/mgb/rMRMhxvpx/xwFQRAEgR+CIAixbiYSImYQ2sof7TV/QRAEQRAEQRCEikFonf/az/wFQRAEQRAEQRAiejLbJYO5CwIxBMHcqz9WIoYvDnMXBGIIgrlnGvSox0zEOMcTXwSCIAgQBEE4NgijHzMRY4wXUUKwYf48EARBEARBmPJIKAQ8cClBBEHggSA4EjoyRvNh+bktV3QPhEEQBEEQBKHakdCR8ZwgZFs8EAQiCAIPsh4JHRmFQQgEQRAEQRAMmhjvuukc1Z+2/hKcAQuCIAiCeQuDEAwPxcQLgiAIgmC+JY+EjoyAIAgC4EjoyAgIgiAAAAAAAAAAAAAAAACgOFckj4ElDmKfSAAAAABJRU5ErkJggg==" width="130" height="39" alt="Images actuelles de rire"><figcaption>Aujourd'hui : 2 images, 120 ms</figcaption></figure>
+</li>
+<li class="item">
+  <span class="rank">8</span>
+  <div class="body">
+    <h3><span>Il se réveille</span> <code>reveil</code></h3>
+    <p>Après 3 minutes de sommeil, ou après plusieurs clics : il se réveille et s&#x27;étire, pendant environ 1 seconde.</p>
+    <dl class="facts">
+      <div><dt>Vu</dt><dd><span class="freq f3">Parfois</span></dd></div>
+      <div><dt>Sens</dt><dd>Part de la pose de dort</dd></div>
+      <div><dt>Lecture</dt><dd>Une fois</dd></div>
+    </dl>
+    <p class="small">Aujourd&#x27;hui, les 3 images tournent en boucle pendant 1,1 s.</p>
+  </div>
+  <figure class="now"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAYgAAABQCAYAAAADWeLQAAADLklEQVR42u3czXEqMRAAYSXnSAjCwfhKLMThTPBpD6iK9f5IaEfzdZWOHJ6na1rsA0oBAAAAAAAAAADAJ3juPAAAgRAIAEgbhPvjuXq+vn9fjmC4MJg/IBACwQ+BAARh+xGMuUNg/oBACAQEAsi+AM4GoT63n9ezsjCQwAvBACwCgeCFQABZF0G9+LcegXBh4AMgEAIhEAIBZFgER4MgFC4MPAAEwmIQCB4AwiAUvOAB3vtTfHHSIrAYeMEDCETCRdA7DBaDMPBhvhA0+JizeQuEhSAQfBAIgbAILAYXBh5MF4TWH3v2BUqBsBgEggcCIRAWgcXgwsCHTH60+uKk+QsEIQSCDwIhEBaBxeDCwIOMYeCBQFgMAsEDgRAIi8BicGHgAy98eEEgLAQ+CAQvBMLgBYIPfIBHjrAQwAcIBCwE9Pdhef3e+e59HR88cuSDQBBAIPggEHwweCIIhEC4QNoLAkEEgRAIgbAX5l8E9en1OiLEuDB8KhB86OvBhD7wQiAgEHwQCIFI89bRQojlg0C4KIz0gRcCYfACwQeB4IVAGDwf+BAxDKMDwQ8LwcD5wAeB4IeFYOB84EPE+QsEISwEPvDB/AWCEBYCH/hg/nEOPywEA+cDHwSCHz2EWP5wFgIfBML8BQICAYGAQGBcIMrJn9QwcBcGPggEPwTCwAWCDwLBj4yB8LE1PlgA5s8PQggEHywA8+dHhreWV3vEZNCxHzF45CgQAiEQAiEQAiEQAmExGLQLAx/sgTYXhdYXB54IhEELBB8EgicCYdB84IMLAj8sBAPnAx8Egh9jBWj9Vs7g+XAxH3hxwoeo/yltT1gIBs8HgRAIe4IABOABL1wQXCAsBouAB7wQCIEYK8Lyh7IQeDCTB7xwQeCFxWDgPOCFQPCi92KoT/RBG3gbD2bzgRfH5j/LBWLrv5MfAgGB4IVA8KOFGFGPQfOAF+bPD2IYNA94Yf78IIgB84AX5s8PYhg0D3hh/vwYK0Z9Ag/WgPmw9tPRODD/WQJS/v9pcQgEBAICwY9uolzwgA984AEviGDwfOADD3gBAAAAAAAAAAAAAAAAAAAAAADQmj8jymeNgAWIYgAAAABJRU5ErkJggg==" width="196" height="40" alt="Images actuelles de reveil"><figcaption>Aujourd'hui : 3 images, 160 ms</figcaption></figure>
+</li>
+<li class="item">
+  <span class="rank">9</span>
+  <div class="body">
+    <h3><span>Il cogne un bord de l&#x27;écran</span> <code>choc-bord</code></h3>
+    <p>Lancé contre le bord gauche ou droit : il s&#x27;écrase contre le bord, puis continue sa chute.</p>
+    <dl class="facts">
+      <div><dt>Vu</dt><dd><span class="freq f3">Parfois</span></dd></div>
+      <div><dt>Sens</dt><dd>De profil ou de face</dd></div>
+      <div><dt>Lecture</dt><dd>Une fois</dd></div>
+    </dl>
+    
+  </div>
+  <figure class="now"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAABSCAYAAACcyNzvAAABLklEQVR42u3byw3CMBBAwW2OSiiCYrhSC3Wkk3AlSMGKEY69niftjRM7siM+EZIkSXpvLYwAUNqFP57rZi63ZTNAAABA5oWXBggAABh58UcXXgFBAGh4ANf79wEAAAAyASgtHAQAAMh89NcCAAEAAGY8+gEAAABHPwAAADD30Q8AAAAAAAAAAMz58AcCAADMfPQDAAAAAAAAAAAAgAAAAKMBiJ0/gda+DgAAAHAFAAAAAAAAAAAAAAAAAAAAAAAAAAAAAIAAEAACQACoXwBx8OtfAAAAwBVg8QAAAAAAAAAAAAAAANB+8a0+6PkBAhAAAJB28a4EAAAAAAQAAGgL4PMN7nXxAAAAQAsAvY7FAwAAAAAAoP9A6A1E7Py0zLoAUEsQJ44AkCRJkiRJOq8XD9tzH3Nh4mIAAAAASUVORK5CYII=" width="64" height="41" alt="Images actuelles de choc-bord"><figcaption>Aujourd'hui : 1 image, 140 ms</figcaption></figure>
+</li>
+<li class="item">
+  <span class="rank">10</span>
+  <div class="body">
+    <h3><span>Fâché</span> <code>fache</code></h3>
+    <p>Sept clics rapides : il se fâche pendant 1,3 seconde, puis part en rampant (la reptation).</p>
+    <dl class="facts">
+      <div><dt>Vu</dt><dd><span class="freq f3">Parfois</span></dd></div>
+      <div><dt>Sens</dt><dd>De face</dd></div>
+      <div><dt>Lecture</dt><dd>En boucle pendant 1,3 s</dd></div>
+    </dl>
+    
+  </div>
+  <figure class="now"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAQQAAABQCAYAAAD/YAtfAAACtElEQVR42u3bzU3rQBQGUDdHJRRBMWyphRrYILGiDSOkWIqH2HHM/M/5pFm8zRO+3+FqcGCaRERERERERETqyvx7liz/NpZh583D4HMGwLx5MOfLV3XJx+f36uhrzHnzMPicATBvHsz5z9Xl6gtyRRx73jwMPmcAzJsHc97/QndeegAy1vx4GHxuAJgfD+a2fpAwFV1t5geP+fX1PLX3350DCwEEC4GDy1NsPECBj0duFvz2Pu+ep5ev1ckNpaL5tf48qfvnwEIAwULg4FQROw8Qe5Cnir93nl/XJ+OiyD2/1j0k6X/LwwEHrX4fWQgWgoVgIWS+qt94gKjfOLGL31oIW2cHSO3za91D0v6PekjQf3cOLAQLwUKwEMpAS/0NX2AhiP4FCNG/JIcQq3gw9K9/IIDQv/5bhpALABj61z8QQOhf/y2AKA0BCP3rHwgg9K9/V0Uw9K9/IIDQv/7bvCpOwa94ni327P8DRB0/KpRyoH8LAQgLQf+tXBUfBfFfQGDU+aNCbgf6txCAsBD0X9tV0csl/esfCCD0r38g0l35XBn7WAgcAAGC/jloHUDpl4leLnqZyIGFAIKFwAEIINTqYJlTrJeJHFgIIFgIHHiJ5OMnC4EDCwEEC4EDCwEEC4EDCwEEC4EDCwGE0T1wYCGAwAMHroog8NCfBw4sBBB44AAAAHjgAQAAeOChvZeKU/DHVFOkX00FgAceAACABx5a/LjpXtGTP2LhgQcAAOCBh4oB+JhReBAAhAeFp3uJUzEEIHjgAQAAeOCh26ugqyMPPAAAAA88xCw+HER4ei/e1ZGHgx4AsBAsBB4shKGPhcCAheBYCDwMvxBA8FKRBx4AAIAHHg5CCM8APxJYBDzwAAAAPPAQDUbDR3jgAQAAeOBBRERERERERERERERERERE+skPIOsSyJVeVFEAAAAASUVORK5CYII=" width="130" height="40" alt="Images actuelles de fache"><figcaption>Aujourd'hui : 2 images, 100 ms</figcaption></figure>
+</li>
+<li class="item">
+  <span class="rank">11</span>
+  <div class="body">
+    <h3><span>Porté endormi</span> <code>porte-endormi</code></h3>
+    <p>Pris doucement pendant qu&#x27;il dort : il pend sous la souris sans se réveiller.</p>
+    <dl class="facts">
+      <div><dt>Vu</dt><dd><span class="freq f4">Rarement</span></dd></div>
+      <div><dt>Sens</dt><dd>Pose de dort, suspendu</dd></div>
+      <div><dt>Lecture</dt><dd>En boucle</dd></div>
+    </dl>
+    
+  </div>
+  <figure class="now"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAQQAAABsCAYAAACM2MyJAAACeUlEQVR42u3dwY3CMBgFYTdHJRRBMVyphTroJEhIORBiCEkMtv9vJN/2sGJGzwGx2pQAAAAAAACwhSFzoAddCIB4PRiEsMIv1+FxDqfb0xFCzC7GHhZ0AYMAg6CHroXnjoGIeTHowSAIwCDowRBsHgYE7EIPBkEAutBDNPHH8/wRQMwucj3owiAQbxB0QbwAXBB6MAgCMAgGgXjDoAc9CEAAetCDAL4XLwA96EIAxOtBFx4NiTcIujAIxBsEXRAvAF3ognjidaEL4onXgy4EQLweDALxpcQLwAWhC4NAvEHQBfHE60IXxBOvC114q0C8LnRBPPG60IVHQuJ1oQviideFLjwSCkAXuiCeeF3owiPh60mZf/O99ucEoIt3XejBIAhAF3qI9qGRAHShC+KJ14UuiCdeF7ognnhd6IJ44nWhC+KJ14UuiCdeF7ognnhd6IJ44nWhC+KJ14UuehY+vrDEY8kQ6MIgEG8QdBF9EP4lXAC60APxAtCFHnoUn1b+ubMAdKEH4gWgCz208CGSR0M91PRhoi4MAvEGQRcCIN5FoQuDQLxB0IVBIF4XuiCeeF3ooibRqfKvqC4IQAi6MAzEGwRdGITdhNfylWQh6EIPxAtAF3qoQfj4grU+CEIwBDowCEIwCDooMQjT03oAQnBBGAaDIACDYBBKDEIrYXz6/QXggtCDQRCAQdBDyWFo7RCvBz0IQAB60MMeAUxPw8KJNwgGwSAYBINgEMKHQfRvLooOLgidGAQYBINQ9K1ExQd60IMABKAHPQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAANTNHVOxQbxckftnAAAAAElFTkSuQmCC" width="130" height="54" alt="Images actuelles de porte-endormi"><figcaption>Aujourd'hui : 2 images, 900 ms</figcaption></figure>
+</li>
+<li class="item">
+  <span class="rank">12</span>
+  <div class="body">
+    <h3><span>Secoué</span> <code>secoue</code></h3>
+    <p>Secoué pendant qu&#x27;on le tient : il verdit.</p>
+    <dl class="facts">
+      <div><dt>Vu</dt><dd><span class="freq f4">Rarement</span></dd></div>
+      <div><dt>Sens</dt><dd>Suspendu sous la souris</dd></div>
+      <div><dt>Lecture</dt><dd>En boucle</dd></div>
+    </dl>
+    <p class="small">S&#x27;enchaîne avec les deux suivantes.</p>
+  </div>
+  <figure class="now"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAQQAAABiCAYAAAC20q35AAACrUlEQVR42u3dy03sMBSAYTfHmj5ogmZYI6qYCiiEDoIYKUKMCHGwT8aP75e8uFLYXJ98wpkHKUmSJEmSJEnKbclckoAABGmaG//y8fbrenx9+LEAIQEBCNKIEGzd+LkLEBIQgCCBoAgISUAAgjQMBM/vT1kLDBIQgCCNCELujZ+7gCABAQgSEMAgAQEIEhCAIAEBCNLoEESDAAYJCECQHBWAIAEBCBIQgCABAQgSEMAgAQEIEhCAIAEBCBIQvtd6/da/S68HggQEIEgtQLDeeEePDHs3dun1YJCAAASpRRBqHQGOXg8ECQhAkHoEwcuPEhCAIM0EAxAkAUHSPghgkIAABNUZqBOXgGAOgGAQgACE5m/8qD8fnjEQtQdj1kEDgoAABCAoYGCiQThrQF4uy/K1Zt1fb1ASEIAABB07GtSCoPaAVRyU68+tTThwQBAQgAAEBR4NOhyY63XrUeF2TTR4VR8qpp2POydflAIEIAABCINCcO9fIaNhSF5+/Nd+H4Ug+bJVIAABCEDoHIJWAQgYoNkHrsk3KIEBCEAAAhBAYIDMg301AAbHPNhXvxoanLbmwb4CAQgCgs59I0r0zxucsSGwv0AAAhDsb/TGRz88Kh2w2gNqcP6eh9v/HzAAAQhAAIIjQiwE9z4yGJgyGHoBwv4CwcAAwf56mdHA3AOE3pb9BQIQgGB/SzceCBoRBvsLBCAAwf46MoAgck56ASL5E39AAAIQgNAZCKnyl2wCoQ0gGlwCAhCAYD+rbnDUjZgqf8kmCCQgAEHqGQIPEyUgAEHq8WHQ6BAcgAEQAgIQgKCJIej146y1IfAWVwEBCECQo0Ea6GOsPgwjAQEI0hlHBcvDRQHBAoLAsL0mvOEBICAAAQhSMRgDLElAAIIkSZIkSZIkSZIkSZL67xNP3YlJNeI1gAAAAABJRU5ErkJggg==" width="130" height="49" alt="Images actuelles de secoue"><figcaption>Aujourd'hui : 2 images, 80 ms</figcaption></figure>
+</li>
+<li class="item">
+  <span class="rank">13</span>
+  <div class="body">
+    <h3><span>Nausée</span> <code>nausee</code></h3>
+    <p>Posé après avoir été secoué : il titube 3,5 secondes en changeant de direction au hasard.</p>
+    <dl class="facts">
+      <div><dt>Vu</dt><dd><span class="freq f4">Rarement</span></dd></div>
+      <div><dt>Sens</dt><dd>De profil (il avance)</dd></div>
+      <div><dt>Lecture</dt><dd>En boucle</dd></div>
+    </dl>
+    
+  </div>
+  <figure class="now"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAQQAAABACAYAAAD8tgnEAAACLklEQVR42u3cwU3DMBxG8S7HmT1YostwRkzRCRikGwRRyYdaonEdN47//j3JBw4g6Pf62qQSpxMAAAAAAABqWCoP+MADAhCBDzwIO/Tl+l103r/e7g5BYj7hG3qwtw/8EwQIgiBUDV/6xC8955+P2xGKmC8Apfvnp8CHl/B5WZa/Y3ZBgCAIwt4BKBWitxg4xv4FHjT9exP8EgQIgiC0FqB04NqzgxhCsMMlwYH2v31/ulTIz8x+CQIEQRDqRHj1E18QxghBIA/uwsArQRAEQRCEUhF6De9mo/173FwkhCDYXxAEYU2Io4XAJcTcLwR2FwRiCILdRxEi/RyCCMGWU+uRS0dBEARBEISjXioIgkvEgwYBgkAMQbC7IBBDEOwuCMQQBLsHu6nUOigE6bN77xcGuwsCMQTB7tHeMgpCjN0FgRiCYHdBIIYg2F0QiCEIdhcEYox2iGF3uxODGHa3+xYx0gNHDLtH2N3+xCCE3e1PDELY3f7EIITd7T/uzaX8Y6i1rwkR66ai/YlBCLvbf3RBeovQ6vcgQt/d7U8MQtjd/sRwM8nu9icGIexu/zgC5CeaEP4td9n+UXe3vyAQQhDs/6wA+QOUTnQR/jsTCfJw/6geCIQgCIIgCMJWEWY9Ewhh/zofBEEQBIEP3ikY3r0kPkx4k5EIgiAIfHj8cWNUQdb+Xp8+z+HBE14QQBAEQRD4UBWMAQ94wAsiGJ4HvAAAAAAAAAAAAAAAAHH4BUfbS12sqoDKAAAAAElFTkSuQmCC" width="130" height="32" alt="Images actuelles de nausee"><figcaption>Aujourd'hui : 2 images, 220 ms</figcaption></figure>
+</li>
+<li class="item">
+  <span class="rank">14</span>
+  <div class="body">
+    <h3><span>Ça va mieux</span> <code>remis</code></h3>
+    <p>Après la nausée : il s&#x27;ébroue et reprend sa couleur.</p>
+    <dl class="facts">
+      <div><dt>Vu</dt><dd><span class="freq f4">Rarement</span></dd></div>
+      <div><dt>Sens</dt><dd>Finit de face</dd></div>
+      <div><dt>Lecture</dt><dd>Une fois</dd></div>
+    </dl>
+    
+  </div>
+  <figure class="now"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAgwAAABGCAYAAACg2swsAAADjElEQVR42u3dwY3rNhiFUTY3lbiIKcZb1+I63IlnYWgxgmWLIinwJ88HeJkAefeEZJyXSUqSJEmSJEmSJEmSJEmK1DPzI/uKG27sb38wwLCvxI397Q/A6nO7P99+LtfX5+f38e8DzBj7Lh/7csON/e0vDwb7+htf3Mj+yoPwDcDWg2HrswOMOt63woGgid04F5wbB/8BUx4MYHgwyIOBGw8G+4cEUQvA3s8HKOpw34oPCE3oxrng3Ch8QMqDAQwPBnkwOBc8GOw/5VeMDoYx/sbP3dNXji6KGueC88H+9vdgAMKDwYPBheF8sL/9XRxgRN279b72HvN84MX+9gfCg8GDwd68uDDsb38gUjcXBxD2tjcvvNjf/kAAYW9788KL/e3vq2kw7G3vEZz07oUT5wUHQABhb3t7MHDivODAV01A2NveLgpOnBccAAGEve3twcCJ84IDBwIY9rY3J5xwwAEQQNjb3pxwwgEHivVVExD2tnc8J8ufJ3fvo38cJxxw4AIBwt72dlFwwgEHLhAXiL3t7aJwUXDAgQvEBWJve7soXBQccDAmhN4vEDCO7b38OtlbZ5wLZ18UnHDAgQcDEB4M9nZRcMIBByN81bT+tPrjgGjzYLC3WvwrKxcFBxwA4QLxYLC3c8FFwQEHvmry1fRs+/e+t/1jXhR8cMCBBwMIHgz2d1HwwQEHIIBgf/vzwQcHHIAAgv3tLz7EgUCQ/cUHHxxwAAII9rc/H3xwwME5EEr/8zoQ7G9/PvjggAMQQLC//fnggwMOQADB/vbX+V9Fpy8/iCcV/qAePmKcExyA4MKwv/09GFwUzgkOHAhlPzo4Ff5IYBDsb//4Pmr/qHA+OODAhQGC/e3vouCDAw56BuGraPvbX3yIA4Eg+4sPcaB8CP6nQ/a3v7gQDwJB9hcX4oGH/OGjAsgAAYb97c8FFzzwAAII9rc/F1zwwIOvlHwF1WT/5dfF/nIucMEDDyCA4MFgf+cCFzzwcOwrpfUv0CgXx9ZfFwifHwyzefAVJA/OBx548GAAwIHgwcCD84EHHloDGP3jQOCBBx544IEHAADggQceeOCBBxAMzwMPPPDAAw8AAMADDzzwwAMPfUJIO38zZMCh/aY2HnjggQceeAAAAB544IEHHnjoDkagj3jggQceeOABAAB44IEHHnjgQZIkSZIkSZIkSZIkSZIkSZIkSZIkSZIkKXp/d7gX40egrqwAAAAASUVORK5CYII=" width="262" height="35" alt="Images actuelles de remis"><figcaption>Aujourd'hui : 4 images, 70 à 90 ms</figcaption></figure>
+</li>
+<li class="item">
+  <span class="rank">15</span>
+  <div class="body">
+    <h3><span>Un fichier approche</span> <code>intrigue</code></h3>
+    <p>Un fichier glissé au-dessus de lui : &quot;Oh ?&quot;. Tant que le fichier est là, puis il mange (ton animation mange).</p>
+    <dl class="facts">
+      <div><dt>Vu</dt><dd><span class="freq f4">Rarement</span></dd></div>
+      <div><dt>Sens</dt><dd>De profil, pour enchaîner avec mange</dd></div>
+      <div><dt>Lecture</dt><dd>Fixe</dd></div>
+    </dl>
+    
+  </div>
+  <figure class="now"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAABKCAYAAABzTVwZAAABRklEQVR42u3dsQ3CMBBAUS/HJAzBMLTMwhxsEoQQBZEcbCUOvvh96QoKGu4pAQtBSpIkSXo1VY4A0GEWfbtPi3O6PL4GDAAAiLjwX4sunfP1PQUwBID+tvitFp4DMJ8FEAJA3QPILbZ0AAAAgAiLX7toAAAAICKAVosHAQAAAAAAAADGfPMHAgAAuPQDAAAALv0gAABAlEt/mn2Bo3Shtc8DAAAAAAAAAAD6evO3FwAQAACgx4MfAAAAAAAAAABgTACOhAEAAAAAAAAgJoDPCwkAAAAAsB2AlPkJGAAAAGAkALnHAAAAQM8fB3u7BVg8AACMfCAEAAAAtATQ68EPAAAA0GLhURZfAQEIAAAIf6l3awAAgJZHvrmJvngQAABgDYCjDQAAADAiBIsHAICag6CoMJK/nQMAgB1gdDwCQJIkSZIkqX1PZxm2OOpOAdYAAAAASUVORK5CYII=" width="64" height="37" alt="Images actuelles de intrigue"><figcaption>Aujourd'hui : 1 image, 400 ms</figcaption></figure>
+</li>
+<li class="item">
+  <span class="rank">16</span>
+  <div class="body">
+    <h3><span>Il gagne une partie</span> <code>fier</code></h3>
+    <p>Quand il gagne une partie de son corps (dans le jeu : tous les 500 000 tokens) : il est fier pendant 1,5 seconde.</p>
+    <dl class="facts">
+      <div><dt>Vu</dt><dd><span class="freq f4">Rarement</span></dd></div>
+      <div><dt>Sens</dt><dd>De face</dd></div>
+      <div><dt>Lecture</dt><dd>Une fois</dd></div>
+    </dl>
+    
+  </div>
+  <figure class="now"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAABMCAYAAAClFL8EAAABTklEQVR42u3dvQ3CMBCAUS/HJAzBMLTMwhxsEkSRIpESx/lBPvt90pVQcE+JFSRISZIkSb+GwhEAambRr/ewOrfHZzJAAABAxMXnFr11gAAAgB4XP879OZ0VEAJAYRY/X2zpgAAAABEWf3TRIAAAQEQAVy8eAAAA6PnSDwIAAPR86QcAAAAAAAAAAPo+/IEAAAA9X/oBAAAAAAAAAIC6D3/j+5QudO/rQAAAgBou/fMFbl3o3tcBAAAAPR7+AAAAAAAAAAAAAAAAAAAAAAAAgPMAjB8kAAAAAMBxALlHu3u/BAIAAAAiHQLTws/JuQUAAEAECA5/AADgVgAAAAC0ufCzDmUVQQACAACyi4+2cLcGAAA485FvawBAAACAEgBLE33hAAAAwBEArQ0AAADQIwSLBwCAkkfBUWEkf0kLAAB/gFHxCABJkiRJkqTr+wK2c72S6f7m1AAAAABJRU5ErkJggg==" width="64" height="38" alt="Images actuelles de fier"><figcaption>Aujourd'hui : 1 image, 1500 ms</figcaption></figure>
+</li>
+  </ol>
+  <p class="small">Pas besoin de dessiner <code>etourdi</code> (la limace s'écrase au lieu d'être étourdie) ni <code>boude</code> (elle part fâchée avec la reptation).</p>
+</section>
+</div>
+</body>
+</html>

@@ -10,7 +10,7 @@ Statut : prototype, testé sur Mac. Windows est prévu.
 - **Être utile pendant le travail.** Il te prévient quand Claude a fini ou attend ta réponse, et remarque les longues sessions ou le travail tard le soir.
 - **Ne pas pousser à consommer.** Le jeu récompense la bonne utilisation, pas le volume de tokens : prompter pour rien ne rapporte rien, et il n'y a pas de classement des tokens entre collègues.
 - **Respecter la vie privée.** Le Bidule lit seulement les métadonnées des journaux de Claude Code (heures, quantités), jamais le texte des messages. Les fonctions d'équipe éventuelles seront en option, avec des totaux seulement.
-- **Rester discret et attachant.** Il se fait oublier quand on travaille, on peut le prendre, le lancer, le caresser. Chaque sprint, il évolue, puis il rejoint une collection.
+- **Rester discret et attachant.** Il se fait oublier quand on travaille, on peut le prendre, le lancer, le caresser. Pendant le sprint, il évolue (le système d'évolution reste à définir). À la fin du sprint, il rejoint une collection.
 
 Inspiration : l'app "Claude Usage" (PokéBurn), sans le thème Pokémon.
 
@@ -74,7 +74,8 @@ L'interface est embarquée dans l'app à la compilation : après une modificatio
 | `dist/` | L'interface : `index.html` (le Bidule), `panel.html` (le panneau), `monstre64.js` et `bidule64.js` (monstres générés), `persos/limace/` (feuille d'images de la limace) |
 | `src-tauri/` | L'app de bureau en Rust |
 | `animations/` | Les animations dessinées, un dossier par animation ; `limace-complete/gen.py` assemble la feuille de la limace |
-| `moodboard/`, `sprites/`, `prototype/` | Direction artistique, fichiers Aseprite des blobs, prototype de la chambre |
+| `moodboard/` | Direction artistique ; `planches-limace.html` (animations de la limace à dessiner) et `animations-des-bidules.html` (spec des animations d'un Bidule), à ouvrir dans un navigateur |
+| `sprites/`, `prototype/` | Fichiers Aseprite des blobs, prototype de la chambre |
 | `tools/` | `sim.py` : page de test du Bidule dans un navigateur, sans l'app |
 
 ## Ajouter une animation à la limace
