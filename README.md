@@ -56,6 +56,12 @@ xcode-select --install
    mise run bidule
    ```
 
+5. Activer le garde-fou git, qui refuse un push direct sur `main` depuis ton poste (une fois par clone) :
+
+   ```bash
+   git config core.hooksPath .githooks
+   ```
+
 Pour le fermer : clic droit sur son icône dans la barre de menus, puis "Quitter".
 
 L'interface est embarquée dans l'app à la compilation : après une modification dans `dist/`, relancer `mise run bidule`.
@@ -91,6 +97,8 @@ L'interface est embarquée dans l'app à la compilation : après une modificatio
 | `moodboard/` | Direction artistique ; `planches-limace.html` (animations de la limace à dessiner) et `animations-des-bidules.html` (spec des animations d'un Bidule), à ouvrir dans un navigateur |
 | `sprites/`, `prototype/` | Fichiers Aseprite des blobs, prototype de la chambre |
 | `tools/` | `sim.py` : page de test du Bidule dans un navigateur, sans l'app |
+| `.claude/`, `CLAUDE.md` | Consignes pour Claude Code : skill de commit, règles git, garde-fou contre les push sur `main`, pas de mention de Claude dans les commits et les PR |
+| `.githooks/`, `.github/` | Garde-fou git pour les humains, modèle de pull request |
 
 ## Ajouter une animation à la limace
 
