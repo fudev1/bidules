@@ -369,6 +369,7 @@ MOUTHS.update({
     "flatline": ["KKK"],
 })
 VEIN = [".V.V.", "VV.VV", ".....", "VV.VV", ".V.V."]
+NOTE = ["..K.", "..KK", "..K.", "..K.", "KKK.", "KKK."]
 
 
 def Pz(**kw):
@@ -385,6 +386,11 @@ def render(P):
     draw_candy(im, P)
     if P.get("fx") == "vein":
         im.stamp(P["bx"] + 5.5, P["by"] - 8.8 - (P["ry"] - R0) * .3, VEIN, {"V": "V"})
+    if P.get("fx") in ("notes1", "notes2"):
+        # deux notes à droite de la tête : l'une monte pendant que l'autre descend
+        ha, hb = (8.0, 15.0) if P["fx"] == "notes1" else (12.0, 11.0)
+        im.stamp(P["bx"] + 20.0, P["by"] - ha, NOTE, {"K": "O"})
+        im.stamp(P["bx"] + 25.0, P["by"] - hb, NOTE, {"K": "O"})
     return im
 
 
@@ -463,24 +469,66 @@ def jump_body(rx, ry, H, bottom=BOTTOM, **kw):
     return P
 
 
-def anim_saut_face():
-    seq = [
-        (jump_body(14.6, 12.2, 0, 57.6, tilt=0, ear=(8, 8), eye="arc", mouth="dot", bow=(0, 1.2), wing=(0, 1.5)), 90),
-        (jump_body(15.6, 11.0, 0, 58.4, ear=(14, 14), eye="arc", mouth="dot", bow=(0, 1.8), wing=(0, 2)), 110),
-        (jump_body(12.4, 15.0, 2, ear=(-12, -12), eye="open", mouth="oSmall", arms_up=1, bow=(0, -1), wing=(0, -1.5)), 60),
-        (jump_body(12.4, 14.6, 7, ear=(-16, -16), eye="star", mouth="oSmall", arms_up=1, bow=(0, -1.4), wing=(0, -2)), 70),
-        (jump_body(12.6, 14.4, 10, ear=(-10, -10), eye="star", mouth="oSmall", arms_up=1, bow=(0, -.6), wing=(0, -1)), 70),
-        (jump_body(12.8, 14.0, 11, ear=(6, 6), eye="star", mouth="oSmall", arms_up=1, bow=(0, .6), wing=(0, 1)), 70),
-        (jump_body(12.6, 14.4, 8, ear=(-18, -18), eye="star", mouth="oSmall", arms_up=.6, bow=(0, -1.6), wing=(0, -2), tilt=3), 80),
-        (jump_body(12.4, 14.8, 4, ear=(-22, -22), eye="star", mouth="oSmall", arms_up=.6, bow=(0, -2), wing=(0, -2.4), tilt=-3), 80),
-        (jump_body(16.8, 9.8, 0, 58.6, ear=(26, 26), eye="squint", mouth="dot", blush=2, bow=(0, 2.2), wing=(0, 2.4), arm=(0, 0)), 60),
-        (jump_body(15.0, 11.6, 0, 58.0, ear=(16, 16), eye="squint", mouth="dot", blush=2, bow=(0, 1.2), wing=(0, 1.6)), 70),
-        (jump_body(12.6, 14.6, 0, ear=(-12, -12), eye="open", mouth="smile", bow=(0, -1.4), wing=(0, -2)), 80),
-        (jump_body(14.2, 12.4, 0, 57.4, ear=(8, 8), eye="open", mouth="smile", bow=(0, 1), wing=(0, 1.2)), 80),
-        (jump_body(13.0, 13.8, 0, ear=(-4, -4), eye="open", mouth="smile", bow=(0, -.4), wing=(0, -.6)), 90),
-        (FRONT, 120),
+def impact(rx, ry, bottom, ear=26, **kw):
+    """le corps se tasse une fraction de seconde au sol : ressort comprimé, yeux plissés"""
+    return jump_body(rx, ry, 0, bottom, ear=(ear, ear), eye="squint", mouth="dot", blush=2, bow=(0, 2.4), wing=(0, 2.6), **kw)
+
+
+def boing():
+    """le saut au clic : un grand bond puis des rebonds de plus en plus petits, un peu de travers"""
+    J = jump_body
+    return [
+        (J(14.8, 12.0, 0, 57.6, ear=(8, 8), eye="arc", mouth="dot", bow=(0, 1.2), wing=(0, 1.5)), 90),                          # 0 s'accroupit
+        (J(15.8, 10.8, 0, 58.4, ear=(14, 14), eye="arc", mouth="dot", bow=(0, 1.8), wing=(0, 2)), 110),                         # 1 ressort comprimé
+        (J(12.2, 15.4, 3, ear=(-12, -12), eye="open", mouth="oSmall", arms_up=1, bow=(0, -1), wing=(0, -1.5)), 50),             # 2 décolle
+        (J(12.2, 15.2, 9, ear=(-16, -16), eye="open", mouth="oSmall", arms_up=1, bow=(0, -1.4), wing=(0, -2)), 60),             # 3 monte
+        (J(12.6, 14.8, 15, ear=(-14, -14), eye="arc", mouth="openSmall", arms_up=1, bow=(0, -.8), wing=(0, -1.4)), 70),         # 4 monte
+        (J(13.4, 13.8, 19, ear=(-6, -6), eye="arc", mouth="openSmall", arms_up=1, tilt=4, bow=(.8, .6), wing=(0, 1)), 90),      # 5 sommet
+        (J(13.2, 14.0, 18, ear=(4, 4), eye="arc", mouth="openSmall", arms_up=.6, tilt=5, bow=(1, 1), wing=(0, 1.4)), 80),       # 6 suspendue
+        (J(12.6, 14.6, 13, ear=(-18, -18), eye="open", mouth="oSmall", arms_up=.6, tilt=2, bow=(0, -1.2), wing=(0, -1.8)), 70), # 7 descend
+        (J(12.4, 14.8, 6, ear=(-24, -24), eye="open", mouth="oSmall", arms_up=.4, tilt=-3, bow=(0, -1.8), wing=(0, -2.2)), 70), # 8 descend
+        (impact(16.8, 9.6, 58.6), 60),                                                                                          # 9 boing 1
+        (J(12.0, 15.2, 4, ear=(-14, -14), eye="open", mouth="oSmall", arms_up=.6, bow=(0, -1.2), wing=(0, -1.8)), 60),         # 10 repart
+        (J(13.2, 13.9, 11, ear=(-10, -10), eye="arc", mouth="openSmall", arms_up=.6, tilt=-4, bow=(-.8, .4), wing=(0, .8)), 80),  # 11 sommet 2
+        (J(12.6, 14.6, 5, ear=(-18, -18), eye="open", mouth="oSmall", tilt=3, bow=(0, -1.2), wing=(0, -1.8)), 60),              # 12 descend
+        (impact(15.8, 10.8, 58.2, ear=18), 60),                                                                                 # 13 boing 2
+        (J(12.6, 14.6, 3, ear=(-12, -12), eye="open", mouth="oSmall", bow=(0, -1), wing=(0, -1.5)), 55),                        # 14 repart
+        (J(13.2, 13.8, 6, ear=(-4, -4), eye="arc", mouth="openSmall", tilt=5, bow=(1, .8), wing=(0, 1.2)), 80),                 # 15 sommet 3
+        (impact(14.8, 12.2, 57.6, ear=12, tilt=-4), 60),                                                                        # 16 boing 3
+        (J(14.0, 12.8, 0, 57.4, tilt=7, ear=(10, -6), eye="open", mouth="smile", bow=(1.5, .8), wing=(0, 1.2)), 70),          # 17 vacille
+        (J(14.0, 12.8, 0, 57.4, tilt=-6, ear=(-4, 12), eye="open", mouth="smile", bow=(-1.5, .6), wing=(0, 1)), 70),           # 18 vacille
+        (J(13.6, 13.2, 0, tilt=3, ear=(4, 4), eye="arc", mouth="smile", bow=(.6, .6), wing=(0, .6)), 70),                       # 19 se rattrape
+        (FRONT, 120),                                                                                                           # 20 debout
     ]
-    return seq
+
+
+def anim_saut_face():
+    return boing()
+
+
+def anim_vol():
+    f = boing()
+    return [f[3], f[4], f[5]]
+
+
+def anim_chute_legere():
+    f = boing()
+    return [f[7], f[8]]
+
+
+def anim_rebond():
+    """un rebond sur le sol quand on la lance : impact puis ressort"""
+    return [(impact(16.8, 9.6, 58.6), 50),
+            (jump_body(12.4, 15.0, 2, ear=(-14, -14), eye="open", mouth="oSmall", arms_up=.6, bow=(0, -1.2), wing=(0, -1.8)), 60)]
+
+
+def anim_atterrissage():
+    J = jump_body
+    return [(impact(16.4, 10.0, 58.5), 60),
+            (J(12.6, 14.6, 3, ear=(-12, -12), eye="open", mouth="oSmall", bow=(0, -1), wing=(0, -1.5)), 60),
+            (impact(14.8, 12.2, 57.6, ear=12), 60),
+            (J(14.0, 12.8, 0, 57.4, tilt=5, ear=(8, -4), eye="open", mouth="smile", bow=(1.2, .8), wing=(0, 1.2)), 80),
+            (FRONT, 100)]
 
 
 def anim_chute():
@@ -495,15 +543,31 @@ def anim_chute():
 
 
 def anim_ecrase():
-    seq = [
-        (bod(17.0, 8.8, bottom=58.4), dict(eye="squint", mouth="dot", ear=(30, 30), blush=2, bow=(0, 2.4), wing=(0, 2.6)), 50),
-        (bod(18.6, 7.0, bottom=59.0), dict(eye="squint", mouth="dot", ear=(40, 40), blush=2, bow=(0, 3), wing=(0, 3)), 50),
-        (bod(19.6, 5.8, bottom=59.6), dict(eye="ko", mouth="flatline", ear=(48, 48), blush=0, bow=(0, 3.4), wing=(0, 3.4)), 60),
-        (bod(19.8, 5.4, bottom=59.8), dict(eye="ko", mouth="flatline", ear=(52, 52), blush=0, bow=(0, 3.4), wing=(0, 3.6)), 80),
-        (bod(19.4, 5.8, bottom=59.7), dict(eye="ko", mouth="wave", ear=(50, 50), blush=0, bow=(0, 3.4), wing=(0, 3.6)), 120),
-        (bod(19.6, 5.6, bottom=59.8), dict(eye="ko", mouth="wave2", ear=(52, 52), blush=0, bow=(0, 3.4), wing=(0, 3.6)), 600),
+    """la grosse chute : un gros splat très bref, elle se redresse d'un coup et boude (la dernière image est tenue 1,5 à 3 s par l'app)"""
+    J = jump_body
+    angry = dict(eye="flat", mouth="pout", blush=2, fx="vein", ear=(14, 14), bow=(0, 1), wing=(0, 1.8))
+    return [
+        (Pz(**bod(17.6, 8.4, bottom=58.4), eye="squint", mouth="dot", blush=2, ear=(34, 34), bow=(0, 2.6), wing=(0, 2.8), feet=stand_feet(0, 7.4)), 60),
+        (Pz(**bod(18.8, 7.0, bottom=59.0), eye="ko", mouth="flatline", blush=0, ear=(44, 44), bow=(0, 3.2), wing=(0, 3.4), feet=stand_feet(0, 7.4), hide_feet=True), 80),
+        (J(11.8, 15.8, 4, ear=(-16, -16), eye="open", mouth="oSmall", arms_up=1, bow=(0, -1.6), wing=(0, -2.2)), 60),
+        (J(12.6, 14.6, 9, ear=(-10, -10), eye="open", mouth="oSmall", arms_up=.6, tilt=4, bow=(.6, -.6), wing=(0, -1)), 70),
+        (impact(15.0, 11.4, 57.8, ear=16), 70),
+        (J(14.2, 12.8, 0, 57.4, tilt=-3, **angry), 90),
+        (J(14.2, 12.8, 0, 57.4, tilt=3, feet=stand_feet(0, 5.9, lift=(1.6, 0)), **angry), 90),
+        (J(14.2, 12.8, 0, 57.4, tilt=-3, feet=stand_feet(0, 5.9, lift=(0, 1.6)), **angry), 90),
+        (J(14.4, 12.6, 0, 57.4, tilt=-2, **angry), 120),
     ]
-    return [(Pz(**b, **kw, feet=stand_feet(0, 7.4), hide_feet=i > 1), d) for i, (b, kw, d) in enumerate(seq)]
+
+
+def anim_reforme():
+    """elle se calme : elle gonfle les joues, soupire, puis sourit"""
+    J = jump_body
+    return [
+        (J(13.8, 13.6, 0, eye="flat", mouth="pout", blush=2, ear=(8, 8), bow=(0, .6), wing=(0, 1)), 110),
+        (J(14.2, 12.6, 0, 57.4, eye="sleep", mouth="dot", blush=1, ear=(16, 16), bow=(0, 1.4), wing=(0, 2)), 160),
+        (J(13.6, 13.2, 0, tilt=2, eye="open", mouth="smile", blush=1, ear=(4, 4), bow=(.4, .4), wing=(0, .5)), 120),
+        (FRONT, 120),
+    ]
 
 
 def anim_baille():
@@ -553,6 +617,12 @@ def anim_fache():
             (Pz(eye="flat", mouth="pout", blush=2, fx="vein", tilt=2, **bod(14.2, 12.8), ear=(14, 14), feet=stand_feet(0, 5.9), bow=(.6, 1), wing=(0, 1.8)), 100)]
 
 
+def anim_chante():
+    """elle ferme les yeux et chante en balançant la tête ; l'app joue ces deux images en boucle pendant certaines pauses"""
+    return [(Pz(eye="arc", mouth="oSmall", blush=1, tilt=-3, by=BY0 - .6, ear=(2, 2), bow=(-.6, .6), wing=(0, .6), fx="notes1", feet=stand_feet(0)), 380),
+            (Pz(eye="arc", mouth="oSmall", blush=1, tilt=3, ear=(-4, -4), bow=(.6, .2), wing=(0, -.6), fx="notes2", feet=stand_feet(0)), 380)]
+
+
 def anim_intrigue():
     return [(Pz(v=62, tilt=-2, **bod(12.9, 14.2), ear=(-12, -12), eye="star", mouth="oSmall", bow=(0, -1), wing=(0, -1.6),
                feet=stand_feet(62, z=(1, -1))), 100)]
@@ -592,15 +662,12 @@ def build():
     s0 = len(frames)
     for k in range(7):
         frames.append(frames[t0 + k])
-    f0 = add("saut-face", anim_saut_face())
+    add("saut-face", anim_saut_face())
     tags.append(("saut", s0, len(frames) - 1))
-    tags.append(("vol", f0 + 3, f0 + 5))
-    tags.append(("chute-legere", f0 + 6, f0 + 7))
-    tags.append(("atterrissage", f0 + 8, f0 + 13))
-    tags.append(("reforme", f0 + 9, f0 + 13))
-    for name, anim in (("repos", anim_repos()), ("regard", anim_regard()), ("attrape", anim_attrape()), ("chute", anim_chute()),
-                       ("ecrase", anim_ecrase()), ("baille", anim_baille()), ("dort", anim_dort()), ("remue", anim_remue()),
-                       ("caresse", anim_caresse()), ("rire", anim_rire()), ("fache", anim_fache()), ("intrigue", anim_intrigue()),
+    for name, anim in (("vol", anim_vol()), ("chute-legere", anim_chute_legere()), ("rebond", anim_rebond()), ("atterrissage", anim_atterrissage()),
+                       ("repos", anim_repos()), ("regard", anim_regard()), ("attrape", anim_attrape()), ("chute", anim_chute()),
+                       ("ecrase", anim_ecrase()), ("reforme", anim_reforme()), ("baille", anim_baille()), ("dort", anim_dort()), ("remue", anim_remue()),
+                       ("caresse", anim_caresse()), ("rire", anim_rire()), ("fache", anim_fache()), ("chante", anim_chante()), ("intrigue", anim_intrigue()),
                        ("secoue", anim_secoue()), ("nausee", anim_nausee())):
         add(name, anim)
     return frames, tags
@@ -689,7 +756,7 @@ def write_outputs(frames, tags, out, png_name="sheet.png", json_name="sheet.json
     return meta
 
 
-SUB = ("saut", "vol", "chute-legere", "atterrissage", "reforme")   # morceaux d'autres balises : pas de fichier à part
+SUB = ("saut",)   # morceaux d'autres balises : pas de fichier à part
 
 
 if __name__ == "__main__":
@@ -711,7 +778,7 @@ if __name__ == "__main__":
     T = {n: (a, b) for n, a, b in tags}
     write_png(os.path.join(DIST, "thumb.png"), frames[T["repos"][0]][0].g)
     from gif import write_gif
-    seq = [("crawl", 3)] + [(nm, 1) for nm in ("turn", "repos")] + [("caresse", 3), ("rire", 3), ("fache", 3), ("saut-face", 1), ("dort", 2)]
+    seq = [("crawl", 3)] + [(nm, 1) for nm in ("turn", "repos")] + [("caresse", 3), ("rire", 3), ("fache", 3), ("chante", 3), ("saut-face", 1), ("ecrase", 1), ("reforme", 1), ("dort", 2)]
     order = []
     for nm, rep_ in seq:
         order += list(range(T[nm][0], T[nm][1] + 1)) * rep_
@@ -719,9 +786,9 @@ if __name__ == "__main__":
     write_gif(os.path.join(HERE, "apercu_x4.gif"), rgb, [round(frames[i][1] / 10) for i in order], scale=4)
     if prev:
         os.makedirs(prev, exist_ok=True)
-        groups = [("crawl", ["crawl"]), ("turn", ["turn"]), ("saut", ["saut-face", "chute"]),
-                  ("autres", ["repos", "regard", "attrape", "ecrase", "baille"]),
-                  ("reste", ["dort", "remue", "caresse", "rire", "fache", "intrigue", "secoue", "nausee"])]
+        groups = [("crawl", ["crawl"]), ("turn", ["turn"]), ("saut", ["saut-face", "vol", "chute-legere", "rebond", "atterrissage"]), ("crash", ["chute", "ecrase", "reforme"]),
+                  ("autres", ["repos", "regard", "attrape", "baille"]),
+                  ("reste", ["dort", "remue", "caresse", "rire", "fache", "chante", "intrigue", "secoue", "nausee"])]
         for gname, names in groups:
             sel = [f for nm in names for f in frames[T[nm][0]:T[nm][1] + 1]]
             contact(os.path.join(prev, f"c_{gname}.png"), [f[0] for f in sel], cols=8 if gname == "crawl" else 7, scale=3)
