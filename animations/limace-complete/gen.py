@@ -9,7 +9,11 @@ A, B, C, D = (0x63, 0x9b, 0xff, 255), (0, 0, 0, 255), (0x45, 0x77, 0xe0, 255), (
 BLEU = dict(A=A, C=C, D=D)
 VERT = dict(A=(0x7f, 0xd4, 0x6a, 255), C=(0x4f, 0xae, 0x45, 255), D=(0xc6, 0xf0, 0xb0, 255))
 GOLD, GOLD2, WHITE, MIST = (0xff, 0xd2, 0x3f, 255), (0xff, 0xf3, 0xb0, 255), (255, 255, 255, 255), (0xd8, 0xdd, 0xe6, 255)
-front = SRC[14]
+# axe du retournement gauche/droite = 32,5 : la reptation retournée doit tenir dans l'image (voir tools/align_turn.py). Les images de face, dessinées
+# centrées sur 36,5, sont donc décalées de 4 pixels vers la gauche pour que la limace ne bouge pas quand elle se tourne.
+FRONT_DX = -4
+def shift_x(f, dx): return [[f[y][x - dx] if 0 <= x - dx < 64 else (0, 0, 0, 0) for x in range(64)] for y in range(64)]
+front = shift_x(SRC[14], FRONT_DX)
 mask0 = {(x, y) for y in range(64) for x in range(64) if front[y][x][3]}
 TOP, BOT = min(p[1] for p in mask0), max(p[1] for p in mask0)
 H, CX = BOT - TOP + 1, (min(p[0] for p in mask0) + max(p[0] for p in mask0)) / 2
@@ -139,11 +143,11 @@ for t in META["meta"]["frameTags"]: tags.append((t["name"], t["from"], t["to"]))
 S0 = [t for t in META["meta"]["frameTags"] if t["name"] == "saut"][0]["from"]
 tags += [("vol", S0 + 16, S0 + 18), ("chute-legere", S0 + 19, S0 + 20), ("atterrissage", S0 + 21, S0 + 26), ("reforme", S0 + 22, S0 + 26), ("saut-face", S0 + 6, S0 + 28)]
 # animations dessinées par Thibault (dossiers voisins) : elles remplacent celles générées ici
-def hand(folder, sheet, a=0, b=None):
-    fr = frames(f"{A0}/{folder}/{sheet}_sheet.png"); du = durations(json.load(open(f"{A0}/{folder}/{sheet}_sheet.json")))
+def hand(folder, sheet, a=0, b=None, dx=0):
+    fr = [shift_x(f, dx) for f in frames(f"{A0}/{folder}/{sheet}_sheet.png")]; du = durations(json.load(open(f"{A0}/{folder}/{sheet}_sheet.json")))
     b = len(fr) - 1 if b is None else b
     return [(fr[k], du[k]) for k in range(a, b + 1)]
-HAND = [("baille", hand("baille", "baille")), ("dort", hand("dort", "dort")), ("mange", hand("eat", "mange", 56, 85)), ("rot", hand("rot", "rot")),
+HAND = [("baille", hand("baille", "baille", dx=FRONT_DX)), ("dort", hand("dort", "dort")), ("mange", hand("eat", "mange", 56, 85)), ("rot", hand("rot", "rot")),
         # chute : 0-1 = début, 2-11 = boucle ; 12-13 (la goutte qui descend dans l'image) sont sautées, c'est la fenêtre qui descend
         ("chute", hand("chute", "chute", 0, 11)), ("ecrase", hand("chute", "chute", 14, 22))]
 # reptation redessinée : elle remplace celle de la feuille du saut, les balises suivantes sont décalées
@@ -152,6 +156,7 @@ def replace(name, seq):
     out_frames[a:b + 1] = seq; d = len(seq) - (b - a + 1)
     tags[:] = [(n, x + d * (x > b), y + d * (y >= b)) for n, x, y in tags]
 replace("crawl", hand("crawl", "crawl"))
+replace("turn", hand("turn", "turn"))
 for name, seq in HAND:
     start = len(out_frames); out_frames += seq; tags.append((name, start, len(out_frames) - 1))
 for name, seq in ANIMS:
