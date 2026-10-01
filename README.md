@@ -109,6 +109,8 @@ Une animation qui remplace une existante (même nom de balise, par exemple `dort
 
 Format attendu : 64 × 64 pixels, fond transparent, tourné vers la droite (l'app le retourne pour la gauche). De profil, le bas du contour est sur la ligne 60, comme la reptation. De face, le corps est placé comme l'image de face du demi-tour.
 
+Le retournement gauche/droite se fait autour d'un axe que l'app calcule depuis `crawl[0]` et la dernière image de `turn` : ici 31,5, le milieu de l'image, donc un simple miroir de l'image. Pour que reptation droite, demi-tour et reptation gauche s'enchaînent sans saut : `turn[0]` est identique à `crawl[0]`, `turn[12]` en est le miroir exact (reflet compris), et la reptation retournée doit tenir dans l'image (x de 2 à 61). Toutes les animations sont centrées sur 31,5 et posées sur la ligne 60. Si la reptation change, `tools/align_turn.py` reconstruit le demi-tour (voir son en-tête) ; le saut commence et finit par les images de ce demi-tour, `gen.py` les reprend tout seul.
+
 ## Tester sans l'app
 
 ```bash

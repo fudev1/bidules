@@ -3,13 +3,21 @@ sys.path.insert(0, os.path.dirname(__file__))
 from png import frames, write
 # chemins relatifs au script : le projet peut être cloné n'importe où
 D0 = os.path.dirname(os.path.abspath(__file__)); A0 = os.path.dirname(D0)
-SRC = frames(f"{A0}/jump/saut_sheet.png")
-META = json.load(open(f"{A0}/jump/saut_sheet.json"))
+def durations(meta):
+    f = meta["frames"]; return [x["duration"] for x in (f.values() if isinstance(f, dict) else f)]
+def shift_xy(f, dx, dy): return [[f[y - dy][x - dx] if 0 <= x - dx < 64 and 0 <= y - dy < 64 else (0, 0, 0, 0) for x in range(64)] for y in range(64)]
+# animations dessinées par Thibault (dossiers voisins, exportées d'Aseprite) : feuille PNG + JSON, dx et dy pour recaler une image
+def hand(folder, sheet, a=0, b=None, dx=0, dy=0):
+    fr = [shift_xy(f, dx, dy) for f in frames(f"{A0}/{folder}/{sheet}_sheet.png")]; du = durations(json.load(open(f"{A0}/{folder}/{sheet}_sheet.json")))
+    b = len(fr) - 1 if b is None else b
+    return [(fr[k], du[k]) for k in range(a, b + 1)]
+TURN = hand("turn", "turn")
 A, B, C, D = (0x63, 0x9b, 0xff, 255), (0, 0, 0, 255), (0x45, 0x77, 0xe0, 255), (0xa4, 0xc6, 0xff, 255)
 BLEU = dict(A=A, C=C, D=D)
 VERT = dict(A=(0x7f, 0xd4, 0x6a, 255), C=(0x4f, 0xae, 0x45, 255), D=(0xc6, 0xf0, 0xb0, 255))
 GOLD, GOLD2, WHITE, MIST = (0xff, 0xd2, 0x3f, 255), (0xff, 0xf3, 0xb0, 255), (255, 255, 255, 255), (0xd8, 0xdd, 0xe6, 255)
-front = SRC[14]
+# l'image de face du demi-tour sert de modèle aux animations générées plus bas (centrée sur l'axe 31,5, bas sur la ligne 60)
+front = TURN[6][0]
 mask0 = {(x, y) for y in range(64) for x in range(64) if front[y][x][3]}
 TOP, BOT = min(p[1] for p in mask0), max(p[1] for p in mask0)
 H, CX = BOT - TOP + 1, (min(p[0] for p in mask0) + max(p[0] for p in mask0)) / 2
@@ -130,20 +138,23 @@ ANIMS = [
 ]
 REGARD = [((0, -1), "0,-1"), ((0, 0), "0,0"), ((0, 1), "0,1"), ((1, -1), "1,-1"), ((1, 0), "1,0"), ((1, 1), "1,1")]
 
-def durations(meta):
-    f = meta["frames"]; return [x["duration"] for x in (f.values() if isinstance(f, dict) else f)]
 out_frames, tags = [], []
-for k, dur in enumerate(durations(META)): out_frames.append((SRC[k], dur))
-for t in META["meta"]["frameTags"]: tags.append((t["name"], t["from"], t["to"]))
+def add(name, seq):
+    start = len(out_frames); out_frames.extend(seq); tags.append((name, start, len(out_frames) - 1)); return start
+add("crawl", hand("crawl", "crawl"))
+add("turn", TURN)
+# le saut commence par le demi-tour (images 1 à 6 = turn[1] à turn[6]) et finit par le même à l'envers (images 33 à 28) ; entre les deux,
+# la limace s'écrase (images 7 et 8, 26 et 27) : on recentre les deux premières sur l'axe comme le reste
+SAUT = hand("jump", "saut")
+for k in range(1, 7):
+    SAUT[k] = (TURN[k][0], SAUT[k][1]); SAUT[34 - k] = (TURN[k][0], SAUT[34 - k][1])
+for k, dx in ((7, -3), (8, -1)): SAUT[k] = (shift_xy(SAUT[k][0], dx, 0), SAUT[k][1])
+S0 = add("saut", SAUT)
 # sous-parties de son saut, dessinées à la main : vol (la boule en l'air), atterrissage (la flaque qui se reforme), saut depuis la face
-S0 = [t for t in META["meta"]["frameTags"] if t["name"] == "saut"][0]["from"]
 tags += [("vol", S0 + 16, S0 + 18), ("chute-legere", S0 + 19, S0 + 20), ("atterrissage", S0 + 21, S0 + 26), ("reforme", S0 + 22, S0 + 26), ("saut-face", S0 + 6, S0 + 28)]
-# animations dessinées par Thibault (dossiers voisins) : elles remplacent celles générées ici
-def hand(folder, sheet, a=0, b=None):
-    fr = frames(f"{A0}/{folder}/{sheet}_sheet.png"); du = durations(json.load(open(f"{A0}/{folder}/{sheet}_sheet.json")))
-    b = len(fr) - 1 if b is None else b
-    return [(fr[k], du[k]) for k in range(a, b + 1)]
-HAND = [("baille", hand("baille", "baille")), ("dort", hand("dort", "dort")), ("mange", hand("eat", "mange", 56, 85)), ("rot", hand("rot", "rot")),
+# autres animations dessinées par Thibault : elles remplacent celles générées plus bas
+# baille : dessinée avec l'ancienne image de face (centre 36,5, bas sur la ligne 59), recalée sur la nouvelle
+HAND = [("baille", hand("baille", "baille", dx=-5, dy=1)), ("dort", hand("dort", "dort")), ("mange", hand("eat", "mange")), ("rot", hand("rot", "rot")),
         # chute : 0-1 = début, 2-11 = boucle ; 12-13 (la goutte qui descend dans l'image) sont sautées, c'est la fenêtre qui descend
         ("chute", hand("chute", "chute", 0, 11)), ("ecrase", hand("chute", "chute", 14, 22))]
 for name, seq in HAND:
