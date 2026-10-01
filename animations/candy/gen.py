@@ -451,15 +451,15 @@ def anim_regard():
 
 
 def anim_attrape():
-    out = []
-    for k in range(4):
-        sw = [-1, 1, 1, -1][k]
-        eye, mouth = ("teary", "wave") if k % 2 == 0 else ("teary2", "wave2")
-        P = Pz(by=41.6, rx=12.8, ry=14.4, tilt=3 * sw, eye=eye, mouth=mouth, arms_up=1, ear=(-14 * sw, 14 * sw), blush=1,
-               bow=(sw * 1.2, -1.2), wing=(0, -2),
-               feet=stand_feet(0, 4.8, lift=(2.2 + sw, 2.2 - sw)))
-        out.append((P, 110))
-    return out
+    """soulevée : "Hey, mais qu'est-ce que tu fais ?" Un peu apeurée, un peu fâchée : elle râle (yeux plats, veine, bouche ouverte)
+    puis les yeux se mouillent, et les pieds s'agitent"""
+    spec = [("flat", "openSmall", -4, 1.0, (-8, -8), (3.0, 1.2)),
+            ("teary", "wave", 4, .5, (12, 12), (1.2, 3.0)),
+            ("flat", "openSmall", -3, 1.0, (-10, -10), (1.2, 3.0)),
+            ("teary2", "wave2", 3, .5, (14, 14), (3.0, 1.2))]
+    return [(Pz(by=41.6, rx=12.8, ry=14.4, tilt=tilt, eye=eye, mouth=mouth, arms_up=au, ear=ear, blush=2, fx="vein",
+                bow=(tilt * .25, -1), wing=(0, -2), feet=stand_feet(0, 4.8, lift=lifts)), 110)
+            for eye, mouth, tilt, au, ear, lifts in spec]
 
 
 def jump_body(rx, ry, H, bottom=BOTTOM, **kw):
@@ -778,7 +778,7 @@ if __name__ == "__main__":
     T = {n: (a, b) for n, a, b in tags}
     write_png(os.path.join(DIST, "thumb.png"), frames[T["repos"][0]][0].g)
     from gif import write_gif
-    seq = [("crawl", 3)] + [(nm, 1) for nm in ("turn", "repos")] + [("caresse", 3), ("rire", 3), ("fache", 3), ("chante", 3), ("saut-face", 1), ("ecrase", 1), ("reforme", 1), ("dort", 2)]
+    seq = [("crawl", 3)] + [(nm, 1) for nm in ("turn", "repos")] + [("attrape", 3), ("caresse", 3), ("rire", 3), ("fache", 3), ("chante", 3), ("saut-face", 1), ("ecrase", 1), ("reforme", 1), ("dort", 2)]
     order = []
     for nm, rep_ in seq:
         order += list(range(T[nm][0], T[nm][1] + 1)) * rep_
