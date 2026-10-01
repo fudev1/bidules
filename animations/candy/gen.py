@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # Candy (marche dessinée) : génère les images une par une, la planche PNG et le JSON, dans le même format que la limace.
-# Python 3 sans dépendance. Usage : python3 animations/candy-marche/gen.py [dossier de test pour les aperçus]
-# Sorties : frames/<balise>_<n>.png, candy_sheet.png, candy_sheet.json, et dist/persos/candy-marche/{sheet.png,sheet.json,thumb.png}
+# Python 3 sans dépendance. Usage : python3 animations/candy/gen.py [dossier de test pour les aperçus]
+# Sorties : frames/<balise>_<n>.png, candy_sheet.png, candy_sheet.json, et dist/persos/candy/{sheet.png,sheet.json,thumb.png}
 import json
 import math
 import os
@@ -11,7 +11,7 @@ import sys
 import zlib
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-DIST = os.path.join(HERE, "..", "..", "dist", "persos", "candy-marche")
+DIST = os.path.join(HERE, "..", "..", "dist", "persos", "candy")
 N = 64
 GROUND = 60   # ligne du bas du contour, comme la limace de profil
 R0 = 13.4     # rayon du corps au repos
@@ -246,12 +246,14 @@ def draw_face(img, P):
         ex, ey, d = sph(Pf, s * 26.6, 2.6 + la0)
         if d <= .1:
             continue
-        stamp = EYES.get(eye)
+        names = eye.split("|")
+        ename = names[0] if s < 0 or len(names) == 1 else names[1]
+        stamp = EYES.get(ename)
         if stamp and abs(v) < 20:
             img.stamp(ex, ey, stamp, EYE_CMAP, flip=(s == 1))
             continue
         w = 1.0 + 2.0 * d
-        if eye == "open":
+        if ename == "open":
             shape = ell(ex, ey, w, 3.5)
             m = img.mask(shape)
             img.paint(m, "O")
@@ -259,10 +261,10 @@ def draw_face(img, P):
             img.paint(img.mask(ell(gx, ey - 1.5, max(.8, 1.05 * d), 1.1)), "W")
             img.paint({p for p in img.mask(ell(ex, ey, w - .7, 2.9)) if p[1] + .5 > ey + 1.4}, "T")
             img.paint(img.mask(ell(ex + .6 * w, ey + 1.4, .5, .5)), "W")
-        elif eye == "closed":
+        elif ename == "closed":
             pts = [(ex - w + .3, ey + .6), (ex, ey + 1.6), (ex + w - .3, ey + .6)]
             img.line([(px, py - 0.6) for px, py in pts])
-        elif eye == "sleep":
+        elif ename == "sleep":
             pts = [(ex - w + .3, ey), (ex - w * .4, ey + 1.2), (ex + w * .4, ey + 1.2), (ex + w - .3, ey)]
             img.line(pts)
             if d > .4:
@@ -351,6 +353,7 @@ EYES.update({
     "star": [".KKKK.", "KKWKKK", "KWWWKK", "KKWKKK", "KKKKWK", "KTTTTK", ".KKKK."],
     "flat": ["KKKKKK", "KWKKKK", "KKKKKK", "KTTTTK", ".KKKK."],
     "ko": ["K.K", ".K.", "K.K"],
+    "half": ["KKKKKK", "KWKKKK", "KTTTTK", ".KKKK."],
 })
 EYES["spiral2"] = [r[::-1] for r in EYES["spiral"]][::-1]
 MOUTHS.update({
@@ -524,15 +527,15 @@ def anim_dort():
     for t in range(8):
         br = math.sin(2 * math.pi * t / 8)
         ry = 12.0 + .55 * br
-        P = Pz(v=62, rx=14.4 - .3 * br, ry=ry, by=59.8 - ry, tilt=9, eye="sleep", ear=(28, 28), bow=(.6, 1.4 + .3 * br), wing=(0, 2.2),
-               mouth="dot", blush=1, feet=[(36, 0, 1), (32, 0, -1)], arm=(6, 1.2))
+        P = Pz(rx=14.4 - .3 * br, ry=ry, by=59.8 - ry, tilt=2.5 * math.sin(2 * math.pi * (t - 2) / 8), eye="sleep", ear=(28, 28),
+               bow=(.6, 1.4 + .3 * br), wing=(0, 2.2), mouth="dot", blush=1, feet=stand_feet(0, 6.4))
         out.append((P, 200))
     return out
 
 
 def anim_remue():
-    return [(Pz(v=62, rx=14.4, ry=12.0, by=59.8 - 12.0, tilt=7, eye="half", ear=(24, 24), bow=(.6, 1.4), wing=(0, 2), mouth="dot",
-               feet=[(36, 0, 1), (32, 0, -1)], arm=(6, 1.2)), 400)]
+    return [(Pz(rx=14.4, ry=12.0, by=59.8 - 12.0, tilt=-3, eye="half|sleep", ear=(24, 24), bow=(.6, 1.4), wing=(0, 2), mouth="dot",
+               feet=stand_feet(0, 6.4)), 400)]
 
 
 def anim_caresse():

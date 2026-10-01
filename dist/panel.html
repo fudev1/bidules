@@ -80,15 +80,15 @@ footer .btn{background:var(--plum);color:var(--white)}
 <script src="monstre64.js"></script>
 <script>
 const T = window.__TAURI__;
-const STYLES = [...Object.keys(MONSTRES).map(id => [id, MONSTRES[id].name]), ["limace", "Limace (essai)"], ["candy-marche", "Candy (marche dessinée)"], ["classique", "Classique"], ["louche", "Il louche"], ["depareille", "Yeux dépareillés"], ["paupieres", "Paupières lourdes"], ["dessus", "Yeux dessus"]];
+const STYLES = [...Object.keys(MONSTRES).map(id => [id, MONSTRES[id].name]), ["limace", "Limace (essai)"], ["candy", "Candy"], ["classique", "Classique"], ["louche", "Il louche"], ["depareille", "Yeux dépareillés"], ["paupieres", "Paupières lourdes"], ["dessus", "Yeux dessus"]];
 const SLOTS = [["tete", "Tête", [["antennes", "Antennes"], ["cornes", "Cornes"]]], ["bouche", "Bouche", [["crocs", "Crocs"], ["langue", "Langue"]]],
   ["bras", "Bras", [["bras", "Petits bras"], ["pinces", "Pinces"]]], ["pattes", "Pattes", [["longues", "Longues"], ["palmees", "Palmées"]]],
   ["dos", "Dos", [["ailes", "Ailes"], ["fourrure", "Fourrure"]]], ["queue", "Queue", [["touffue", "Touffue"], ["lezard", "Lézard"]]]];
 const $ = id => document.getElementById(id);
-let st = {mood:null, moodMode:"auto", moodReason:"", style:"goutte", partsBy:{classique:{tete:"antennes", pattes:"longues", bras:"bras", queue:"touffue"}, louche:{}, depareille:{}, paupieres:{}, dessus:{}, ...Object.fromEntries(Object.keys(MONSTRES).map(id => [id, {}])), limace:{}, "candy-marche":{}}, thumb:""};
+let st = {mood:null, moodMode:"auto", moodReason:"", style:"goutte", partsBy:{classique:{tete:"antennes", pattes:"longues", bras:"bras", queue:"touffue"}, louche:{}, depareille:{}, paupieres:{}, dessus:{}, ...Object.fromEntries(Object.keys(MONSTRES).map(id => [id, {}])), limace:{}, candy:{}}, thumb:""};
 const send = (ev, payload) => { if (T) T.event.emit(ev, payload); else console.log(ev, payload); };
 const MOODS = [["auto", "Automatique"], ["guilleret", "Guilleret"], ["ronchon", "Ronchon"], ["vaseux", "Vaseux"], ["stresse", "Stressé"], ["lune", "Dans la lune"]];
-const render64 = (s, parts) => s === "limace" || s === "candy-marche" ? "persos/" + s + "/thumb.png" : MONSTRES[s] ? monstreURL(s, "forme", [0, 0], parts, st.mood) : s === "classique" ? bidule64({pal:"menthe", parts, mood:st.mood}, "forme", {tete:"bonnet"}) : blobFace64(s, "forme", [0, 0], "menthe", parts, st.mood);
+const render64 = (s, parts) => s === "limace" || s === "candy" ? "persos/" + s + "/thumb.png" : MONSTRES[s] ? monstreURL(s, "forme", [0, 0], parts, st.mood) : s === "classique" ? bidule64({pal:"menthe", parts, mood:st.mood}, "forme", {tete:"bonnet"}) : blobFace64(s, "forme", [0, 0], "menthe", parts, st.mood);
 function render() {
   const parts = st.partsBy[st.style] || {}, n = Object.keys(parts).length;
   $("thumb").src = st.thumb || render64(st.style, parts);
