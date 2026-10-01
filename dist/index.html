@@ -76,7 +76,7 @@ async function loadSheet(id) {
     // appui au sol : les deux bouts de la ligne juste au-dessus du bas
     let tail = f.frame.w, head = 0;
     for (let X = 0; X < f.frame.w; X++) if (bot > 0 && px[((bot - 1) * f.frame.w + X) * 4 + 3]) { tail = Math.min(tail, X); head = Math.max(head, X); }
-    return {src:cv.toDataURL(), dur:f.duration || 100, bot, cx:(l + r) / 2, tail, head};
+    return {src:cv.toDataURL(), dur:f.duration || 100, bot, cx:(l + r) / 2, tail, head, step:f.step};
   });
   const tags = {};
   for (const t of meta.meta.frameTags || []) tags[t.name] = frames.slice(t.from, Math.min(t.to, frames.length - 1) + 1);
@@ -350,6 +350,7 @@ function faceStep(now) {
   }
   const want = watching ? (mood === "ronchon" ? "side" : "front") : now < idleUntil ? "front" : "side";
   if (want === (FRONT.has(img.src) ? "front" : "side")) return false;
+  if (airborne()) return false;
   faceSeq = {frames:want === "front" ? HALF : HALF.slice().reverse(), i:0, next:0};
   return faceStep(now);
 }
@@ -377,7 +378,8 @@ function sheetAnim(now) {
     // petite chute : la goutte du saut du collègue ; grande chute (au moins les deux tiers de l'écran) : l'animation de Thibault, il a peur
     const L2 = T2["chute-legere"];
     if (vy < 3) { f = T2.vol[0]; fall = null; }
-    else if (!bigFall() && L2) { f = vy < 9 ? L2[0] : L2[L2.length - 1]; fall = null; }
+    // Candy panique (bras qui battent, larmes) pendant la première chute ; après le premier rebond, la chute légère
+    else if (!bigFall() && L2 && !(style === "candy" && bounces === 0)) { f = vy < 9 ? L2[0] : L2[L2.length - 1]; fall = null; }
     else {
       const C = T2.chute;
       if (!fall) fall = {i:0, next:now + C[0].dur};
@@ -401,6 +403,11 @@ function sheetAnim(now) {
   if (sheetLoop.tag !== tag) sheetLoop = {tag, i:0, next:0};
   if (now >= sheetLoop.next) { const fr = T2[tag], k2 = sheetLoop.i % fr.length; img.src = fr[k2].src; sheetLoop.next = nextAt(sheetLoop.next, fr[k2].dur, now); sheetLoop.i++; }
 }
+// Candy sautille en marchant, sauf ronchon ou vaseuse (elle garde la reptation) ; la marche ne change qu'en fin de cycle
+let walkTag = "crawl";
+const walkFrames = () => { const T = SHEET_DATA[style].tags; return T[walkTag] || T.crawl || SHEET_DATA[style].frames; };
+const hopping = () => isSheet() && walkTag === "sautille" && !!SHEET_DATA[style].tags.sautille;
+const airborne = () => hopping() && crawlIdx % 4 !== 0;
 let crawlIdx = 0, crawlNext = 0, turnSeq = null, turnIdx = 0, turnNext = 0, pendingDir = 1, turnWanted = null, turnWantedUntil = 0;
 let moodMode = "auto", mood = null, moodReason = "";
 const MOOD_LABEL = {guilleret:"Guilleret", ronchon:"Ronchon", vaseux:"Vaseux", stresse:"Stressé", lune:"Dans la lune"};
@@ -566,7 +573,7 @@ function tick() {
     if (now >= turnNext) {
       if (turnIdx >= turnSeq.length) {
         mode = "walk"; dir = pendingDir; face(); pose("walk");
-        const cr = SHEET_DATA[style].tags.crawl || SHEET_DATA[style].frames;
+        const cr = walkFrames();
         crawlIdx = 1 % cr.length; img.src = cr[crawlIdx].src; crawlNext = now + cr[crawlIdx].dur;
       }
       else { img.src = turnSeq[turnIdx].src; turnNext = nextAt(turnNext, turnSeq[turnIdx].dur, now); turnIdx++; }
@@ -623,7 +630,7 @@ function tick() {
   if (now < idleUntil) { if (img.className === "walk") pose(""); return; }
   if (img.className === "") pose("walk");
   if (Math.random() < 0.0025 * k) moodExtra();
-  if (Math.random() < MV().idle * k) {
+  if (!airborne() && Math.random() < MV().idle * k * (hopping() ? 3 : 1)) {
     idleUntil = now + 1500 + Math.random() * 2500;
     // Candy chante pendant une partie de ses pauses, sauf quand elle est ronchon
     sing = style === "candy" && mood !== "ronchon" && Math.random() < .37;
@@ -633,10 +640,11 @@ function tick() {
   if (!sheetOnce && Math.random() < MV().flip * k) { turnTo(-dir); if (mode === "turning") return; }
   if (!isSheet()) x += dir * MV().speed * k;
   y = floorY;
-  if (isSheet() && mode === "walk" && !sheetOnce && Math.random() < .004 * k) playOnce("saut");
+  if (isSheet() && mode === "walk" && !sheetOnce && !airborne() && Math.random() < .004 * k) playOnce("saut");
   if (isSheet() && mode === "walk" && !sheetOnce && now >= crawlNext) {
     // l'humeur change la cadence des images, pas la longueur du pas
-    const cr = SHEET_DATA[style].tags.crawl || SHEET_DATA[style].frames;
+    let cr = walkFrames();
+    if ((crawlIdx + 1) % cr.length === 0) { walkTag = SHEET_DATA[style].tags.sautille && mood !== "ronchon" && mood !== "vaseux" ? "sautille" : "crawl"; cr = walkFrames(); }
     // demi-tour demandé : il prend la place de la première image de la reptation (turn[0] = crawl[0]), donc aucun saut
     if (turnWanted !== null && (crawlIdx + 1) % cr.length === 0) { const nd = turnWanted; turnWanted = null; if (Date.now() < turnWantedUntil && nd !== dir) { turnTo(nd, true); return; } }
     crawlIdx = (crawlIdx + 1) % cr.length; img.src = cr[crawlIdx].src; crawlNext = nextAt(crawlNext, cr[crawlIdx].dur * MOOD_MOVE.normal.speed / MV().speed, now);
