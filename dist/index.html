@@ -61,11 +61,12 @@ const FRAME_STATES = {normal:"forme", p1:"panique", p2:"panique2", d1:"etourdi",
 const EYE_Y = {classique:123, louche:135, depareille:135, paupieres:136, dessus:115};
 for (const id in MONSTRES) EYE_Y[id] = 48 + MONSTRES[id].eyeY * 2;
 EYE_Y.limace = 138;
+EYE_Y["candy-marche"] = 134;
 let style = "goutte", FR = {}, LOOK = {}, FRONT = new Set(), HALF = null, faceSeq = null;
 // prochaine image : à partir de l'heure prévue de la précédente, sauf gros retard (l'écart ne s'accumule pas)
 const nextAt = (prev, dur, now) => (now - prev > 60 ? now : prev) + dur;
 // Persos dessinés à la main dans Aseprite : on lit la feuille et ses balises (crawl, turn).
-const SHEETS = {limace:{png:"persos/limace/sheet.png", json:"persos/limace/sheet.json"}}, SHEET_DATA = {};
+const SHEETS = {limace:{png:"persos/limace/sheet.png", json:"persos/limace/sheet.json"}, "candy-marche":{png:"persos/candy-marche/sheet.png", json:"persos/candy-marche/sheet.json"}}, SHEET_DATA = {};
 async function loadSheet(id) {
   const meta = await (await fetch(SHEETS[id].json)).json();
   const im = new Image(); im.src = SHEETS[id].png; await im.decode();
@@ -407,7 +408,7 @@ const MOOD_MOVE = {normal:{speed:1.6, idle:.008, flip:.004}, guilleret:{speed:2.
 const MV = () => MOOD_MOVE[mood] || MOOD_MOVE.normal;
 const partsBy = {classique:{tete:"antennes", pattes:"longues", bras:"bras", queue:"touffue"}, louche:{}, depareille:{}, paupieres:{}, dessus:{}};
 for (const id in MONSTRES) partsBy[id] = {};
-partsBy.limace = {};
+partsBy.limace = {}; partsBy["candy-marche"] = {};
 const PART_NAME = {"tete:antennes":"antennes", "tete:cornes":"cornes", "bouche:crocs":"crocs", "bouche:langue":"langue gourmande", "bras:bras":"petits bras",
   "bras:pinces":"pinces", "pattes:longues":"longues pattes", "pattes:palmees":"pattes palmées", "dos:ailes":"ailes", "dos:fourrure":"fourrure",
   "queue:touffue":"queue touffue", "queue:lezard":"queue de lézard"};
@@ -460,7 +461,7 @@ function pose(c) { img.className = c; }
 function squash(c = "land") { pose(c); setTimeout(() => { if (img.className === c) pose(mode === "walk" ? "walk" : mode === "nausea" ? "woozy" : ""); }, 300); }
 const CANDY_SAYS = {"Grrr !":"Hmpf !", "Hi hi !":"Hihi !", "Beurk...":"Bleh...", "Miam !":"Miam miam !", "Ouaaah !":"Kyaaah !", "Hein ?!":"Hiii ?!",
   "Hé !":"Eh oh !", "Laisse-moi...":"Je boude...", "Youpi !":"Youpiii !", "Burp !":"Hips !"};
-function bubble(text, ms = 1200) { if (style === "candy") text = CANDY_SAYS[text] || text; const b = document.createElement("div"); b.className = "bub"; b.textContent = text; fx.appendChild(b); setTimeout(() => b.remove(), ms); }
+function bubble(text, ms = 1200) { if (style === "candy" || style === "candy-marche") text = CANDY_SAYS[text] || text; const b = document.createElement("div"); b.className = "bub"; b.textContent = text; fx.appendChild(b); setTimeout(() => b.remove(), ms); }
 function heart() {
   const h = document.createElement("img"); h.src = HEART; h.className = "heart"; h.style.left = (62 + Math.random() * 40) + "px"; fx.appendChild(h);
   h.animate([{transform:"translate(0,0)", opacity:1}, {transform:`translate(${(Math.random() - .5) * 40}px,-54px)`, opacity:0}], {duration:1000, easing:"ease-out"}).finished.then(() => h.remove());

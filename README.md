@@ -106,6 +106,7 @@ Après `gh pr checkout`, `git switch test` ramène sur `test`.
 | `dist/` | L'interface : `index.html` (le Bidule), `panel.html` (le panneau), `monstre64.js` et `bidule64.js` (monstres générés), `persos/limace/` (feuille d'images de la limace) |
 | `src-tauri/` | L'app de bureau en Rust |
 | `animations/` | Les animations dessinées, un dossier par animation ; `limace-complete/gen.py` assemble la feuille de la limace |
+| `animations/candy-marche/` | Candy dessinée image par image (95 images, 22 balises) : `gen.py` génère les images, la planche et le JSON, et les copie dans `dist/persos/candy-marche/` ; `apercu_x4.gif` pour la voir bouger |
 | `moodboard/` | Direction artistique ; `planches-limace.html` (animations de la limace à dessiner) et `animations-des-bidules.html` (spec des animations d'un Bidule), à ouvrir dans un navigateur |
 | `sprites/`, `prototype/` | Fichiers Aseprite des blobs, prototype de la chambre |
 | `tools/` | `sim.py` : page de test du Bidule dans un navigateur, sans l'app |
