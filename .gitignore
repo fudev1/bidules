@@ -5,3 +5,7 @@ src-tauri/gen/schemas/
 # fichiers système et caches
 .DS_Store
 __pycache__/
+
+# réglages personnels de Claude Code
+.claude/settings.local.json
+CLAUDE.local.md
