@@ -58,11 +58,12 @@ const FRAME_STATES = {normal:"forme", p1:"panique", p2:"panique2", d1:"etourdi",
 const EYE_Y = {classique:123, louche:135, depareille:135, paupieres:136, dessus:115};
 for (const id in MONSTRES) EYE_Y[id] = 48 + MONSTRES[id].eyeY * 2;
 EYE_Y.limace = 138;
+EYE_Y.candy = 134;
 let style = "goutte", FR = {}, LOOK = {}, FRONT = new Set(), HALF = null, faceSeq = null;
 // prochaine image : à partir de l'heure prévue de la précédente, sauf gros retard (l'écart ne s'accumule pas)
 const nextAt = (prev, dur, now) => (now - prev > 60 ? now : prev) + dur;
 // Persos dessinés à la main dans Aseprite : on lit la feuille et ses balises (crawl, turn).
-const SHEETS = {limace:{png:"persos/limace/sheet.png", json:"persos/limace/sheet.json"}}, SHEET_DATA = {};
+const SHEETS = {limace:{png:"persos/limace/sheet.png", json:"persos/limace/sheet.json"}, candy:{png:"persos/candy/sheet.png", json:"persos/candy/sheet.json"}}, SHEET_DATA = {};
 async function loadSheet(id) {
   const meta = await (await fetch(SHEETS[id].json)).json();
   const im = new Image(); im.src = SHEETS[id].png; await im.decode();
@@ -78,7 +79,7 @@ async function loadSheet(id) {
     // sommet de la tête : la première ligne non vide et le milieu de ses pixels (c'est là que la souris tient le Bidule quand il pend)
     let top = f.frame.h, tl = 0, tn = 0;
     for (let i = 3; i < px.length; i += 4) if (px[i]) { const Y = Math.floor((i >> 2) / f.frame.w), X = (i >> 2) % f.frame.w; if (Y < top) { top = Y; tl = 0; tn = 0; } if (Y === top) { tl += X; tn++; } }
-    return {src:cv.toDataURL(), dur:f.duration || 100, bot, cx:(l + r) / 2, tail, head, top, tipx:tn ? tl / tn : f.frame.w / 2};
+    return {src:cv.toDataURL(), dur:f.duration || 100, bot, cx:(l + r) / 2, tail, head, top, tipx:tn ? tl / tn : f.frame.w / 2, step:f.step};
   });
   const tags = {};
   for (const t of meta.meta.frameTags || []) tags[t.name] = frames.slice(t.from, Math.min(t.to, frames.length - 1) + 1);
@@ -333,7 +334,11 @@ function pullFinish() {
 }// Un perso dessiné joue l'animation qui correspond à ce qu'il fait ; sheetOnce joue une animation une fois (saut, atterrissage, choc).
 const SHEET_MODE_TAG = {held:"attrape", fly:"vol", dizzy:"etourdi", nausea:"nausee", recover:"remis", pet:"caresse", laugh:"rire", angry:"fache",
   sulk:"boude", ooh:"intrigue", sleep:"dort", carried:"attrape", waking:"reveil", evolving:"fier"};
-let sheetOnce = null, sheetLoop = {tag:null, i:0, next:0}, fall = null, burpAt = 0, peakY = null;
+// Candy rebondit comme une balle quand on la lance ; crashed : la première chute était grosse, l'écrasement viendra à la fin des rebonds ; sing : elle chante pendant cette pause
+const BOUNCY = new Set(["candy"]);
+// pas d'étirement collant quand on la soulève : elle réagit avec ses images (balise attrape)
+const NO_PULL = new Set(["candy"]);
+let sheetOnce = null, sheetLoop = {tag:null, i:0, next:0}, fall = null, burpAt = 0, peakY = null, crashed = false, sing = false;
 const bigFall = () => peakY !== null && floorY - peakY >= (floorY + WH - minY) * 2 / 3;
 const tagDur = t => (isSheet() && SHEET_DATA[style].tags[t] || []).reduce((a, f) => a + f.dur, 0);
 // une animation jouée sur place (sans avancer), puis il reprend sa marche
@@ -349,6 +354,7 @@ function faceStep(now) {
   }
   const want = watching ? (mood === "ronchon" ? "side" : "front") : now < idleUntil ? "front" : "side";
   if (want === (FRONT.has(img.src) ? "front" : "side")) return false;
+  if (airborne()) return false;
   faceSeq = {frames:want === "front" ? HALF : HALF.slice().reverse(), i:0, next:0};
   return faceStep(now);
 }
@@ -376,7 +382,8 @@ function sheetAnim(now) {
     // petite chute : la goutte du saut du collègue ; grande chute (au moins les deux tiers de l'écran) : l'animation de Thibault, il a peur
     const L2 = T2["chute-legere"];
     if (vy < 3) { f = T2.vol[0]; fall = null; }
-    else if (!bigFall() && L2) { f = vy < 9 ? L2[0] : L2[L2.length - 1]; fall = null; }
+    // Candy panique (bras qui battent, larmes) pendant la première chute ; après le premier rebond, la chute légère
+    else if (!bigFall() && L2 && !(style === "candy" && bounces === 0)) { f = vy < 9 ? L2[0] : L2[L2.length - 1]; fall = null; }
     else {
       const C = T2.chute;
       if (!fall) fall = {i:0, next:now + C[0].dur};
@@ -395,7 +402,7 @@ function sheetAnim(now) {
   if (mode === "held" && drag && drag.shaken) tag = "secoue";
   if (mode === "fly" && vy > 0 && T2.chute) tag = "chute";
   if (mode === "sleep" && wake > 35) tag = "remue";
-  if (mode === "walk") { if (watching || now >= idleUntil || faceSeq || !FRONT.has(img.src)) return; tag = "repos"; }
+  if (mode === "walk") { if (watching) sing = false; if (watching || now >= idleUntil || faceSeq || !FRONT.has(img.src)) return; tag = sing && T2.chante ? "chante" : "repos"; }
   if (!tag || !T2[tag]) { if (tag === "boude" && T2.crawl) tag = "crawl"; else return; }
   if (sheetLoop.tag !== tag) sheetLoop = {tag, i:0, next:0};
   if (now >= sheetLoop.next) { const fr = T2[tag], k2 = sheetLoop.i % fr.length; img.src = fr[k2].src; sheetLoop.next = nextAt(sheetLoop.next, fr[k2].dur * (mode === "nausea" ? 1.6 : 1), now); sheetLoop.i++;
@@ -403,6 +410,11 @@ function sheetAnim(now) {
     if (mode === "nausea") x += dir * 2 * (fr[k2].step || 0);
   }
 }
+// Candy sautille en marchant, sauf ronchon ou vaseuse (elle garde la reptation) ; la marche ne change qu'en fin de cycle
+let walkTag = "crawl";
+const walkFrames = () => { const T = SHEET_DATA[style].tags; return T[walkTag] || T.crawl || SHEET_DATA[style].frames; };
+const hopping = () => isSheet() && walkTag === "sautille" && !!SHEET_DATA[style].tags.sautille;
+const airborne = () => hopping() && crawlIdx % 4 !== 0;
 let crawlIdx = 0, crawlNext = 0, turnSeq = null, turnIdx = 0, turnNext = 0, pendingDir = 1, turnWanted = null, turnWantedUntil = 0;
 let moodMode = "auto", mood = null, moodReason = "";
 const MOOD_LABEL = {guilleret:"Guilleret", ronchon:"Ronchon", vaseux:"Vaseux", stresse:"Stressé", lune:"Dans la lune"};
@@ -411,7 +423,7 @@ const MOOD_MOVE = {normal:{speed:1.6, idle:.008, flip:.004}, guilleret:{speed:2.
 const MV = () => MOOD_MOVE[mood] || MOOD_MOVE.normal;
 const partsBy = {classique:{tete:"antennes", pattes:"longues", bras:"bras", queue:"touffue"}, louche:{}, depareille:{}, paupieres:{}, dessus:{}};
 for (const id in MONSTRES) partsBy[id] = {};
-partsBy.limace = {};
+partsBy.limace = {}; partsBy.candy = {};
 const PART_NAME = {"tete:antennes":"antennes", "tete:cornes":"cornes", "bouche:crocs":"crocs", "bouche:langue":"langue gourmande", "bras:bras":"petits bras",
   "bras:pinces":"pinces", "pattes:longues":"longues pattes", "pattes:palmees":"pattes palmées", "dos:ailes":"ailes", "dos:fourrure":"fourrure",
   "queue:touffue":"queue touffue", "queue:lezard":"queue de lézard"};
@@ -428,7 +440,7 @@ function buildFrames(s) {
     for (const lx of [0, 1]) for (const ly of [-1, 0, 1]) { const key = lx + "," + ly; nl[key] = T2.regard ? T2.regard[LOOK_ORDER.indexOf(key)].src : front; }
     // images de face ; HALF = début du demi-tour, du profil jusqu'à l'image de face
     const mid = T2.turn ? T2.turn.reduce((b, f, i) => f.dur > T2.turn[b].dur ? i : b, 0) : -1;
-    FRONT = new Set(["repos", "regard", "baille", "reforme", "atterrissage", "intrigue", "caresse", "rire", "fache", "remis", "reveil", "fier"].flatMap(t => (T2[t] || []).map(f => f.src)));
+    FRONT = new Set(["repos", "regard", "baille", "reforme", "atterrissage", "intrigue", "caresse", "rire", "fache", "chante", "remis", "reveil", "fier"].flatMap(t => (T2[t] || []).map(f => f.src)));
     if (mid > 0) FRONT.add(T2.turn[mid].src);
     HALF = mid > 0 ? T2.turn.slice(0, mid + 1) : null; faceSeq = null;
     FR = nf; LOOK = nl; style = s; return;
@@ -461,7 +473,9 @@ let drag = null, samples = [], want = null, sending = false, flap = null;
 function face() { img.style.setProperty("--sx", dir < 0 ? -1 : 1); img.style.scale = dir < 0 ? "-1 1" : "1 1"; }
 function pose(c) { img.className = c; }
 function squash(c = "land") { pose(c); setTimeout(() => { if (img.className === c) pose(mode === "walk" ? "walk" : mode === "nausea" ? "woozy" : ""); }, 300); }
-function bubble(text, ms = 1200) { const b = document.createElement("div"); b.className = "bub"; b.textContent = text; fx.appendChild(b); setTimeout(() => b.remove(), ms); }
+const CANDY_SAYS = {"Grrr !":"Hmpf !", "Hi hi !":"Hihi !", "Beurk...":"Bleh...", "Miam !":"Miam miam !", "Ouaaah !":"Kyaaah !", "Hein ?!":"Hiii ?!",
+  "Hé !":"Eh oh !", "Laisse-moi...":"Je boude...", "Youpi !":"Youpiii !", "Burp !":"Hips !"};
+function bubble(text, ms = 1200) { if (style === "candy") text = CANDY_SAYS[text] || text; const b = document.createElement("div"); b.className = "bub"; b.textContent = text; fx.appendChild(b); setTimeout(() => b.remove(), ms); }
 function heart() {
   const h = document.createElement("img"); h.src = HEART; h.className = "heart"; h.style.left = (62 + Math.random() * 40) + "px"; fx.appendChild(h);
   h.animate([{transform:"translate(0,0)", opacity:1}, {transform:`translate(${(Math.random() - .5) * 40}px,-54px)`, opacity:0}], {duration:1000, easing:"ease-out"}).finished.then(() => h.remove());
@@ -500,12 +514,13 @@ function land() {
   vx = vy = 0; angle = 0; img.style.rotate = "0deg"; bounces = 0;
   if (nausea) {
     mode = "nausea"; reactUntil = Date.now() + 3500; img.src = FR.n1; bubble("Beurk...", 1400); say("secoue : il a la nausee");
-  } else if (isSheet() && SHEET_DATA[style].tags.ecrase && bigFall()) {
+  } else if (isSheet() && SHEET_DATA[style].tags.ecrase && (bigFall() || crashed)) {
+    if (style === "candy") bubble("Grrr !", 1400);
     mode = "splat"; reactUntil = Date.now() + tagDur("ecrase") + 1500 + Math.random() * 1500; say(`chute de haut (${Math.round(floorY - peakY)} px) : il s'ecrase`);
   } else if (maxImpact > 24 && !isSheet()) {
     mode = "dizzy"; dizzyUntil = Date.now() + 2400; img.src = FR.d1; say(`atterrissage brutal (${Math.round(maxImpact)}) : il est etourdi`);
   } else { mode = "walk"; img.src = FR.normal; say("atterrissage en douceur"); }
-  playOnce(mode === "splat" ? "ecrase" : "atterrissage"); fall = null; peakY = null;
+  playOnce(mode === "splat" ? "ecrase" : "atterrissage"); fall = null; peakY = null; crashed = false;
   nausea = false; maxImpact = 0; if (!isSheet()) squash();
 }
 let lastT = performance.now();
@@ -531,16 +546,24 @@ function tick() {
   }
   if (mode === "fly") {
     peakY = peakY === null ? y : Math.min(peakY, y);
-    vy += 1.3 * k; vx *= Math.pow(0.985, k); x += vx * k; y += vy * k; angle += vx * 1.2 * k;
-    if (x < minX) { x = minX; vx = -vx * 0.25; squash("wall"); playOnce("choc-bord"); }
-    if (x > maxX) { x = maxX; vx = -vx * 0.25; squash("wall"); playOnce("choc-bord"); }
+    vy += 1.3 * k; vx *= Math.pow(0.985, k); x += vx * k; y += vy * k; angle += vx * (BOUNCY.has(style) ? .7 : 1.2) * k; if (BOUNCY.has(style)) angle = Math.max(-60, Math.min(60, angle));
+    if (x < minX) { x = minX; vx = -vx * (BOUNCY.has(style) ? .7 : .25); squash("wall"); playOnce("choc-bord"); }
+    if (x > maxX) { x = maxX; vx = -vx * (BOUNCY.has(style) ? .7 : .25); squash("wall"); playOnce("choc-bord"); }
     if (y < minY) { y = minY; vy = -vy * 0.4; }
     if (y >= floorY) {
       y = floorY; const impact = Math.abs(vy); maxImpact = Math.max(maxImpact, impact);
-      if (impact > 7 && bounces < 4 && !isSheet()) { vy = -impact * 0.45; vx *= 0.7; angle *= 0.4; bounces++; squash(); }
+      if (impact > 7 && bounces < (isSheet() ? 6 : 4) && (!isSheet() || BOUNCY.has(style))) {
+        if (isSheet() && bigFall()) crashed = true;
+        if (isSheet()) {
+          // elle rebondit dans tous les sens : à chaque rebond, un élan de côté au hasard et un coup de toupie
+          vy = -impact * (.55 + Math.random() * .25); vx = vx * .7 + (Math.random() - .5) * Math.min(impact, 16) * 1.2;
+          angle = angle * .5 + (Math.random() - .5) * 50; peakY = y; playOnce("rebond");
+        } else { vy = -impact * 0.45; vx *= 0.7; angle *= 0.4; squash(); }
+        bounces++;
+      }
       else land();
     }
-    img.style.rotate = (mode === "fly" && !isSheet() ? angle : 0).toFixed(1) + "deg";
+    img.style.rotate = (mode === "fly" && (!isSheet() || (BOUNCY.has(style) && bounces > 0)) ? angle : 0).toFixed(1) + "deg";
     push(); return;
   }
   const now = Date.now();
@@ -557,7 +580,7 @@ function tick() {
     if (now >= turnNext) {
       if (turnIdx >= turnSeq.length) {
         mode = "walk"; dir = pendingDir; face(); pose("walk");
-        const cr = SHEET_DATA[style].tags.crawl || SHEET_DATA[style].frames;
+        const cr = walkFrames();
         crawlIdx = 1 % cr.length; img.src = cr[crawlIdx].src; crawlNext = now + cr[crawlIdx].dur;
       }
       else { img.src = turnSeq[turnIdx].src; turnNext = nextAt(turnNext, turnSeq[turnIdx].dur, now); turnIdx++; }
@@ -609,14 +632,21 @@ function tick() {
   if (now < idleUntil) { if (img.className === "walk") pose(""); return; }
   if (img.className === "") pose("walk");
   if (Math.random() < 0.0025 * k) moodExtra();
-  if (Math.random() < MV().idle * k) { idleUntil = now + 1500 + Math.random() * 2500; return; }
+  if (!airborne() && Math.random() < MV().idle * k * (hopping() ? 3 : 1)) {
+    idleUntil = now + 1500 + Math.random() * 2500;
+    // Candy chante pendant une partie de ses pauses, sauf quand elle est ronchon
+    sing = style === "candy" && mood !== "ronchon" && Math.random() < .37;
+    if (sing && Math.random() < .4) bubble("La la la !", 1200);
+    return;
+  }
   if (!sheetOnce && Math.random() < MV().flip * k) { turnTo(-dir); if (mode === "turning") return; }
   if (!isSheet()) x += dir * MV().speed * k;
   y = floorY;
-  if (isSheet() && mode === "walk" && !sheetOnce && Math.random() < .004 * k) playOnce("saut");
+  if (isSheet() && mode === "walk" && !sheetOnce && !airborne() && Math.random() < .004 * k) playOnce("saut");
   if (isSheet() && mode === "walk" && !sheetOnce && now >= crawlNext) {
     // l'humeur change la cadence des images, pas la longueur du pas
-    const cr = SHEET_DATA[style].tags.crawl || SHEET_DATA[style].frames;
+    let cr = walkFrames();
+    if ((crawlIdx + 1) % cr.length === 0) { walkTag = SHEET_DATA[style].tags.sautille && mood !== "ronchon" && mood !== "vaseux" ? "sautille" : "crawl"; cr = walkFrames(); }
     // demi-tour demandé : il prend la place de la première image de la reptation (turn[0] = crawl[0]), donc aucun saut
     if (turnWanted !== null && (crawlIdx + 1) % cr.length === 0) { const nd = turnWanted; turnWanted = null; if (Date.now() < turnWantedUntil && nd !== dir) { turnTo(nd, true); return; } }
     crawlIdx = (crawlIdx + 1) % cr.length; img.src = cr[crawlIdx].src; crawlNext = nextAt(crawlNext, cr[crawlIdx].dur * MOOD_MOVE.normal.speed / MV().speed, now);
@@ -668,7 +698,7 @@ function clicked() {
     else { img.src = FR.remue; bubble("Hm...", 700); setTimeout(() => { if (mode === "sleep") img.src = FR.dort; }, 700); }
     return;
   }
-  disturb();
+  disturb(); sing = false;
   clicks = clicks.filter(t => now - t < 1500); clicks.push(now);
   if (!["walk", "pet", "laugh"].includes(mode)) return;
   if (clicks.length >= 7) { clicks = []; react("angry", 1300, FR.fache, "shake"); bubble("Grrr !", 1300); say("chatouilles : il se fache"); }
@@ -690,9 +720,9 @@ img.addEventListener("pointermove", e => {
   const dx = e.screenX - drag.sx, dy = e.screenY - drag.sy;
   if (!drag.moved && Math.abs(dx) + Math.abs(dy) > 3) {
     drag.moved = true;
-    if (isSheet() && !drag.asleep && !["fly", "splat", "reform"].includes(mode) && y >= floorY - 4) pullStart();
+    if (isSheet() && !NO_PULL.has(style) && !drag.asleep && !["fly", "splat", "reform"].includes(mode) && y >= floorY - 4) pullStart();
     if (drag.asleep) { mode = "carried"; pose("dangle"); img.src = isSheet() ? FR.p1 : FR.dort; holdByHead(e.screenX, e.screenY); say("porte endormi"); }
-    else { mode = "held"; struggle(true); disturb(); }
+    else { mode = "held"; struggle(true); disturb(); if (style === "candy") bubble("Hé !", 900); }
   }
   if (!drag.moved) return;
   drag.lastX = e.screenX; drag.lastY = e.screenY;
@@ -737,7 +767,7 @@ img.addEventListener("pointerup", async () => {
   if (asleep) { bubble("Hein ?!", 900); say(Math.hypot(vx, vy) > 10 ? "reveille : lance" : "reveille : repose au sol"); calm = 0; wake = 0; }     // attrapé endormi, il ne se rendort pas : il retombe réveillé
   disturb();
   say(`lance : vitesse ${Math.round(vx)}, ${Math.round(vy)}`);
-  if (!isSheet()) img.src = FR.p1; pose(""); mode = "fly"; bounces = 0; maxImpact = 0;
+  if (!isSheet()) img.src = FR.p1; pose(""); mode = "fly"; bounces = 0; maxImpact = 0; crashed = false;
   if (isSheet()) sheetAnim(Date.now());
   if (fromPull) img.style.opacity = "";
 });

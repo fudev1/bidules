@@ -1,0 +1,12 @@
+#!/bin/sh
+# Garde-fou git : refuse un push vers main depuis ton poste.
+# main se met à jour par une pull request test -> main sur GitHub, jamais par un push.
+# Activation, une fois par clone : git config core.hooksPath .githooks
+while read local_ref local_sha remote_ref remote_sha; do
+  if [ "$remote_ref" = "refs/heads/main" ]; then
+    echo "Push vers main refusé : passe par une branche et une pull request vers test." >&2
+    echo "(Vraie exception : git push --no-verify)" >&2
+    exit 1
+  fi
+done
+exit 0
