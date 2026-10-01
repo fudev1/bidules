@@ -37,7 +37,7 @@ Mise à jour : 30 septembre 2026. Ce fichier suit l'état du projet : ce qui est
   - étirement collé au sol, deux chutes, écrasement ;
   - demi-tours, passage profil / face, marche sans glissade ;
   - animations à 60 images par seconde.
-- Animations de Thibault branchées : baille, dort, mange, rot, chute.
+- Animations de Thibault branchées : reptation (12 images, dos plus droit), demi-tour aligné dessus, saut, baille, dort, mange, rot, chute. Tout est centré sur 31,5 et posé sur la ligne 60 ; l'animation `grimpe` n'est pas branchée (retirée du fichier Aseprite).
 - Candy (marche dessinée) : second style à côté de la Candy générée. Marche, demi-tour, pause, regard, saut, chutes, écrasement, bâillement, sommeil, caresse, rire, bouderie. Pas encore : mange, rot, évolution, parties.
 - Lien avec Claude : l'humeur est lue dans les heures des prompts de `~/.claude` et `~/.claude-masana`, jamais dans le texte.
 - Outils : `animations/limace-complete/gen.py` assemble la feuille de la limace, `tools/sim.py` fait tourner le Bidule dans un navigateur sans l'app.

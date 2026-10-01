@@ -74,6 +74,24 @@ L'interface est embarquée dans l'app à la compilation : après une modificatio
 - Une pull request relue est mergée sur `test`. Chacun peut ainsi continuer à partir de `test` sans devoir reprendre son travail à chaque changement de `main`.
 - `main` est mise à jour depuis `test`, une fois ce qui est sur `test` validé.
 
+### Avec `gh`
+
+[gh](https://cli.github.com) est l'outil en ligne de commande de GitHub. Il évite de passer par le site pour les pull requests. Installation : `brew install gh`, puis `gh auth login` une fois.
+
+| Commande | Ce qu'elle fait |
+| --- | --- |
+| `gh repo clone fudev1/bidules` | Clone le repo avec ton compte GitHub connecté à `gh`. |
+| `gh pr list` | Liste les pull requests ouvertes, avec leur numéro. |
+| `gh pr status` | Montre tes pull requests et celles qui attendent ta relecture. |
+| `gh pr checkout 12` | Récupère la branche de la pull request n°12 et bascule dessus. Pratique pour essayer le travail d'un collègue : ensuite `mise run bidule`. |
+| `gh pr diff 12` | Affiche les changements de la pull request n°12 dans le terminal. |
+| `gh pr view 12 --web` | Ouvre la pull request n°12 dans le navigateur. |
+| `gh pr create --fill` | Ouvre une pull request depuis ta branche, vers `test` (la branche par défaut). `--fill` reprend le titre et le texte de tes commits. |
+| `gh pr review 12 --approve` | Approuve la pull request n°12. `--comment -b "..."` laisse un commentaire à la place. |
+| `gh pr merge 12` | Merge la pull request n°12 sur `test`. La commande demande la méthode (merge, squash ou rebase). |
+
+Après `gh pr checkout`, `git switch test` ramène sur `test`.
+
 ## Stack
 
 - **App de bureau** : [Tauri 2](https://tauri.app) en Rust. Fenêtre transparente toujours au premier plan, icône dans la barre de menus, lecture des journaux de Claude Code (`serde`, `serde_json`).
@@ -109,6 +127,8 @@ L'interface est embarquée dans l'app à la compilation : après une modificatio
 Une animation qui remplace une existante (même nom de balise, par exemple `dort`) est prise en compte sans toucher au code. Une nouvelle balise doit aussi être utilisée dans `dist/index.html`.
 
 Format attendu : 64 × 64 pixels, fond transparent, tourné vers la droite (l'app le retourne pour la gauche). De profil, le bas du contour est sur la ligne 60, comme la reptation. De face, le corps est placé comme l'image de face du demi-tour.
+
+Le retournement gauche/droite se fait autour d'un axe que l'app calcule depuis `crawl[0]` et la dernière image de `turn` : ici 31,5, le milieu de l'image, donc un simple miroir de l'image. Pour que reptation droite, demi-tour et reptation gauche s'enchaînent sans saut : `turn[0]` est identique à `crawl[0]`, `turn[12]` en est le miroir exact (reflet compris), et la reptation retournée doit tenir dans l'image (x de 2 à 61). Toutes les animations sont centrées sur 31,5 et posées sur la ligne 60. Si la reptation change, `tools/align_turn.py` reconstruit le demi-tour (voir son en-tête) ; le saut commence et finit par les images de ce demi-tour, `gen.py` les reprend tout seul.
 
 ## Tester sans l'app
 
