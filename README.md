@@ -80,7 +80,7 @@ L'interface est embarquée dans l'app à la compilation : après une modificatio
 
 | Commande | Ce qu'elle fait |
 | --- | --- |
-| `gh repo clone fudev1/bidules` | Clone le repo avec ton compte GitHub, sans configurer de clé à part. |
+| `gh repo clone fudev1/bidules` | Clone le repo avec ton compte GitHub connecté à `gh`. |
 | `gh pr list` | Liste les pull requests ouvertes, avec leur numéro. |
 | `gh pr status` | Montre tes pull requests et celles qui attendent ta relecture. |
 | `gh pr checkout 12` | Récupère la branche de la pull request n°12 et bascule dessus. Pratique pour essayer le travail d'un collègue : ensuite `mise run bidule`. |
