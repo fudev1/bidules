@@ -1,6 +1,6 @@
 # Notes du projet
 
-Mise à jour : 30 septembre 2026. Ce fichier suit l'état du projet : ce qui est décidé, ce qui reste à trancher, ce qui est fait et ce qui reste à faire. La vision, l'installation et la stack sont dans le [README](README.md).
+Mise à jour : 1er octobre 2026. Ce fichier suit l'état du projet : ce qui est décidé, ce qui reste à trancher, ce qui est fait et ce qui reste à faire. La vision, l'installation et la stack sont dans le [README](README.md).
 
 ## Décisions
 
@@ -38,7 +38,7 @@ Mise à jour : 30 septembre 2026. Ce fichier suit l'état du projet : ce qui est
   - demi-tours, passage profil / face, marche sans glissade ;
   - animations à 60 images par seconde.
 - Animations de Thibault branchées : reptation (12 images, dos plus droit), demi-tour aligné dessus, saut, baille, dort, mange, rot, chute. Tout est centré sur 31,5 et posé sur la ligne 60 ; l'animation `grimpe` n'est pas branchée (retirée du fichier Aseprite).
-- Candy : le seul style Candy, dessiné image par image (planche, comme la limace), bondissante au lieu de s'étaler. Marche, demi-tour, pause, regard, saut en "boing boing", rebonds réels et dans tous les sens quand on la lance (élan de côté et toupie au hasard à chaque rebond, inclinaison limitée à 60° ; réservés à Candy, `BOUNCY` dans `index.html`), pas d'étirement quand on la soulève (`NO_PULL`) : elle râle "Hey !", apeurée et fâchée, grosse chute suivie d'une bouderie, bâillement, sommeil (de face), caresse, rire, bouderie, chant pendant 37 % des pauses (jamais en humeur ronchon, un clic ou la souris le coupe). Pas encore : mange, rot, évolution, parties.
+- Candy : le seul style Candy, dessiné image par image (planche, comme la limace), bondissante au lieu de s'étaler. Marche sautillante comme un enfant (ronchon ou vaseuse : elle garde la reptation), demi-tour, pause, regard, saut en "boing boing", rebonds réels et dans tous les sens quand on la lance (élan de côté et toupie au hasard à chaque rebond, inclinaison limitée à 60° ; réservés à Candy, `BOUNCY` dans `index.html`), pas d'étirement quand on la soulève (`NO_PULL`) : elle râle "Hey !", apeurée et fâchée, elle panique en tombant (bras qui battent, quelques larmes, pas pendant les rebonds), grosse chute suivie d'une bouderie, bâillement, sommeil (de face), caresse, rire, bouderie, chant pendant 37 % des pauses (jamais en humeur ronchon, un clic ou la souris le coupe). Pas encore : mange, rot, évolution, parties.
 - Lien avec Claude : l'humeur est lue dans les heures des prompts de `~/.claude` et `~/.claude-masana`, jamais dans le texte.
 - Outils : `animations/limace-complete/gen.py` assemble la feuille de la limace, `tools/sim.py` fait tourner le Bidule dans un navigateur sans l'app.
 - Documents :

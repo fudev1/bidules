@@ -370,6 +370,7 @@ MOUTHS.update({
 })
 VEIN = [".V.V.", "VV.VV", ".....", "VV.VV", ".V.V."]
 NOTE = ["..K.", "..KK", "..K.", "..K.", "KKK.", "KKK."]
+TEAR = [".O.", "OAO", "OAO", "OAO", ".O."]
 
 
 def Pz(**kw):
@@ -391,6 +392,12 @@ def render(P):
         ha, hb = (8.0, 15.0) if P["fx"] == "notes1" else (12.0, 11.0)
         im.stamp(P["bx"] + 20.0, P["by"] - ha, NOTE, {"K": "O"})
         im.stamp(P["bx"] + 25.0, P["by"] - hb, NOTE, {"K": "O"})
+    if str(P.get("fx")).startswith("larmes"):
+        # trois larmes qui quittent les yeux et partent vers le haut et le côté ; la boucle de la chute fait quatre images
+        k = int(P["fx"][6:])
+        for s, off in ((-1, 0), (1, 1), (-1, 2)):
+            t = ((k + off) % 4) / 3
+            im.stamp(P["bx"] + s * (10.5 + 8 * t), P["by"] + 1 - 14 * t, TEAR, {})
     return im
 
 
@@ -418,6 +425,32 @@ def crawl_pose(t):
 
 def anim_crawl():
     return [(crawl_pose(t), 110) for t in range(8)]
+
+
+HOP_STEP = [0, 3, 3, 2]   # avance (en pixels) à l'entrée de chaque image du bond : rien pendant le contact, le pas se fait en l'air
+
+
+def hop_pose(k):
+    """un bond sur quatre images (contact, montée, sommet, descente) ; le second bond a l'autre pied devant"""
+    h, ph = divmod(k, 4)
+    s = 1 - 2 * h
+    if ph == 0:
+        return dict(crawl_pose(4 * h), **bod(14.2, 12.6), ear=(4, 4), bow=(0, 1.2), wing=(0, 1.5), step=0)
+    if ph == 1:
+        feet = [(36.0, 4.0, s), (29.0, 2.5, -s)]
+        return jump_body(12.6, 14.6, 4, v=90, tilt=6, ear=(-14, -14), arms_up=.5, arm=(20, 0), bow=(0, -1.2), wing=(0, -1.8),
+                         feet=sorted(feet, key=lambda f: f[2]), step=HOP_STEP[1])
+    if ph == 2:
+        feet = [(34.0, 6.0, s), (30.0, 5.5, -s)]
+        return jump_body(13.2, 14.0, 6, v=90, tilt=3, ear=(-4, -4), arms_up=.8, bow=(.8, .6), wing=(0, 1),
+                         feet=sorted(feet, key=lambda f: f[2]), step=HOP_STEP[2])
+    feet = [(36.0, 2.0, s), (30.0, 1.5, -s)]
+    return jump_body(12.6, 14.6, 3, v=90, tilt=0, ear=(-20, -20), arms_up=.5, arm=(-20, 0), bow=(0, -1.6), wing=(0, -2.2),
+                     feet=sorted(feet, key=lambda f: f[2]), step=HOP_STEP[3])
+
+
+def anim_sautille():
+    return [(hop_pose(k), [90, 80, 90, 80][k % 4]) for k in range(8)]
 
 
 def anim_turn():
@@ -532,12 +565,13 @@ def anim_atterrissage():
 
 
 def anim_chute():
+    """elle tombe en panique : les bras battent, quelques larmes s'échappent. Deux images d'entrée, puis la boucle des quatre dernières"""
     out = []
-    for k in range(5):
-        sw = [0, 0, 1, -1, 1][k]
+    for k in range(6):
+        sw = [0, 0, 1, -1, 1, -1][k]
         eye, mouth = ("teary", "wave") if k % 2 == 0 else ("teary2", "wave2")
-        P = jump_body(12.4, 15.0, 9, eye=eye, mouth=mouth, arms_up=1, ear=(-20 + 6 * sw, -20 - 6 * sw), tilt=4 * sw,
-                      bow=(sw, -2), wing=(0, -2.4), feet=stand_feet(0, 4.6, lift=(9 + sw, 9 - sw)))
+        P = jump_body(12.4, 15.0, 9, eye=eye, mouth=mouth, arms_up=.8 * (1 - k % 2), ear=(-20 + 6 * sw, -20 - 6 * sw), tilt=4 * sw,
+                      bow=(sw, -2), wing=(0, -2.4), feet=stand_feet(0, 4.6, lift=(9 + sw, 9 - sw)), fx=f"larmes{k}")
         out.append((P, 70 if k < 2 else 80))
     return out
 
@@ -668,7 +702,7 @@ def build():
                        ("repos", anim_repos()), ("regard", anim_regard()), ("attrape", anim_attrape()), ("chute", anim_chute()),
                        ("ecrase", anim_ecrase()), ("reforme", anim_reforme()), ("baille", anim_baille()), ("dort", anim_dort()), ("remue", anim_remue()),
                        ("caresse", anim_caresse()), ("rire", anim_rire()), ("fache", anim_fache()), ("chante", anim_chante()), ("intrigue", anim_intrigue()),
-                       ("secoue", anim_secoue()), ("nausee", anim_nausee())):
+                       ("secoue", anim_secoue()), ("nausee", anim_nausee()), ("sautille", anim_sautille())):
         add(name, anim)
     return frames, tags
 
@@ -744,8 +778,8 @@ def write_outputs(frames, tags, out, png_name="sheet.png", json_name="sheet.json
 
     png = b"\x89PNG\r\n\x1a\n" + chunk(b"IHDR", struct.pack(">IIBBBBB", N * n, N, 8, 6, 0, 0, 0))
     png += chunk(b"IDAT", zlib.compress(bytes(raw), 9)) + chunk(b"IEND", b"")
-    meta = {"frames": {f"candy {k}.aseprite": {"frame": {"x": k * N, "y": 0, "w": N, "h": N}, "duration": d}
-                       for k, (_, d, _) in enumerate(frames)},
+    meta = {"frames": {f"candy {k}.aseprite": {"frame": {"x": k * N, "y": 0, "w": N, "h": N}, "duration": d, **({"step": P["step"]} if "step" in P else {})}
+                       for k, (_, d, P) in enumerate(frames)},
             "meta": {"app": "bidule", "image": "candy_sheet.png", "format": "RGBA8888", "size": {"w": N * n, "h": N}, "scale": "1",
                      "frameTags": [{"name": nm, "from": a, "to": b, "direction": "forward"} for nm, a, b in tags]}}
     os.makedirs(out, exist_ok=True)
@@ -778,7 +812,7 @@ if __name__ == "__main__":
     T = {n: (a, b) for n, a, b in tags}
     write_png(os.path.join(DIST, "thumb.png"), frames[T["repos"][0]][0].g)
     from gif import write_gif
-    seq = [("crawl", 3)] + [(nm, 1) for nm in ("turn", "repos")] + [("attrape", 3), ("caresse", 3), ("rire", 3), ("fache", 3), ("chante", 3), ("saut-face", 1), ("ecrase", 1), ("reforme", 1), ("dort", 2)]
+    seq = [("crawl", 3), ("sautille", 3)] + [(nm, 1) for nm in ("turn", "repos")] + [("attrape", 3), ("chute", 3), ("caresse", 3), ("rire", 3), ("fache", 3), ("chante", 3), ("saut-face", 1), ("ecrase", 1), ("reforme", 1), ("dort", 2)]
     order = []
     for nm, rep_ in seq:
         order += list(range(T[nm][0], T[nm][1] + 1)) * rep_
@@ -786,7 +820,7 @@ if __name__ == "__main__":
     write_gif(os.path.join(HERE, "apercu_x4.gif"), rgb, [round(frames[i][1] / 10) for i in order], scale=4)
     if prev:
         os.makedirs(prev, exist_ok=True)
-        groups = [("crawl", ["crawl"]), ("turn", ["turn"]), ("saut", ["saut-face", "vol", "chute-legere", "rebond", "atterrissage"]), ("crash", ["chute", "ecrase", "reforme"]),
+        groups = [("crawl", ["crawl", "sautille"]), ("turn", ["turn"]), ("saut", ["saut-face", "vol", "chute-legere", "rebond", "atterrissage"]), ("crash", ["chute", "ecrase", "reforme"]),
                   ("autres", ["repos", "regard", "attrape", "baille"]),
                   ("reste", ["dort", "remue", "caresse", "rire", "fache", "chante", "intrigue", "secoue", "nausee"])]
         for gname, names in groups:
