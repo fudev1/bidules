@@ -1,8 +1,15 @@
 [tools]
 rust = "stable"
 
+# Du fichier Aseprite à l'app : réexporte les animations enregistrées et rassemble la feuille de la limace (voir tools/publier.py)
+[tasks.publier]
+description = "Réexporte les animations Aseprite enregistrées et met à jour la feuille de la limace"
+dir = "{{config_root}}"
+run = "python3 tools/publier.py"
+
 # Temporaire : lance le Bidule de test
 [tasks.bidule]
-description = "Compile et lance le Bidule"
+description = "Publie les animations, compile et lance le Bidule"
+depends = ["publier"]
 dir = "{{config_root}}/src-tauri"
 run = "cargo build && ./target/debug/bidule-desktop"

@@ -16,12 +16,13 @@ A, B, C, D = (0x63, 0x9b, 0xff, 255), (0, 0, 0, 255), (0x45, 0x77, 0xe0, 255), (
 BLEU = dict(A=A, C=C, D=D)
 VERT = dict(A=(0x7f, 0xd4, 0x6a, 255), C=(0x4f, 0xae, 0x45, 255), D=(0xc6, 0xf0, 0xb0, 255))
 GOLD, GOLD2, WHITE, MIST = (0xff, 0xd2, 0x3f, 255), (0xff, 0xf3, 0xb0, 255), (255, 255, 255, 255), (0xd8, 0xdd, 0xe6, 255)
-# l'image de face du demi-tour sert de modèle aux animations générées plus bas (centrée sur l'axe 31,5, bas sur la ligne 60)
+# l'image de face du demi-tour (= la pose de repos : queue à gauche) sert de modèle aux animations générées plus bas ; le corps est centré sur l'axe 31,5,
+# la queue dépasse à gauche, bas sur la ligne 60
 front = TURN[6][0]
 mask0 = {(x, y) for y in range(64) for x in range(64) if front[y][x][3]}
 TOP, BOT = min(p[1] for p in mask0), max(p[1] for p in mask0)
-H, CX = BOT - TOP + 1, (min(p[0] for p in mask0) + max(p[0] for p in mask0)) / 2
-EYES, MOUTH = [(33, 43.5), (40, 43.5)], (37, 50)
+H, CX = BOT - TOP + 1, 31.5
+EYES, MOUTH = [(28, 45.5), (35, 45.5)], (32, 51)      # yeux et bouche de la pose de repos
 
 def params(sx=1, sy=1, shear=0, neck=0, dy=0, wob=0, top=None):
     if top is not None: dy = top - (BOT + .5 - H * sy)
@@ -117,11 +118,9 @@ ANIMS = [
   ("repos", [(F(1.02, .98), "line", "line", BLEU, None, 520), (F(), "line", "line", BLEU, None, 520)]),
   ("attrape", [(F(.86, 1.34, neck=.45, wob=2.2, top=11), "dot", "open", BLEU, "sweat", 110), (F(.84, 1.4, neck=.5, wob=-2.2, top=11), "dot", "open", BLEU, None, 110),
                (F(.86, 1.34, neck=.45, wob=1.5, top=11), "dot", "wavy", BLEU, "sweat", 110), (F(.83, 1.44, neck=.52, wob=-1.5, top=11), "dot", "open", BLEU, None, 110)]),
-  ("secoue", [(F(1.2, .84, shear=4), "x", "wavy", VERT, "sweat", 80), (F(.82, 1.22, shear=-4, top=16), "x", "wavy", VERT, None, 80)]),
   ("choc-bord", [(F(.72, 1.22), "closed", "small", BLEU, None, 140)]),
   ("etourdi", [(F(1.04, .97, wob=2.2), "x", "wavy", BLEU, ("stars", 0), 140), (F(1.04, .97), "x", "wavy", BLEU, ("stars", 1), 140),
                (F(1.04, .97, wob=-2.2), "x", "wavy", BLEU, ("stars", 0), 140), (F(1.04, .97), "x", "wavy", BLEU, ("stars", 1), 140)]),
-  ("nausee", [(F(1.12, .9, wob=1.6), ("up", "down"), "wavy", VERT, None, 220), (F(1.14, .88, wob=-1.6), ("down", "up"), "wavy", VERT, "sweat", 220)]),
   ("remis", [(F(1, 1, shear=3), "closed", "line", BLEU, None, 70), (F(1, 1, shear=-3), "closed", "line", BLEU, None, 70), (F(1, 1, shear=2), "line", "smile", BLEU, None, 70), (F(), "line", "smile", BLEU, None, 90)]),
   ("caresse", [(F(1.1, .92), "happy", "smile", BLEU, None, 300), (F(1.04, .97), "happy", "smile", BLEU, None, 300)]),
   ("rire", [(F(1.08, .93), "happy", "open", BLEU, None, 120), (F(.95, 1.06, dy=-2), "happy", "open", BLEU, None, 120)]),
@@ -132,11 +131,9 @@ ANIMS = [
   ("baille", [(F(.95, 1.08), "closed", "small", BLEU, None, 220), (F(.88, 1.2), "closed", "yawn", BLEU, None, 450), (F(1.05, .95), "closed", "small", BLEU, None, 220)]),
   ("dort", [(F(1.12, .88), "closed", "small", BLEU, None, 1300), (F(1.16, .85), "closed", "small", BLEU, None, 1300)]),
   ("remue", [(F(1.12, .88), ("line", "closed"), "small", BLEU, None, 600)]),
-  ("porte-endormi", [(F(.9, 1.28, neck=.4, top=11), "closed", "small", BLEU, None, 900), (F(.9, 1.3, neck=.42, wob=1, top=11), "closed", "small", BLEU, None, 900)]),
   ("reveil", [(F(.9, 1.18), "closed", "o", BLEU, None, 160), (F(.92, 1.14), "line", "small", BLEU, None, 160), (F(1.04, .97), "line", "line", BLEU, None, 160)]),
   ("fier", [(F(.92, 1.12), "happy", "smile", BLEU, None, 1500)]),
 ]
-REGARD = [((0, -1), "0,-1"), ((0, 0), "0,0"), ((0, 1), "0,1"), ((1, -1), "1,-1"), ((1, 0), "1,0"), ((1, 1), "1,1")]
 
 out_frames, tags = [], []
 def add(name, seq):
@@ -151,10 +148,45 @@ for k in range(1, 7):
 for k, dx in ((7, -3), (8, -1)): SAUT[k] = (shift_xy(SAUT[k][0], dx, 0), SAUT[k][1])
 S0 = add("saut", SAUT)
 # sous-parties de son saut, dessinées à la main : vol (la boule en l'air), atterrissage (la flaque qui se reforme), saut depuis la face
-tags += [("vol", S0 + 16, S0 + 18), ("chute-legere", S0 + 19, S0 + 20), ("atterrissage", S0 + 21, S0 + 26), ("reforme", S0 + 22, S0 + 26), ("saut-face", S0 + 6, S0 + 28)]
+tags += [("vol", S0 + 16, S0 + 18), ("chute-legere", S0 + 19, S0 + 20), ("atterrissage", S0 + 21, S0 + 26), ("saut-face", S0 + 6, S0 + 28)]
 # autres animations dessinées par Thibault : elles remplacent celles générées plus bas
-# baille : dessinée avec l'ancienne image de face (centre 36,5, bas sur la ligne 59), recalée sur la nouvelle
-HAND = [("baille", hand("baille", "baille", dx=-5, dy=1)), ("dort", hand("dort", "dort")), ("mange", hand("eat", "mange")), ("rot", hand("rot", "rot")),
+# baille : recalée sur la pose de repos par tools/rebase_animations.py (plus de jupe au bas du corps, queue à gauche) ; rien à décaler ici
+# repos : de face, 8 images (il cligne deux fois) ; sa petite queue est à gauche, côté d'où il vient quand il marche vers la droite : l'app retourne tout autour de l'axe 31,5
+# secoue et nausee : l'animation attrape passée au vert de la nausée (le bleu de base, son ombre et son reflet deviennent leurs verts)
+TO_VERT = {BLEU[k]: VERT[k] for k in "ACD"}
+def vert(seq): return [([[TO_VERT.get(p, p) for p in row] for row in f], d) for f, d in seq]
+# nausee (au sol) : la reptation classique passée au vert, avec des spirales à la place des yeux ; elles tournent d'un quart de tour toutes les 3 images
+SPIRAL = ["#####", "....#", "###.#", "#...#", "#####"]
+def turn_spiral(g, k):
+    for _ in range(k % 4): g = ["".join(g[len(g) - 1 - c][r] for c in range(len(g))) for r in range(len(g))]
+    return g
+def eyes_of(f):
+    """les yeux d'une image de profil : des traits d'encre verticaux entièrement entourés de corps (la bouche, horizontale, est écartée)"""
+    around = [(a, b) for a in (-1, 0, 1) for b in (-1, 0, 1)]
+    todo = {(x, y) for y in range(64) for x in range(64) if f[y][x] == B and all(0 <= x + a < 64 and 0 <= y + b < 64 and f[y + b][x + a][3] for a, b in around)}
+    comps = []
+    while todo:
+        c = {todo.pop()}; stack = list(c)
+        while stack:
+            x, y = stack.pop()
+            for a, b in around:
+                if (x + a, y + b) in todo: todo.remove((x + a, y + b)); c.add((x + a, y + b)); stack.append((x + a, y + b))
+        comps.append(c)
+    return sorted((c for c in comps if len({p[0] for p in c}) <= 2 and len({p[1] for p in c}) >= 3), key=lambda c: min(p[0] for p in c))
+def dizzy(seq):
+    out = []
+    for n, (f, d) in enumerate(seq):
+        g = [row[:] for row in f]; eyes = eyes_of(f)
+        for e in eyes:
+            for x, y in e: g[y][x] = VERT["A"]
+        for i, e in enumerate(eyes):
+            cx = round(sum(p[0] for p in e) / len(e)) + (-1 if i == 0 else 1); cy = round(sum(p[1] for p in e) / len(e))   # les deux spirales s'écartent d'un pixel
+            for r, row in enumerate(turn_spiral(SPIRAL, n // 3)):
+                for c, ch in enumerate(row):
+                    if ch == "#": g[cy - 2 + r][cx - 2 + c] = B
+        out.append((g, d))
+    return out
+HAND = [("baille", hand("baille", "baille")), ("repos", hand("repos", "repos")), ("dort", hand("dort", "dort")), ("remue", hand("remue", "remue")), ("regard", hand("regard", "regard")), ("reforme", hand("reforme", "reforme")), ("attrape", hand("attrape", "attrape")), ("secoue", vert(hand("attrape", "attrape"))), ("nausee", dizzy(vert(hand("crawl", "crawl")))), ("mange", hand("eat", "mange")), ("rot", hand("rot", "rot")),
         # chute : 0-1 = début, 2-11 = boucle ; 12-13 (la goutte qui descend dans l'image) sont sautées, c'est la fenêtre qui descend
         ("chute", hand("chute", "chute", 0, 11)), ("ecrase", hand("chute", "chute", 14, 22))]
 for name, seq in HAND:
@@ -168,10 +200,6 @@ for name, seq in ANIMS:
         if effect: fx(px, box, *(effect if isinstance(effect, tuple) else (effect, 0)))
         out_frames.append((px, dur))
     tags.append((name, start, len(out_frames) - 1))
-start = len(out_frames)
-for look, _ in REGARD:
-    P = F(); px, box = render(warp(P), BLEU); draw_face(px, P, "line", "line", look); out_frames.append((px, 400))
-tags.append(("regard", start, len(out_frames) - 1))
 
 N = len(out_frames)
 sheet = [[out_frames[k][0][y][x] for k in range(N) for x in range(64)] for y in range(64)]

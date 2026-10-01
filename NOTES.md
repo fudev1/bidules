@@ -1,6 +1,6 @@
 # Notes du projet
 
-Mise à jour : 30 septembre 2026. Ce fichier suit l'état du projet : ce qui est décidé, ce qui reste à trancher, ce qui est fait et ce qui reste à faire. La vision, l'installation et la stack sont dans le [README](README.md).
+Mise à jour : 1er octobre 2026. Ce fichier suit l'état du projet : ce qui est décidé, ce qui reste à trancher, ce qui est fait et ce qui reste à faire. La vision, l'installation et la stack sont dans le [README](README.md).
 
 ## Décisions
 
@@ -32,12 +32,15 @@ Mise à jour : 30 septembre 2026. Ce fichier suit l'état du projet : ce qui est
   - caresses, chatouilles (rire, puis fâché), secouer (nausée) ;
   - fichier glissé dessus : il le "mange", sans y toucher ;
   - sommeil après 40 s de calme, porté endormi, réveil.
+  - porté endormi, il joue `attrape`, qui remplace `porte-endormi`, et ne bouge que selon la souris : un pendule amorti autour de la tête, dont l'angle suit la vitesse horizontale (20° au plus ; immobile, il ne bouge pas, secoué, il oscille) ; tant qu'on le porte il ne repasse jamais par `remue` ni par une pose de sommeil ; lâché, il est réveillé et retombe : il ne se rendort pas (il ne s'endort à nouveau qu'après 40 s de calme, 15 s s'il est « vaseux »). Réveillé pendant qu'on le porte (trop vite, ou secoué), il reste dans `attrape` ; secoué, il joue `attrape` passé au vert de la nausée ; retombé nauséeux, il rampe en vert avec des spirales à la place des yeux (la reptation classique, plus lente, qui tournent d'un quart de tour toutes les 3 images) : il est tenu par le haut de la tête, ce qui explique sa tête allongée. La fenêtre est recalée pour que la souris tombe sur le sommet de la tête de l'image `attrape`, et il se balance autour de ce point.
 - Personnages : 6 monstres du moodboard et 4 blobs générés par le code, 12 parties sur 6 emplacements (ajoutées à la main depuis le panneau).
 - Limace :
   - étirement collé au sol, deux chutes, écrasement ;
   - demi-tours, passage profil / face, marche sans glissade ;
   - animations à 60 images par seconde.
-- Animations de Thibault branchées : reptation (12 images, dos plus droit), demi-tour aligné dessus, saut, baille, dort, mange, rot, chute. Tout est centré sur 31,5 et posé sur la ligne 60 ; l'animation `grimpe` n'est pas branchée (retirée du fichier Aseprite).
+- Animations de Thibault branchées : reptation (12 images, dos plus droit), demi-tour aligné dessus, saut, baille, dort, mange, rot, chute, repos (de face, double clignement, queue côté d'où il vient), remue (de profil sur la pose de dort : la bulle éclate, l'œil de devant s'entrouvre), regard (6 images de face, le regard suit la souris : devant et de côté, en haut, au milieu et en bas), reforme (8 images : de la flaque de chute jusqu'à la pose de repos, avec un rebond), attrape (4 images : tenu par la souris, étiré et pincé en haut ; les bras alternent entre le haut et le bas, dessinés à la main ; le bas du corps des images 2 à 4 est aligné sur l'image 1 par `tools/attrape_bas.py`).
+- Base de face unique : turn, saut et baille ont été alignés sur la pose de repos (plus de jupe au bas du corps, côté droit droit, queue à gauche) par `tools/rebase_animations.py`, outil à lancer une seule fois. Au retournement, la queue change de côté d'une image à l'autre (images 6 et 7 de turn).
+- Bâillement : le Bidule étire ses deux petits bras, qui sortent des côtés du corps et montent à 45° (images 3 à 8 de baille), ajoutés par `tools/baille_bras.py`.
 - Lien avec Claude : l'humeur est lue dans les heures des prompts de `~/.claude` et `~/.claude-masana`, jamais dans le texte.
 - Outils : `animations/limace-complete/gen.py` assemble la feuille de la limace, `tools/sim.py` fait tourner le Bidule dans un navigateur sans l'app.
 - Documents :
@@ -80,9 +83,7 @@ Mise à jour : 30 septembre 2026. Ce fichier suit l'état du projet : ce qui est
 
 ### Animations (Thibault)
 
-- Les 16 animations de `moodboard/planches-limace.html`, en commençant par le regard et la pause.
-- La reformation après l'écrasement (aujourd'hui, la fin de l'atterrissage sert de transition).
-- L'image "il remue" de profil, sur la pose du sommeil.
+- Les 8 animations restantes (porte-endormi est remplacée par attrape ; secoue est attrape en vert ; nausee est la reptation en vert, avec des spirales) de `moodboard/planches-limace.html`, en commençant par « Caressé » (`caresse`, n° 6). Les animations générées (regard, reforme et attrape exceptées) reprennent la silhouette de repos : à redessiner à la main avec sa queue à gauche.
 
 ### Technique et diffusion
 

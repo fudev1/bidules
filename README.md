@@ -76,24 +76,19 @@ L'interface est embarquée dans l'app à la compilation : après une modificatio
 | `animations/` | Les animations dessinées, un dossier par animation ; `limace-complete/gen.py` assemble la feuille de la limace |
 | `moodboard/` | Direction artistique ; `planches-limace.html` (animations de la limace à dessiner) et `animations-des-bidules.html` (spec des animations d'un Bidule), à ouvrir dans un navigateur |
 | `sprites/`, `prototype/` | Fichiers Aseprite des blobs, prototype de la chambre |
-| `tools/` | `sim.py` : page de test du Bidule dans un navigateur, sans l'app |
+| `tools/` | `publier.py` : du fichier Aseprite à l'app ; `sim.py` : page de test du Bidule dans un navigateur, sans l'app ; les autres scripts créent ou alignent des animations (voir leur en-tête) |
 
 ## Ajouter une animation à la limace
 
-1. Exporter l'animation depuis Aseprite (feuille PNG + JSON) dans un dossier de `animations/`.
-2. La déclarer dans `animations/limace-complete/gen.py` (liste `HAND`), puis assembler la feuille :
+1. Dessiner ou modifier l'animation dans son fichier Aseprite de `animations/<dossier>/` (une balise par animation) et l'enregistrer.
+2. La déclarer, si elle est nouvelle, dans `animations/limace-complete/gen.py` (liste `HAND`) et dans `tools/publier.py` (liste `ANIMS`).
+3. Lancer `mise run bidule` : il exécute d'abord `mise run publier`, qui réexporte les animations enregistrées depuis le dernier export, assemble la feuille de la limace (`gen.py`) et la copie dans `dist/persos/limace/`, puis compile et lance l'app.
 
-   ```bash
-   python3 animations/limace-complete/gen.py
-   cp animations/limace-complete/limace_sheet.png dist/persos/limace/sheet.png
-   cp animations/limace-complete/limace_sheet.json dist/persos/limace/sheet.json
-   ```
-
-3. Relancer `mise run bidule`.
+`mise run publier` se lance seul (depuis n'importe quel dossier du projet) quand on veut seulement mettre à jour la feuille. L'app lit la feuille exportée, pas le fichier Aseprite : enregistrer ne suffit pas.
 
 Une animation qui remplace une existante (même nom de balise, par exemple `dort`) est prise en compte sans toucher au code. Une nouvelle balise doit aussi être utilisée dans `dist/index.html`.
 
-Format attendu : 64 × 64 pixels, fond transparent, tourné vers la droite (l'app le retourne pour la gauche). De profil, le bas du contour est sur la ligne 60, comme la reptation. De face, le corps est placé comme l'image de face du demi-tour.
+Format attendu : 64 × 64 pixels, fond transparent, tourné vers la droite (l'app le retourne pour la gauche). De profil, le bas du contour est sur la ligne 60, comme la reptation. De face, le corps est placé comme la pose de repos (`repos`, aussi l'image de face du demi-tour) : centré sur 31,5, petite queue à gauche, sans jupe au bas du corps.
 
 Le retournement gauche/droite se fait autour d'un axe que l'app calcule depuis `crawl[0]` et la dernière image de `turn` : ici 31,5, le milieu de l'image, donc un simple miroir de l'image. Pour que reptation droite, demi-tour et reptation gauche s'enchaînent sans saut : `turn[0]` est identique à `crawl[0]`, `turn[12]` en est le miroir exact (reflet compris), et la reptation retournée doit tenir dans l'image (x de 2 à 61). Toutes les animations sont centrées sur 31,5 et posées sur la ligne 60. Si la reptation change, `tools/align_turn.py` reconstruit le demi-tour (voir son en-tête) ; le saut commence et finit par les images de ce demi-tour, `gen.py` les reprend tout seul.
 
