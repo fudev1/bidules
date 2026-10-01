@@ -532,20 +532,24 @@ function tick() {
   }
   if (mode === "fly") {
     peakY = peakY === null ? y : Math.min(peakY, y);
-    vy += 1.3 * k; vx *= Math.pow(0.985, k); x += vx * k; y += vy * k; angle += vx * 1.2 * k;
-    if (x < minX) { x = minX; vx = -vx * 0.25; squash("wall"); playOnce("choc-bord"); }
-    if (x > maxX) { x = maxX; vx = -vx * 0.25; squash("wall"); playOnce("choc-bord"); }
+    vy += 1.3 * k; vx *= Math.pow(0.985, k); x += vx * k; y += vy * k; angle += vx * (BOUNCY.has(style) ? .7 : 1.2) * k; if (BOUNCY.has(style)) angle = Math.max(-60, Math.min(60, angle));
+    if (x < minX) { x = minX; vx = -vx * (BOUNCY.has(style) ? .7 : .25); squash("wall"); playOnce("choc-bord"); }
+    if (x > maxX) { x = maxX; vx = -vx * (BOUNCY.has(style) ? .7 : .25); squash("wall"); playOnce("choc-bord"); }
     if (y < minY) { y = minY; vy = -vy * 0.4; }
     if (y >= floorY) {
       y = floorY; const impact = Math.abs(vy); maxImpact = Math.max(maxImpact, impact);
-      if (impact > 7 && bounces < 4 && (!isSheet() || BOUNCY.has(style))) {
+      if (impact > 7 && bounces < (isSheet() ? 6 : 4) && (!isSheet() || BOUNCY.has(style))) {
         if (isSheet() && bigFall()) crashed = true;
-        vy = -impact * (isSheet() ? .6 : .45); vx *= 0.7; angle *= 0.4; bounces++;
-        if (isSheet()) { peakY = y; playOnce("rebond"); } else squash();
+        if (isSheet()) {
+          // elle rebondit dans tous les sens : à chaque rebond, un élan de côté au hasard et un coup de toupie
+          vy = -impact * (.55 + Math.random() * .25); vx = vx * .7 + (Math.random() - .5) * Math.min(impact, 16) * 1.2;
+          angle = angle * .5 + (Math.random() - .5) * 50; peakY = y; playOnce("rebond");
+        } else { vy = -impact * 0.45; vx *= 0.7; angle *= 0.4; squash(); }
+        bounces++;
       }
       else land();
     }
-    img.style.rotate = (mode === "fly" && !isSheet() ? angle : 0).toFixed(1) + "deg";
+    img.style.rotate = (mode === "fly" && (!isSheet() || (BOUNCY.has(style) && bounces > 0)) ? angle : 0).toFixed(1) + "deg";
     push(); return;
   }
   const now = Date.now();
