@@ -74,6 +74,14 @@ L'interface est embarquée dans l'app à la compilation : après une modificatio
 - Une pull request relue est mergée sur `test`. Chacun peut ainsi continuer à partir de `test` sans devoir reprendre son travail à chaque changement de `main`.
 - `main` est mise à jour depuis `test`, une fois ce qui est sur `test` validé.
 
+### Règles pour les pull requests
+
+- **Taille** : une grosse pull request n'est pas un problème. Inutile de découper un gros chantier.
+- **Nom de branche** : en anglais.
+- **Avant de pousser** : lancer `mise run publier`, pour que la feuille de la limace dans `dist/persos/limace/` corresponde aux fichiers Aseprite enregistrés. La feuille est commitée avec les animations, et l'app lit la feuille, pas le fichier Aseprite.
+- **Description** : ce que fait la PR, ce qui a été vérifié (et ce qui ne l'a pas été : par exemple « pas testé dans l'app Tauri réelle »), et ce qu'il faut savoir. Aucune ligne d'attribution du type « Generated with Claude Code ».
+- **Une PR déjà relue ou approuvée n'est pas alourdie** de nouveaux commits : le nouveau travail part sur une nouvelle branche, avec sa propre PR vers `test`. Elle contient les commits de la précédente tant que celle-ci n'est pas fusionnée, puis son diff se réduit tout seul.
+
 ## Stack
 
 - **App de bureau** : [Tauri 2](https://tauri.app) en Rust. Fenêtre transparente toujours au premier plan, icône dans la barre de menus, lecture des journaux de Claude Code (`serde`, `serde_json`).
