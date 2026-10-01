@@ -60,6 +60,20 @@ Pour le fermer : clic droit sur son icône dans la barre de menus, puis "Quitter
 
 L'interface est embarquée dans l'app à la compilation : après une modification dans `dist/`, relancer `mise run bidule`.
 
+## Branches et pull requests
+
+- `test` est la branche par défaut : chaque pull request vise `test`, pas `main`.
+- Une branche par sujet, partie de `test` :
+
+  ```bash
+  git switch test
+  git pull
+  git switch -c ma-branche
+  ```
+
+- Une pull request relue est mergée sur `test`. Chacun peut ainsi continuer à partir de `test` sans devoir reprendre son travail à chaque changement de `main`.
+- `main` est mise à jour depuis `test`, une fois ce qui est sur `test` validé.
+
 ## Stack
 
 - **App de bureau** : [Tauri 2](https://tauri.app) en Rust. Fenêtre transparente toujours au premier plan, icône dans la barre de menus, lecture des journaux de Claude Code (`serde`, `serde_json`).
