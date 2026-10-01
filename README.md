@@ -74,6 +74,24 @@ L'interface est embarquée dans l'app à la compilation : après une modificatio
 - Une pull request relue est mergée sur `test`. Chacun peut ainsi continuer à partir de `test` sans devoir reprendre son travail à chaque changement de `main`.
 - `main` est mise à jour depuis `test`, une fois ce qui est sur `test` validé.
 
+### Avec `gh`
+
+[gh](https://cli.github.com) est l'outil en ligne de commande de GitHub. Il évite de passer par le site pour les pull requests. Installation : `brew install gh`, puis `gh auth login` une fois.
+
+| Commande | Ce qu'elle fait |
+| --- | --- |
+| `gh repo clone fudev1/bidules` | Clone le repo avec ton compte GitHub connecté à `gh`. |
+| `gh pr list` | Liste les pull requests ouvertes, avec leur numéro. |
+| `gh pr status` | Montre tes pull requests et celles qui attendent ta relecture. |
+| `gh pr checkout 12` | Récupère la branche de la pull request n°12 et bascule dessus. Pratique pour essayer le travail d'un collègue : ensuite `mise run bidule`. |
+| `gh pr diff 12` | Affiche les changements de la pull request n°12 dans le terminal. |
+| `gh pr view 12 --web` | Ouvre la pull request n°12 dans le navigateur. |
+| `gh pr create --fill` | Ouvre une pull request depuis ta branche, vers `test` (la branche par défaut). `--fill` reprend le titre et le texte de tes commits. |
+| `gh pr review 12 --approve` | Approuve la pull request n°12. `--comment -b "..."` laisse un commentaire à la place. |
+| `gh pr merge 12` | Merge la pull request n°12 sur `test`. La commande demande la méthode (merge, squash ou rebase). |
+
+Après `gh pr checkout`, `git switch test` ramène sur `test`.
+
 ## Stack
 
 - **App de bureau** : [Tauri 2](https://tauri.app) en Rust. Fenêtre transparente toujours au premier plan, icône dans la barre de menus, lecture des journaux de Claude Code (`serde`, `serde_json`).
