@@ -1,5 +1,4 @@
-# Aligne le demi-tour (turn) sur la reptation redessinée (crawl). Outil à usage unique : il reconstruit les 13 images du demi-tour
-# à partir de l'ancien demi-tour (commit d3880f2, animations/turn/turn_sheet.png, images 8 à 20) et de animations/crawl/crawl_sheet.png.
+# Aligne le demi-tour (turn) sur la reptation redessinée (crawl). Outil réexécutable : il lit animations/crawl et animations/jump (saut).
 #   python3 tools/align_turn.py /tmp/turn_aligned         écrit turn_000.png ... turn_012.png dans ce dossier
 #
 # Ce que fait l'app : elle retourne l'image entière autour d'un axe (calculé depuis crawl[0] et la dernière image de turn) dès que la
@@ -7,15 +6,16 @@
 #   turn[0]  = crawl[0] (au pixel près)
 #   turn[12] = le miroir de crawl[0] autour de l'axe (lumière comprise : le reflet passe de l'autre côté)
 #   le reste du demi-tour passe de l'un à l'autre en gardant le corps centré sur l'axe.
-# La nouvelle reptation fait 60 pixels de large (x de 2 à 61) : une fois retournée autour de l'ancien axe (36,5) elle sortirait de l'image,
-# l'axe doit être entre 30,5 et 32,5. On prend 32,5 ; les images de face (centre 36,5 avant) sont décalées de 4 pixels vers la gauche.
-import json, os, subprocess, sys
+# La reptation fait 60 pixels de large (x de 2 à 61) : l'axe doit être entre 30,5 et 32,5. On prend 31,5, le milieu de l'image : le
+# retournement est alors un simple miroir de l'image, et les images de face sont centrées sur 31,5 comme le reste des animations.
+# Les images 3 à 6 sont celles du retour du saut (saut[31] à saut[28]) : ce sont les images de face, posées sur la ligne 60.
+# Les images 1 et 2 (entre la reptation et l'image 3) sont fabriquées ici ; les images 7 à 11 sont le miroir des images 5 à 1.
+import os, sys
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "animations", "limace-complete"))
 from png import frames, write
 
 ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
-AXIS2 = 65            # 2 * 32,5 : x -> 65 - x
-SHIFT = -4            # centre de face 36,5 -> 32,5
+AXIS2 = 63            # 2 * 31,5 : x -> 63 - x
 INK = (0, 0, 0, 255)
 CLEAR = (0, 0, 0, 0)
 N8 = [(-1, -1), (0, -1), (1, -1), (-1, 0), (1, 0), (-1, 1), (0, 1), (1, 1)]
@@ -23,14 +23,6 @@ N4 = [(0, -1), (-1, 0), (1, 0), (0, 1)]
 
 def blank(): return [[CLEAR] * 64 for _ in range(64)]
 def opaque(f, x, y): return 0 <= x < 64 and 0 <= y < 64 and f[y][x][3] > 0
-def shift(f, dx):
-    o = blank()
-    for y in range(64):
-        for x in range(64):
-            if f[y][x][3]:
-                assert 0 <= x + dx < 64, "image rognée"
-                o[y][x + dx] = f[y][x]
-    return o
 def mirror(f):
     o = blank()
     for y in range(64):
@@ -97,12 +89,11 @@ def morph(A, B, t):
 
 def main(dest):
     crawl0 = frames(os.path.join(ROOT, "animations/crawl/crawl_sheet.png"))[0]
-    old = subprocess.run(["git", "show", "d3880f2:animations/turn/turn_sheet.png"], cwd=ROOT, capture_output=True, check=True).stdout
-    tmp = os.path.join(dest, "_old_turn.png"); os.makedirs(dest, exist_ok=True); open(tmp, "wb").write(old)
-    turn = frames(tmp)[8:21]; os.remove(tmp)
+    saut = frames(os.path.join(ROOT, "animations/jump/saut_sheet.png"))
+    os.makedirs(dest, exist_ok=True)
     T = [None] * 13
     T[0] = crawl0
-    for k in range(3, 7): T[k] = shift(turn[k], SHIFT)
+    for k in range(3, 7): T[k] = saut[34 - k]
     T[1], T[2] = morph(crawl0, T[3], 1 / 3), morph(crawl0, T[3], 2 / 3)
     for k in range(7, 12): T[k] = mirror(T[12 - k])
     T[12] = mirror(crawl0)
