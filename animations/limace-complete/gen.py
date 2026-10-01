@@ -146,6 +146,12 @@ def hand(folder, sheet, a=0, b=None):
 HAND = [("baille", hand("baille", "baille")), ("dort", hand("dort", "dort")), ("mange", hand("eat", "mange", 56, 85)), ("rot", hand("rot", "rot")),
         # chute : 0-1 = début, 2-11 = boucle ; 12-13 (la goutte qui descend dans l'image) sont sautées, c'est la fenêtre qui descend
         ("chute", hand("chute", "chute", 0, 11)), ("ecrase", hand("chute", "chute", 14, 22))]
+# reptation redessinée : elle remplace celle de la feuille du saut, les balises suivantes sont décalées
+def replace(name, seq):
+    a, b = [(x, y) for n, x, y in tags if n == name][0]
+    out_frames[a:b + 1] = seq; d = len(seq) - (b - a + 1)
+    tags[:] = [(n, x + d * (x > b), y + d * (y >= b)) for n, x, y in tags]
+replace("crawl", hand("crawl", "crawl"))
 for name, seq in HAND:
     start = len(out_frames); out_frames += seq; tags.append((name, start, len(out_frames) - 1))
 for name, seq in ANIMS:
