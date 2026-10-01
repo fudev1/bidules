@@ -709,7 +709,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 60
+   "duration": 80
   },
   "candy 79.aseprite": {
    "frame": {
@@ -718,7 +718,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 80
+   "duration": 60
   },
   "candy 80.aseprite": {
    "frame": {
@@ -727,7 +727,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 60
+   "duration": 80
   },
   "candy 81.aseprite": {
    "frame": {
@@ -736,7 +736,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 70
+   "duration": 60
   },
   "candy 82.aseprite": {
    "frame": {
@@ -754,7 +754,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 90
+   "duration": 70
   },
   "candy 84.aseprite": {
    "frame": {
@@ -781,7 +781,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 120
+   "duration": 90
   },
   "candy 87.aseprite": {
    "frame": {
@@ -790,7 +790,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 110
+   "duration": 120
   },
   "candy 88.aseprite": {
    "frame": {
@@ -799,7 +799,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 160
+   "duration": 110
   },
   "candy 89.aseprite": {
    "frame": {
@@ -808,7 +808,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 120
+   "duration": 160
   },
   "candy 90.aseprite": {
    "frame": {
@@ -826,7 +826,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 100
+   "duration": 120
   },
   "candy 92.aseprite": {
    "frame": {
@@ -844,7 +844,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 120
+   "duration": 100
   },
   "candy 94.aseprite": {
    "frame": {
@@ -853,7 +853,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 160
+   "duration": 120
   },
   "candy 95.aseprite": {
    "frame": {
@@ -862,7 +862,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 500
+   "duration": 160
   },
   "candy 96.aseprite": {
    "frame": {
@@ -871,7 +871,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 300
+   "duration": 500
   },
   "candy 97.aseprite": {
    "frame": {
@@ -880,7 +880,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 140
+   "duration": 300
   },
   "candy 98.aseprite": {
    "frame": {
@@ -889,7 +889,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 120
+   "duration": 140
   },
   "candy 99.aseprite": {
    "frame": {
@@ -898,7 +898,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 160
+   "duration": 120
   },
   "candy 100.aseprite": {
    "frame": {
@@ -907,7 +907,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 200
+   "duration": 160
   },
   "candy 101.aseprite": {
    "frame": {
@@ -988,7 +988,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 400
+   "duration": 200
   },
   "candy 110.aseprite": {
    "frame": {
@@ -997,7 +997,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 300
+   "duration": 400
   },
   "candy 111.aseprite": {
    "frame": {
@@ -1015,7 +1015,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 120
+   "duration": 300
   },
   "candy 113.aseprite": {
    "frame": {
@@ -1033,7 +1033,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 100
+   "duration": 120
   },
   "candy 115.aseprite": {
    "frame": {
@@ -1051,7 +1051,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 380
+   "duration": 100
   },
   "candy 117.aseprite": {
    "frame": {
@@ -1069,7 +1069,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 100
+   "duration": 380
   },
   "candy 119.aseprite": {
    "frame": {
@@ -1078,7 +1078,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 80
+   "duration": 100
   },
   "candy 120.aseprite": {
    "frame": {
@@ -1096,7 +1096,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 220
+   "duration": 80
   },
   "candy 122.aseprite": {
    "frame": {
@@ -1106,6 +1106,95 @@
     "h": 64
    },
    "duration": 220
+  },
+  "candy 123.aseprite": {
+   "frame": {
+    "x": 7872,
+    "y": 0,
+    "w": 64,
+    "h": 64
+   },
+   "duration": 220
+  },
+  "candy 124.aseprite": {
+   "frame": {
+    "x": 7936,
+    "y": 0,
+    "w": 64,
+    "h": 64
+   },
+   "duration": 90,
+   "step": 0
+  },
+  "candy 125.aseprite": {
+   "frame": {
+    "x": 8000,
+    "y": 0,
+    "w": 64,
+    "h": 64
+   },
+   "duration": 80,
+   "step": 3
+  },
+  "candy 126.aseprite": {
+   "frame": {
+    "x": 8064,
+    "y": 0,
+    "w": 64,
+    "h": 64
+   },
+   "duration": 90,
+   "step": 3
+  },
+  "candy 127.aseprite": {
+   "frame": {
+    "x": 8128,
+    "y": 0,
+    "w": 64,
+    "h": 64
+   },
+   "duration": 80,
+   "step": 2
+  },
+  "candy 128.aseprite": {
+   "frame": {
+    "x": 8192,
+    "y": 0,
+    "w": 64,
+    "h": 64
+   },
+   "duration": 90,
+   "step": 0
+  },
+  "candy 129.aseprite": {
+   "frame": {
+    "x": 8256,
+    "y": 0,
+    "w": 64,
+    "h": 64
+   },
+   "duration": 80,
+   "step": 3
+  },
+  "candy 130.aseprite": {
+   "frame": {
+    "x": 8320,
+    "y": 0,
+    "w": 64,
+    "h": 64
+   },
+   "duration": 90,
+   "step": 3
+  },
+  "candy 131.aseprite": {
+   "frame": {
+    "x": 8384,
+    "y": 0,
+    "w": 64,
+    "h": 64
+   },
+   "duration": 80,
+   "step": 2
   }
  },
  "meta": {
@@ -1113,7 +1202,7 @@
   "image": "candy_sheet.png",
   "format": "RGBA8888",
   "size": {
-   "w": 7872,
+   "w": 8448,
    "h": 64
   },
   "scale": "1",
@@ -1187,79 +1276,85 @@
    {
     "name": "chute",
     "from": 73,
-    "to": 77,
+    "to": 78,
     "direction": "forward"
    },
    {
     "name": "ecrase",
-    "from": 78,
-    "to": 86,
+    "from": 79,
+    "to": 87,
     "direction": "forward"
    },
    {
     "name": "reforme",
-    "from": 87,
-    "to": 90,
+    "from": 88,
+    "to": 91,
     "direction": "forward"
    },
    {
     "name": "baille",
-    "from": 91,
-    "to": 100,
+    "from": 92,
+    "to": 101,
     "direction": "forward"
    },
    {
     "name": "dort",
-    "from": 101,
-    "to": 108,
-    "direction": "forward"
-   },
-   {
-    "name": "remue",
-    "from": 109,
+    "from": 102,
     "to": 109,
     "direction": "forward"
    },
    {
-    "name": "caresse",
+    "name": "remue",
     "from": 110,
-    "to": 111,
+    "to": 110,
+    "direction": "forward"
+   },
+   {
+    "name": "caresse",
+    "from": 111,
+    "to": 112,
     "direction": "forward"
    },
    {
     "name": "rire",
-    "from": 112,
-    "to": 113,
+    "from": 113,
+    "to": 114,
     "direction": "forward"
    },
    {
     "name": "fache",
-    "from": 114,
-    "to": 115,
+    "from": 115,
+    "to": 116,
     "direction": "forward"
    },
    {
     "name": "chante",
-    "from": 116,
-    "to": 117,
-    "direction": "forward"
-   },
-   {
-    "name": "intrigue",
-    "from": 118,
+    "from": 117,
     "to": 118,
     "direction": "forward"
    },
    {
-    "name": "secoue",
+    "name": "intrigue",
     "from": 119,
-    "to": 120,
+    "to": 119,
+    "direction": "forward"
+   },
+   {
+    "name": "secoue",
+    "from": 120,
+    "to": 121,
     "direction": "forward"
    },
    {
     "name": "nausee",
-    "from": 121,
-    "to": 122,
+    "from": 122,
+    "to": 123,
+    "direction": "forward"
+   },
+   {
+    "name": "sautille",
+    "from": 124,
+    "to": 131,
     "direction": "forward"
    }
   ]
