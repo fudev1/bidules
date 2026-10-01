@@ -30,6 +30,10 @@ const mBox = (x0, y0, x1, y1) => (x, y) => x >= x0 && x <= x1 && y >= y0 && y <=
 const mAny = (...f) => (x, y) => f.some(g => g(x, y));
 const mNot = (a, b) => (x, y) => a(x, y) && !b(x, y);
 const mAnd = (a, b) => (x, y) => a(x, y) && b(x, y);
+const mTri = (a, b, c) => (x, y) => {
+  const s = (p, q) => (q[0] - p[0]) * (y - p[1]) - (q[1] - p[1]) * (x - p[0]), d = [s(a, b), s(b, c), s(c, a)];
+  return !(d.some(v => v < 0) && d.some(v => v > 0));
+};
 
 function mSprite() {
   const c = new Array(64 * 64).fill(null);
@@ -90,6 +94,8 @@ function mSprite() {
 MR.pince = mRamp("#7a1a14", "#b8302a", "#d84436", "#f06a55", "#ff9a86", "#ffd2c8");
 MR.aile = mRamp("#2d4d78", "#6a93c8", "#8fb6e0", "#b4d2f0", "#d4e7fa", "#ffffff");
 MR.eau = mRamp("#1d4f78", "#3f8fcf", "#6fb4e6", "#8fc8f0", "#b4dcf8", "#ffffff");
+MR.candy = mRamp("#9c3a66", "#e0628f", "#ef86ad", "#ffaccb", "#ffd6e4", "#fff3f8");
+MR.bonbon = mRamp("#2f7f6e", "#5cc8b0", "#7ad8c0", "#8ee5cf", "#bdf2e3", "#effffa");
 const mREll = (cx, cy, rx, ry, ang) => { const c = Math.cos(ang), s = Math.sin(ang); return (x, y) => { const dx = x - cx, dy = y - cy, u = (dx * c + dy * s) / rx, v = (-dx * s + dy * c) / ry; return u * u + v * v <= 1; }; };
 function mTintRamp(r, target, amt, sat) {
   const t = mhx(target), f = col => { const m = [0, 1, 2].map(i => col[i] * (1 - amt) + t[i] * amt), g = (m[0] + m[1] + m[2]) / 3; return m.map(v => Math.max(0, Math.min(255, Math.round(g + (v - g) * sat)))).concat(col[3]); };
@@ -114,6 +120,29 @@ const M_MOODFACE = {
   lune:{eye:"up", mouth:"o", fx:"dream"}
 };
 
+// petits motifs de pixels (coin haut gauche en x0, y0), retournés en miroir si mir
+const mStamp = (S, x0, y0, rows, pal, mir) => rows.forEach((r, j) => [...r].forEach((ch, k) => { if (pal[ch]) S.put(x0 + (mir ? r.length - 1 - k : k), y0 + j, pal[ch]); }));
+// yeux, bouches et effets à l'échelle d'un petit visage : K encre, W blanc, B eau, P rose, R gorge
+const M_EYEPIX = {
+  arc:["..K..", ".K.K.", "K...K"],
+  sleep:["K.....", "KK...K", "..KKK."],
+  squint:["K...", ".KK.", "...K", ".KK.", "K..."],
+  spiral:[".KKKKK.", ".WWWWWK", "KKKKKWK", "KWWWKWK", "KWKKKWK", "KWWWWWK", ".KKKKK."],
+  heart:[".K.K.", "KPKPK", "KPPPK", ".KPK.", "..K.."],
+  teary:["..KK..", ".KKKK.", "KWWKKK", "KWWKKK", "KKKKWK", ".BBBB.", "..KK.."],
+  teary2:["..KK..", ".KKKK.", "KKWWKK", "KKWWKK", "KKKKWK", ".BBBB.", "..KK.."]
+};
+M_EYEPIX.spiral2 = M_EYEPIX.spiral.map(r => [...r].reverse().join("")).reverse();
+const M_MOUTHPIX = {
+  cat:["K.K.K", ".K.K."], openSmall:["KKKKKK", "KRRRRK", ".KPPK.", "..KK.."], oSmall:[".KK.", "KRRK", "KRRK", ".KK."], dot:[".KK.", "KRRK", ".KK."],
+  yawnSmall:[".KK.", "KRRK", "KRRK", "KPPK", ".KK."], pout:[".KK.", "K..K"], wave:[".K.K.", "K.K.K"], wave2:["K.K.K", ".K.K."]
+};
+const M_FXPIX = {
+  vein:[".r.r.", "rr.rr", ".....", "rr.rr", ".r.r."],
+  candy:["w.hcc.w", "wwcccww", "w.ccc.w"],
+  note:["..K.", "..KK", "..K.", "..K.", "KKK.", "KKK."]
+};
+
 function mMouthShape(S, mask, tongueMask, tongue = MR.langue) {
   S.hd(mask, MR.gorge, {round:3, inkOnly:true, shine:false});
   if (tongueMask) S.hd(mAnd(tongueMask, mask), tongue, {round:2, outline:false});
@@ -122,7 +151,12 @@ function mTooth(S, x, y, w = 2, h = 3) { S.fill(mBox(x, y, x + w - .01, y + h - 
 
 function mGEye(S, e, R, cfg, lx, ly, i, ring) {
   const [cx, cy, rx, ry, px, py, pr, lid0] = e;
-  const mode = cfg.eye === "remue" ? (i === 0 ? "half" : "closedSleep") : cfg.eye;
+  const mode = cfg.eye === "remue" ? (i === 0 ? "half" : cfg.shut || "closedSleep") : cfg.eye, pix = M_EYEPIX[mode];
+  // motif posé sur la peau, centré sur l'oeil ; à droite de l'axe du visage, en miroir
+  if (pix) {
+    const w = pix[0].length, m = cx > 32, x0 = Math.round((m ? 64 - cx : cx) - w / 2);
+    return mStamp(S, m ? 64 - w - x0 : x0, Math.round(cy - pix.length / 2), pix, {K:MINK, W:"#ffffff", B:"#8fd6ff", P:"#ff4f8e"}, m);
+  }
   if (mode === "closedHappy" || mode === "closedSleep") {
     S.hd(mEll(cx, cy, rx, ry), R.main, {round:Math.min(3, rx * .7)});
     const pts = [];
@@ -130,7 +164,7 @@ function mGEye(S, e, R, cfg, lx, ly, i, ring) {
     S.line(pts, MINK, 1.3);
     return;
   }
-  const grow = mode === "center" || mode === "pin" ? 1.08 : 1;
+  const grow = (mode === "center" || mode === "pin" ? 1.08 : 1) * (cfg.grow || 1), keep = cfg.lidCut && S.c.slice();
   S.hd(mEll(cx, cy, rx * grow, ry * grow), ring ? MR.anneau : MR.blanc, {round:Math.min(3, rx * .7), inkOnly:true});
   let qx = px + lx * Math.min(1.8, rx * .3), qy = py + ly * Math.min(1.8, ry * .3), qr = pr * (ring ? 1 : 1);
   if (mode === "center") { qx = cx; qy = cy; qr = pr * .75; }
@@ -139,13 +173,24 @@ function mGEye(S, e, R, cfg, lx, ly, i, ring) {
   else if (mode === "roll2") { qx = cx - (i ? 1 : -1) * rx * .42; qy = cy - (i ? 1 : -1) * ry * .34; }
   else if (mode === "up") { qx = cx + lx * .8; qy = cy - ry * .45; }
   else if (mode === "down") { qy = cy + ry * .3; }
-  if (cfg.big && mode === "normal") qr *= 1.25;
+  else if (mode === "star" && !cfg.big) { qx = cx; qy = cy; }
+  if (cfg.big && (mode === "normal" || mode === "star")) qr *= 1.25;
+  if (mode === "star") qr *= cfg.grow || 1;
   S.fill(mEll(qx, qy, qr, qr * 1.12), MINK);
   const gx = Math.floor(qx - qr * .5), gy = Math.floor(qy - qr * .55);
-  S.put(gx, gy, "#ffffff"); if (qr > 1.5) { S.put(gx + 1, gy, "#ffffff"); S.put(gx, gy + 1, "#ffffff"); }
-  if (qr > 3.5) S.fill(mEll(qx - qr * .3, qy - qr * .38, qr * .3, qr * .32), "#ffffff");
+  // reflet en étoile : petit plus blanc en haut et un point en bas, gardés dans la pupille
+  if (mode === "star") { const o = qr > 3 ? 1 : 0; for (const [a, b] of [[0, 0], [1, 0], [-1, 0], [0, 1], [0, -1], [2, 2]]) S.put(gx + o + a, gy + o + b, "#ffffff"); }
+  else {
+    S.put(gx, gy, "#ffffff"); if (qr > 1.5) { S.put(gx + 1, gy, "#ffffff"); S.put(gx, gy + 1, "#ffffff"); }
+    if (qr > 3.5) S.fill(mEll(qx - qr * .3, qy - qr * .38, qr * .3, qr * .32), "#ffffff");
+  }
   const lidA = cfg.lid || (mode === "half" ? .5 : 0) || lid0 || 0;
-  if (lidA) {
+  // paupière sur la peau : on rend la peau au-dessus du bord, la première rangée visible devient le trait
+  if (lidA && keep) {
+    const edge = cy - ry + lidA * 2 * ry, x0 = Math.floor(cx - rx - 2), x1 = Math.ceil(cx + rx + 2);
+    for (let y = Math.floor(cy - ry - 2); y + .5 < edge + 1; y++) for (let x = x0; x <= x1; x++) { const k = y * 64 + x; if (S.c[k] !== keep[k]) S.c[k] = y + .5 < edge ? keep[k] : mhx(MINK); }
+    S.put(Math.min(Math.max(gx, Math.round(cx) - 1), Math.round(cx)), Math.max(gy, Math.ceil(edge - .5) + 1), "#ffffff");
+  } else if (lidA) {
     const edge = cy - ry + lidA * 2 * ry;
     S.fill(mAnd(mEll(cx, cy, rx - .5, ry - .5), (x, y) => y < edge), R.main.base);
     S.line([[cx - rx + .9, edge], [cx + rx - .9, edge]], MINK, 1);
@@ -195,6 +240,8 @@ function mDrawMouth(S, M, R, cfg, parts) {
     if (parts.bouche === "langue") S.hd(mEll(cx + 1.5, cy + 3.2, 2.2, 2.6), MR.langue, {round:2});
     return;
   }
+  const pix = M_MOUTHPIX[kind];
+  if (pix) return mStamp(S, Math.round(cx - pix[0].length / 2), Math.floor(cy) - 1, pix, {K:MINK, R:MR.gorge.base, P:"#ff7a9c"});
   if (kind === "o") S.hd(mEll(cx, cy, 1.9, 2.3), MR.gorge, {round:1.5, inkOnly:true, shine:false});
   else if (kind === "open") { mMouthShape(S, mEll(cx, cy, 4.2, 3.2), mEll(cx, cy + 1.9, 2.6, 1.4)); mTooth(S, cx - 2.5, cy - 2.4, 1.6, 1.6); mTooth(S, cx + .9, cy - 2.4, 1.6, 1.6); }
   else if (kind === "yawn") mMouthShape(S, mEll(cx, cy + .5, 3.8, 4.4), mEll(cx, cy + 3, 2.4, 1.4));
@@ -218,6 +265,17 @@ function mDrawFx(S, M, cfg) {
   if (fx === "sweat") drop(tx + hw + 3, ty + 7);
   if (fx === "drool") { const {cx, cy} = M.mouth; S.hd(mEll(cx + 3.5, cy + 3, 1.1, 1.8), MR.eau, {round:1}); }
   if (fx === "dream") { star(tx + hw + 2, ty - 3); star(tx - hw - 1, ty - 6); }
+  const pix = (x, y, rows, pal) => mStamp(S, Math.round(x), Math.round(y), rows, pal);
+  // veine de colère des mangas, sur le haut du front à droite
+  if (fx === "vein") pix(tx + 3, ty + 3, M_FXPIX.vein, {r:"#ff2d55"});
+  // trois bonbons emballés qui tournent au-dessus de la tête
+  if (fx === "candies1" || fx === "candies2") [["#ff5c93", "#ff9dbd"], ["#2fae88", "#7ad8c0"], ["#eaa21a", "#f7d65a"]].forEach(([c, w], k) => {
+    const a = (k * 2 + (fx === "candies2" ? 1 : 0)) * Math.PI / 3 + Math.PI / 2;
+    pix(tx - 3.5 + Math.cos(a) * (hw + .5), ty - 17 + Math.sin(a) * 3.5, M_FXPIX.candy, {c, w, h:"#ffffff"});
+  });
+  // deux croches à droite de la tête, qui montent et alternent
+  if (fx === "notes1") { pix(tx + hw + 9, ty - 11, M_FXPIX.note, {K:MINK}); pix(tx + hw + 15, ty - 18, M_FXPIX.note, {K:MINK}); }
+  if (fx === "notes2") { pix(tx + hw + 9, ty - 14, M_FXPIX.note, {K:MINK}); pix(tx + hw + 15, ty - 16, M_FXPIX.note, {K:MINK}); }
 }
 
 // --- parties à la Spore, placées d'après les points d'accroche de chaque monstre ---
@@ -258,7 +316,7 @@ function mPartsFront(S, M, R, parts) {
   }
 }
 
-// --- les six monstres ---
+// --- les six monstres du moodboard, puis Candy ---
 const MONSTRES = {
   goutte:{name:"Goutte", ramps:{main:"jaune", second:"miel"}, eyeType:"slit", eyes:[[25.5, 29, 42], [35.5, 29, 42]], eyeY:35.5,
     anchors:{top:[31, 15], halfW:11, sides:[[14, 39], [48.5, 38]], bottom:56, tail:[46, 48]},
@@ -344,17 +402,58 @@ const MONSTRES = {
       if (!f.noArms) limbs.push(mCap(19, 42, 10, 38, 2.7), mCap(10, 38, 8, 33, 2.1), mCap(45, 42, 54, 38, 2.7), mCap(54, 38, 56, 33, 2.1), mCap(22, 30, 17, 26, 2.3), mCap(42, 30, 47, 26, 2.3));
       if (!f.noLegs) limbs.push(mCap(24, 52, 20, 58, 2.7), mCap(40, 52, 44, 58, 2.7));
       S.hd(mAny(mEll(32, 42, 14, 13.5), ...limbs), R.main, {round:8});
+    }},
+  candy:{name:"Candy", ramps:{main:"candy", accent:"bonbon"}, eyeType:"googly", eyeY:44.5,
+    eyes:[[26, 44.5, 2.1, 2.6, 26, 44.5, 2], [38, 44.5, 2.1, 2.6, 38, 44.5, 2]],
+    anchors:{top:[32, 31], halfW:9, sides:[[18.5, 50], [45.5, 50]], bottom:58, tail:[44, 54]},
+    mouth:{cx:32, cy:50.5, draw(S) { for (const [x, y] of [[30, 49], [31, 50], [32, 50], [33, 49]]) S.put(x, y, MINK); }},
+    // ses attitudes à elle, par-dessus les expressions communes
+    states:{
+      ooh:{eye:"star", mouth:"oSmall"},
+      panique:{eye:"teary", mouth:"wave", fx:null}, panique2:{eye:"teary2", mouth:"wave2", fx:null},
+      etourdi:{eye:"spiral", mouth:"wave", fx:"candies1"}, etourdi2:{eye:"spiral2", mouth:"wave2", fx:"candies2"},
+      nausee:{mouth:"wave"}, nausee2:{mouth:"wave2"},
+      content:{eye:"arc", mouth:"cat", cheek:"blush"}, rire:{eye:"squint", mouth:"openSmall", cheek:"blush"},
+      fache:{lid:.25, lidCut:true, brow:null, mouth:"pout", fx:"vein", cheek:"puff"},
+      dort:{eye:"sleep", mouth:"dot"}, baille:{eye:"sleep", mouth:"yawnSmall"}, remue:{shut:"sleep", lidCut:true, mouth:"dot"},
+      chante:{eye:"arc", mouth:"oSmall", fx:"notes1", cheek:"blush"}, chante2:{eye:"arc", mouth:"oSmall", fx:"notes2", cheek:"blush"}
+    },
+    moods:{
+      guilleret:{eye:"star", grow:1.3, mouth:"openSmall"},
+      ronchon:{lid:.35, lidCut:true, brow:null, mouth:"pout", cheek:"puff"},
+      vaseux:{lidCut:true, bags:false, fx:null},
+      stresse:{eye:"teary", mouth:"wave", fx:null},
+      lune:{eye:"heart", mouth:"default"}
+    },
+    body(S, R, f) {
+      const head = mEll(32, 45, 13.5, 13.5), limbs = [];
+      if (!f.noArms) limbs.push(mEll(18.3, 50.5, 2, 1.7), mEll(45.7, 50.5, 2, 1.7));
+      if (!f.noLegs) limbs.push(mEll(26.5, 58.5, 3.8, 1.9), mEll(37.5, 58.5, 3.8, 1.9));
+      S.hd(mAny(head, mTri([17, 26.5], [21.5, 38.5], [27.5, 32.5]), mTri([47, 26.5], [42.5, 38.5], [36.5, 32.5]), ...limbs), R.main, {round:10});
+      S.fill(mNot(mAny(mTri([18.5, 28.3], [21.6, 36.7], [25.8, 32.5]), mTri([45.5, 28.3], [42.4, 36.7], [38.2, 32.5])), mEll(32, 45, 12.5, 12.5)), R.main.s2);
+      // joues : très roses quand elle rit, gonflées quand elle boude
+      const ck = f.cfg.cheek;
+      if (ck === "blush") for (const x of [21, 39]) mStamp(S, x, 48, ["PPPP", "PPPP"], {P:"#ff4f8e"});
+      else if (ck === "puff") for (const x of [20, 40]) mStamp(S, x, 47, [".PP.", "PPPP", "PPPP", ".PP."], {P:"#ff5c97"});
+      else for (const x of [22.5, 41.5]) S.fill(mEll(x, 48.5, 1.6, .6), "#ff6f9c");
+      if (!f.noAntennae) {
+        const knot = mEll(32, 29, 3, 2.5);
+        S.hd(mAny(mTri([29.5, 29], [26, 26.2], [26, 31.8]), mTri([34.5, 29], [38, 26.2], [38, 31.8])), R.accent, {round:1.5, bias:.15});
+        S.hd(knot, R.accent, {round:2.5});
+        S.fill(mAnd(knot, (x, y) => Math.floor(x - y) % 3 === 0), R.accent.hi);
+      }
     }}
 };
 
 // Une image complète : état (expression), regard, parties et humeur.
 function monstreFrame(id, state = "forme", look = [0, 0], parts = {}, mood = null) {
-  const M = MONSTRES[id], base = M_STATE[state] || M_STATE.forme;
-  const cfg = state === "forme" && M_MOODFACE[mood] ? {...base, ...M_MOODFACE[mood]} : base;
+  // un monstre peut surcharger les expressions communes (M.states) et les humeurs (M.moods)
+  const M = MONSTRES[id], base = {...(M_STATE[state] || M_STATE.forme), ...M.states?.[state]};
+  const cfg = state === "forme" && M_MOODFACE[mood] ? {...base, ...M_MOODFACE[mood], ...M.moods?.[mood]} : base;
   const R = {}; for (const k in M.ramps) R[k] = mMoodRamp(MR[M.ramps[k]], mood, !!cfg.sick);
   const S = mSprite(), U = mSprite(); parts = parts || {};
   mPartsBack(S, M, R, parts);
-  M.body(S, R, {noArms:!!parts.bras, noLegs:!!parts.pattes, noAntennae:!!parts.tete});
+  M.body(S, R, {noArms:!!parts.bras, noLegs:!!parts.pattes, noAntennae:!!parts.tete, cfg});
   mPartsFront(S, M, R, parts);
   mDrawEyes(S, M, R, cfg, look);
   mDrawMouth(S, M, R, cfg, parts);

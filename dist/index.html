@@ -31,6 +31,9 @@ body[data-mood="stresse"] img.walk{animation:jitter .09s linear infinite}
 @keyframes jitter{0%,100%{translate:-1px 0}50%{translate:1px -1px}}
 body[data-mood="lune"] img.walk{animation:floaty 2.4s ease-in-out infinite}
 @keyframes floaty{50%{translate:0 -6px}}
+/* Candy sautille quand elle n'a pas d'humeur (les humeurs gardent leur démarche) */
+body[data-perso="candy"]:not([data-mood]) img.walk:not(.boude),body[data-perso="candy"][data-mood=""] img.walk:not(.boude){animation:sautille .4s ease-in-out infinite}
+@keyframes sautille{0%,40%,100%{translate:0 0}70%{translate:0 -5px}}
 body.sheet img.walk,body.sheet[data-mood] img.walk{animation:none}
 img.woozy{animation:woozy 1s ease-in-out infinite}
 @keyframes woozy{0%,100%{rotate:-9deg}50%{rotate:9deg}}
@@ -409,7 +412,7 @@ const PART_NAME = {"tete:antennes":"antennes", "tete:cornes":"cornes", "bouche:c
   "bras:pinces":"pinces", "pattes:longues":"longues pattes", "pattes:palmees":"pattes palmées", "dos:ailes":"ailes", "dos:fourrure":"fourrure",
   "queue:touffue":"queue touffue", "queue:lezard":"queue de lézard"};
 function buildFrames(s) {
-  document.body.classList.toggle("sheet", !!SHEETS[s]);
+  document.body.classList.toggle("sheet", !!SHEETS[s]); document.body.dataset.perso = s;
   img.style.transformOrigin = SHEETS[s] ? (SHEET_DATA[s].axis + .5) / 64 * 100 + "% 60%" : "";
   if (SHEETS[s]) {
     const D = SHEET_DATA[s], T2 = D.tags, front = D.front.src, nf = {}, nl = {};
@@ -430,6 +433,7 @@ function buildFrames(s) {
     : s === "classique" ? (st, look) => bidule64({...bid, parts:partsBy.classique, look, mood}, st, ACCS) : (st, look) => blobFace64(s, st, look, "menthe", partsBy[s], mood);
   const nf = {}, nl = {};
   for (const [k, st] of Object.entries(FRAME_STATES)) nf[k] = G(st);
+  if (s === "candy") { nf.chante = G("chante"); nf.chante2 = G("chante2"); }
   for (const lx of [0, 1]) for (const ly of [-1, 0, 1]) nl[lx + "," + ly] = G("forme", [lx, ly]);
   FR = nf; LOOK = nl; style = s;
 }
@@ -449,12 +453,14 @@ let scale = 2, watching = false, lookKey = "", cursor = null;
 let x = 600, y = 200, minX = 0, maxX = 1200, minY = 0, floorY = 700;
 let mode = "fly", dir = 1, vx = 0, vy = 0, angle = 0, idleUntil = 0, dizzyUntil = 0, bounces = 0, maxImpact = 0, ticks = 0;
 let calm = 0, wake = 0, sleepSince = 0, nextZ = 0, stirred = false;
-let reactUntil = 0, nextFx = 0, nausea = false, nextDrop = 0, clicks = [], pet = {dir:0, flips:[], last:null};
+let reactUntil = 0, nextFx = 0, nausea = false, nextDrop = 0, clicks = [], pet = {dir:0, flips:[], last:null}, sing = false;
 let drag = null, samples = [], want = null, sending = false, flap = null;
 function face() { img.style.setProperty("--sx", dir < 0 ? -1 : 1); img.style.scale = dir < 0 ? "-1 1" : "1 1"; }
 function pose(c) { img.className = c; }
 function squash(c = "land") { pose(c); setTimeout(() => { if (img.className === c) pose(mode === "walk" ? "walk" : mode === "nausea" ? "woozy" : ""); }, 300); }
-function bubble(text, ms = 1200) { const b = document.createElement("div"); b.className = "bub"; b.textContent = text; fx.appendChild(b); setTimeout(() => b.remove(), ms); }
+const CANDY_SAYS = {"Grrr !":"Hmpf !", "Hi hi !":"Hihi !", "Beurk...":"Bleh...", "Miam !":"Miam miam !", "Ouaaah !":"Kyaaah !", "Hein ?!":"Hiii ?!",
+  "Hé !":"Eh oh !", "Laisse-moi...":"Je boude...", "Youpi !":"Youpiii !", "Burp !":"Hips !"};
+function bubble(text, ms = 1200) { if (style === "candy") text = CANDY_SAYS[text] || text; const b = document.createElement("div"); b.className = "bub"; b.textContent = text; fx.appendChild(b); setTimeout(() => b.remove(), ms); }
 function heart() {
   const h = document.createElement("img"); h.src = HEART; h.className = "heart"; h.style.left = (62 + Math.random() * 40) + "px"; fx.appendChild(h);
   h.animate([{transform:"translate(0,0)", opacity:1}, {transform:`translate(${(Math.random() - .5) * 40}px,-54px)`, opacity:0}], {duration:1000, easing:"ease-out"}).finished.then(() => h.remove());
@@ -582,7 +588,7 @@ function tick() {
     if (mode === "pet") { if (now > reactUntil) toWalk(); else if (now > nextFx) { heart(); nextFx = now + 320; } return; }
     if (mode === "laugh") { if (now > reactUntil) toWalk(); else if (!isSheet() && Math.random() < 0.25 * k) img.src = img.src === FR.rire ? FR.content : FR.rire; return; }
     if (mode === "angry") {
-      if (now > reactUntil) { dir = cursor && cursor.x < x + 88 ? 1 : -1; face(); react("sulk", 2000, FR.fache, "walk"); say("il boude et s'en va"); }
+      if (now > reactUntil) { dir = cursor && cursor.x < x + 88 ? 1 : -1; face(); react("sulk", 2000, FR.fache, "walk boude"); say("il boude et s'en va"); }
       return;
     }
     if (mode === "sulk") {
@@ -604,10 +610,25 @@ function tick() {
   }
   if (burpAt && now > burpAt && isSheet() && !sheetOnce) { burpAt = 0; playInPlace("rot"); bubble("Burp !", 900); return; }
   if (isSheet() && HALF && !sheetOnce && faceStep(now)) return;
-  if (now < idleUntil) { if (img.className === "walk") pose(""); return; }
+  if (now < idleUntil) {
+    if (img.className === "walk") pose("");
+    if (sing) {
+      // il te regarde, ou une autre image a pris la place (caresse, humeur, perso...) : le chant s'arrête
+      const ch = img.src === FR.chante || img.src === FR.chante2;
+      if (watching || !ch || style !== "candy") { sing = false; if (ch) img.src = FR.normal; }
+      else if (now > nextFx) { img.src = img.src === FR.chante ? FR.chante2 : FR.chante; nextFx = now + 380; }
+    }
+    return;
+  }
+  if (sing) { sing = false; img.src = FR.normal; }
   if (img.className === "") pose("walk");
   if (Math.random() < 0.0025 * k) moodExtra();
-  if (Math.random() < MV().idle * k) { idleUntil = now + 1500 + Math.random() * 2500; return; }
+  if (Math.random() < MV().idle * k) {
+    idleUntil = now + 1500 + Math.random() * 2500;
+    // Candy chante pendant une partie de ses pauses
+    if (style === "candy" && mood !== "ronchon" && img.src === FR.normal && Math.random() < .37) { sing = true; img.src = FR.chante; nextFx = now + 380; if (Math.random() < .4) bubble("La la la !", 1200); }
+    return;
+  }
   if (!sheetOnce && Math.random() < MV().flip * k) { turnTo(-dir); if (mode === "turning") return; }
   if (!isSheet()) x += dir * MV().speed * k;
   y = floorY;
@@ -635,6 +656,7 @@ function clicked() {
     return;
   }
   disturb();
+  if (sing) { sing = false; img.src = FR.normal; }
   clicks = clicks.filter(t => now - t < 1500); clicks.push(now);
   if (!["walk", "pet", "laugh"].includes(mode)) return;
   if (clicks.length >= 7) { clicks = []; react("angry", 1300, FR.fache, "shake"); bubble("Grrr !", 1300); say("chatouilles : il se fache"); }
