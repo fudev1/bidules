@@ -416,6 +416,38 @@ const walkFrames = () => { const T = SHEET_DATA[style].tags; return T[walkTag] |
 const hopping = () => isSheet() && walkTag === "sautille" && !!SHEET_DATA[style].tags.sautille;
 const airborne = () => hopping() && crawlIdx % 4 !== 0;
 let crawlIdx = 0, crawlNext = 0, turnSeq = null, turnIdx = 0, turnNext = 0, pendingDir = 1, turnWanted = null, turnWantedUntil = 0;
+// --- Bonbons : Candy en laisse en marchant quand elle est contente (humeur guilleret), jamais plus de 3 par terre. Ils restent jusqu'à ce qu'on clique
+// sur l'un d'eux : elle vient alors le manger. Chaque bonbon est une petite fenêtre à part (main.rs), car la sienne la suit partout.
+const SWEET_COLORS = ["menthe", "rose", "jaune"], EAT_TAG = {menthe:"mange", rose:"mange-rose", jaune:"mange-jaune"};
+const SWEET_WIN = {w:32, up:148}, SWEET_AHEAD = 30;   // la fenêtre du bonbon : largeur, et hauteur de son haut sous le haut de la fenêtre de Candy ; distance où elle s'arrête devant lui
+let sweets = [], sweetId = 0, sweetTimer = 8000, wanted = [], feeding = null;
+function sweetDrop() {
+  const s = {id:++sweetId, color:SWEET_COLORS[Math.floor(Math.random() * SWEET_COLORS.length)], cx:x + 88 - dir * 28};
+  sweets.push(s);
+  T.core.invoke("bonbon_poser", {id:s.id, x:Math.round(s.cx - SWEET_WIN.w / 2), y:Math.round(y + SWEET_WIN.up), couleur:s.color})
+    .catch(e => { sweets = sweets.filter(c => c !== s); say("bonbon : " + e); });
+  say(`elle laisse un bonbon ${s.color}`);
+}
+function sweetRemove(s) {
+  sweets = sweets.filter(c => c !== s); wanted = wanted.filter(c => c !== s); if (feeding && feeding.s === s) feeding = null;
+  T.core.invoke("bonbon_retirer", {id:s.id}).catch(() => {});
+}
+// elle marche vers le bonbon ; au contact avec le sol, à 30 pixels de lui, elle s'arrête et se met de face
+function feedArrive() {
+  const s = feeding.s, side = Math.sign(s.cx - (x + 88)) || dir, aim = s.cx - side * SWEET_AHEAD - 88;
+  // hors de sa portée (autre écran, écran redimensionné) ou trop long : elle renonce, le bonbon reste là
+  if (aim < minX - 6 || aim > maxX + 6 || Date.now() > feeding.until) { say("bonbon hors de portée : elle renonce"); feeding = null; wanted = wanted.filter(c => c !== s); return; }
+  if (side !== dir) { if (turnWanted === null) turnTo(side); return; }
+  if ((aim - x) * dir > (hopping() ? 8 : 4)) return;
+  feeding.stage = "face"; feeding.aim = aim; idleUntil = Date.now() + 30000;
+}
+function startEat() {
+  const s = feeding.s, tag = EAT_TAG[s.color];
+  sweetRemove(s);   // sa fenêtre se ferme : le bonbon est maintenant dessiné dans ses mains
+  idleUntil = 0; disturb();
+  react("eat", (tagDur(tag) || 1800) + 400, FR.rire, ""); playOnce(tag); bubble("Miam !", 1000);
+  say(`elle mange un bonbon ${s.color}`);
+}
 let moodMode = "auto", mood = null, moodReason = "";
 const MOOD_LABEL = {guilleret:"Guilleret", ronchon:"Ronchon", vaseux:"Vaseux", stresse:"Stressé", lune:"Dans la lune"};
 const MOOD_MOVE = {normal:{speed:1.6, idle:.008, flip:.004}, guilleret:{speed:2.4, idle:.004, flip:.006}, ronchon:{speed:.9, idle:.016, flip:.003},
@@ -528,6 +560,7 @@ function tick() {
   ticks++;
   const t2 = performance.now(), dtMs = Math.min(200, t2 - lastT), k = Math.min(4, (t2 - lastT) / 33); lastT = t2;
   if (isSheet()) sheetAnim(Date.now());
+  if (sweets.length && style !== "candy") sweets.slice().forEach(sweetRemove);
   if (drag) {
     swayStep(dtMs / 1000);
     if (pull.on && pull.ready) pullStep(dtMs / 1000);
@@ -539,6 +572,7 @@ function tick() {
   // juste lâché : le temps de lire l'écran, il reste où il est (sinon la marche le recolle au sol)
   if (mode === "held" || mode === "carried") return;
   if (mode === "walk") calm += dtMs;
+  if (mode === "walk" && style === "candy" && mood === "guilleret" && sweets.length < 3 && !feeding) sweetTimer -= dtMs;
   if (mode === "pet") calm += dtMs * PET_BOOST;
   if ((mode === "walk" || mode === "pet") && calm > (MV().sleepAfter || SLEEP_AFTER)) {
     mode = "drowsy"; reactUntil = Date.now() + (tagDur("baille") ? tagDur("baille") + 300 : 2600); img.src = FR.baille; pose(""); watching = false; lookKey = ""; playOnce("baille");
@@ -634,21 +668,29 @@ function tick() {
     }
   }
   if (burpAt && now > burpAt && isSheet() && !sheetOnce) { burpAt = 0; playInPlace("rot"); bubble("Burp !", 900); return; }
+  if (!feeding && wanted.length && mode === "walk" && !sheetOnce) { feeding = {s:wanted.shift(), stage:"go", until:Date.now() + 90000}; idleUntil = 0; }
+  if (feeding && feeding.stage === "face" && Date.now() > feeding.until) { feeding = null; idleUntil = 0; }
+  if (feeding && feeding.stage === "face") {
+    // pendant son demi-tour, elle se cale au pixel près devant le bonbon, puis elle le mange une fois de face
+    x += (feeding.aim - x) * Math.min(1, .15 * k); y = floorY; push();
+    if (FRONT.has(img.src) && !faceSeq && !sheetOnce) { startEat(); return; }
+  }
+  if (feeding && feeding.stage === "go" && !sheetOnce && !airborne()) feedArrive();
   if (isSheet() && HALF && !sheetOnce && faceStep(now)) return;
   if (now < idleUntil && !airborne()) { if (img.className === "walk") pose(""); return; }
   if (img.className === "") pose("walk");
   if (Math.random() < 0.0025 * k) moodExtra();
-  if (!airborne() && Math.random() < MV().idle * k * (hopping() ? 3 : 1)) {
+  if (!airborne() && !feeding && Math.random() < MV().idle * k * (hopping() ? 3 : 1)) {
     idleUntil = now + 1500 + Math.random() * 2500;
     // Candy chante pendant une partie de ses pauses, sauf quand elle est ronchon
     sing = style === "candy" && mood !== "ronchon" && Math.random() < .37;
     if (sing && Math.random() < .4) bubble("La la la !", 1200);
     return;
   }
-  if (!sheetOnce && Math.random() < MV().flip * k) { turnTo(-dir); if (mode === "turning") return; }
+  if (!sheetOnce && !feeding && Math.random() < MV().flip * k) { turnTo(-dir); if (mode === "turning") return; }
   if (!isSheet()) x += dir * MV().speed * k;
   y = floorY;
-  if (isSheet() && mode === "walk" && !sheetOnce && !airborne() && Math.random() < .004 * k) playOnce("saut");
+  if (isSheet() && mode === "walk" && !sheetOnce && !airborne() && !feeding && Math.random() < .004 * k) playOnce("saut");
   if (isSheet() && mode === "walk" && !sheetOnce && now >= crawlNext) {
     // l'humeur change la cadence des images, pas la longueur du pas
     let cr = walkFrames();
@@ -657,6 +699,7 @@ function tick() {
     if (turnWanted !== null && (crawlIdx + 1) % cr.length === 0) { const nd = turnWanted; turnWanted = null; if (Date.now() < turnWantedUntil && nd !== dir) { turnTo(nd, true); return; } }
     crawlIdx = (crawlIdx + 1) % cr.length; img.src = cr[crawlIdx].src; crawlNext = nextAt(crawlNext, cr[crawlIdx].dur * MOOD_MOVE.normal.speed / MV().speed, now);
     x += dir * 2 * (cr[crawlIdx].step || 0);
+    if (sweetTimer <= 0 && hopping() && crawlIdx % 4 === 0 && mood === "guilleret" && sweets.length < 3 && !feeding) { sweetTimer = 12000 + Math.random() * 26000; sweetDrop(); }
   }
   if (x < minX) { x = minX; turnTo(1); }
   if (x > maxX) { x = maxX; turnTo(-1); }
@@ -802,6 +845,7 @@ async function watchCursor() {
   pet.last = inside ? cx : null;
   if (mode === "pet" || mode === "sleep") return;
   if (isSheet() && sheetOnce) { lookKey = ""; return; }
+  if (feeding) { if (watching) stopWatch(); return; }
   const eyeY = EYE_Y[style] - (style !== "classique" && partsBy[style].pattes === "longues" ? 14 : 0);
   const dx = cx - (x + 88), dy = cy - (y + eyeY), dist = Math.hypot(dx, dy);
   if (dist < 240 && mood === "ronchon") {
@@ -881,6 +925,12 @@ T.event.listen("mood", e => {
   else { moodReason = "choisie à la main"; say("humeur choisie : " + moodMode); applyMood(moodMode); bubble(MOOD_LABEL[moodMode], 1200); }
 });
 setInterval(autoMood, 60000);
+T.event.listen("bonbon-clic", e => {
+  say("bonbon-clic reçu : " + e.payload);
+  const s = sweets.find(c => c.id === e.payload);
+  if (!s || wanted.includes(s) || (feeding && feeding.s === s)) return;
+  wanted.push(s); disturb(); say("clic sur un bonbon");
+});
 T.event.listen("demande-etat", sendState);
 T.event.listen("style", async e => {
   if (SHEETS[e.payload] && !SHEET_DATA[e.payload]) { try { await loadSheet(e.payload); } catch (err) { say("perso : " + err); return; } }

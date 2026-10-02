@@ -1,0 +1,18 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<style>
+html,body{margin:0;width:32px;height:24px;overflow:hidden;background:transparent;user-select:none;-webkit-user-select:none;cursor:pointer}
+body{position:relative}
+/* le bonbon, 10 x 6 pixels de la planche agrandis deux fois comme Candy ; son bas tombe sur la ligne des pieds */
+#c{position:absolute;left:6px;bottom:2px;width:20px;height:12px;background:url(persos/candy/bonbons.png) no-repeat;background-size:60px 12px;image-rendering:pixelated;animation:pose .5s steps(1) both}
+body:hover #c{filter:brightness(1.12)}
+@keyframes pose{0%{translate:0 -10px}10%{translate:0 -6px}20%{translate:0 -2px}30%{translate:0 0}40%{translate:0 -3px}50%{translate:0 -4px}60%{translate:0 -2px}70%{translate:0 0}80%{translate:0 -1px}90%{translate:0 0}}
+</style></head>
+<body><div id="c"></div>
+<script>
+// l'identifiant et la couleur viennent de la fenêtre créée par main.rs
+const B = window.BONBON || {id: 0, couleur: "menthe"};
+document.getElementById("c").style.backgroundPositionX = -20 * Math.max(0, ["menthe", "rose", "jaune"].indexOf(B.couleur)) + "px";
+try { window.__TAURI__.core.invoke("log", {msg: `bonbon ${B.id} affiché (${B.couleur})`}); } catch (e) {}
+document.body.addEventListener("pointerdown", () => { try { window.__TAURI__.core.invoke("bonbon_clic", {id: B.id}); } catch (e) {} });
+</script></body></html>

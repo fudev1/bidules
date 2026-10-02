@@ -19,6 +19,7 @@ Inspiration : l'app "Claude Usage" (PokéBurn), sans le thème Pokémon.
 - Il marche en bas de l'écran, suit la souris des yeux, fait des pauses, bâille puis s'endort quand on le laisse tranquille.
 - On peut l'attraper, le lancer, le secouer, le caresser, le chatouiller, lui glisser un fichier à "manger" (le fichier n'est pas touché).
 - La limace s'étire quand on la tire du sol, décolle, et s'écrase si elle tombe de haut.
+- Candy laisse de petits bonbons en marchant quand elle est de bonne humeur ; un clic sur l'un d'eux et elle vient le manger.
 - Son humeur est devinée d'après le rythme de tes prompts (heure, durée de session, cadence), et tu peux la corriger dans le panneau.
 - Le panneau de la barre de menus permet de choisir le personnage, d'ajouter des parties et de forcer une humeur.
 
