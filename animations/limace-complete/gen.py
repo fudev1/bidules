@@ -1,6 +1,8 @@
 import math, json, os, struct, zlib, sys
 sys.path.insert(0, os.path.dirname(__file__))
 from png import frames, write
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "tools"))
+from boule import arms_of, parts_of
 # chemins relatifs au script : le projet peut être cloné n'importe où
 D0 = os.path.dirname(os.path.abspath(__file__)); A0 = os.path.dirname(D0)
 def durations(meta):
@@ -152,8 +154,9 @@ tags += [("vol", S0 + 16, S0 + 18), ("chute-legere", S0 + 19, S0 + 20), ("atterr
 # autres animations dessinées par Thibault : elles remplacent celles générées plus bas
 # baille : recalée sur la pose de repos par tools/rebase_animations.py (plus de jupe au bas du corps, queue à gauche) ; rien à décaler ici
 # repos : de face, 8 images (il cligne deux fois) ; sa petite queue est à gauche, côté d'où il vient quand il marche vers la droite : l'app retourne tout autour de l'axe 31,5
-# secoue et nausee : l'animation attrape passée au vert de la nausée (le bleu de base, son ombre et son reflet deviennent leurs verts)
+# secoue et nausee : attrape-boule (secoue) et la reptation (nausee) passées au vert de la nausée (le bleu de base, son ombre et son reflet deviennent leurs verts)
 TO_VERT = {BLEU[k]: VERT[k] for k in "ACD"}
+TO_VERT[(63, 63, 116, 255)] = (45, 95, 50, 255)      # le bleu marine de la bouche de chute devient un vert foncé ; le blanc des dents reste blanc
 def vert(seq): return [([[TO_VERT.get(p, p) for p in row] for row in f], d) for f, d in seq]
 # nausee (au sol) : la reptation classique passée au vert, avec des spirales à la place des yeux ; elles tournent d'un quart de tour toutes les 3 images
 SPIRAL = ["#####", "....#", "###.#", "#...#", "#####"]
@@ -186,7 +189,14 @@ def dizzy(seq):
                     if ch == "#": g[cy - 2 + r][cx - 2 + c] = B
         out.append((g, d))
     return out
-HAND = [("baille", hand("baille", "baille")), ("repos", hand("repos", "repos")), ("dort", hand("dort", "dort")), ("remue", hand("remue", "remue")), ("regard", hand("regard", "regard")), ("reforme", hand("reforme", "reforme")), ("attrape", hand("attrape", "attrape")), ("secoue", vert(hand("attrape", "attrape"))), ("nausee", dizzy(vert(hand("crawl", "crawl")))), ("mange", hand("eat", "mange")), ("rot", hand("rot", "rot")),
+HAND = [("baille", hand("baille", "baille")), ("repos", hand("repos", "repos")), ("dort", hand("dort", "dort")), ("remue", hand("remue", "remue")), ("regard", hand("regard", "regard")), ("reforme", hand("reforme", "reforme")), ("attrape", hand("attrape", "attrape")), ("attrape-boule", hand("attrape-boule", "attrape-boule")),
+        # ce qu'attrape-boule ajoute à la goutte nue : le visage, les sourcils et la sueur (une image par image) ; les bras, eux, sont pris sur la première image
+        # (bras levés) : le code les fait tourner autour de leur attache, avec des poses fantômes ; la boule et sa queue, il les dessine en direct
+        ("attrape-boule-parts", [(parts_of(f), d) for f, d in hand("attrape-boule", "attrape-boule")]),
+        ("attrape-boule-arms", [(arms_of(hand("attrape-boule", "attrape-boule")[0][0]), 100)]), ("secoue", vert(hand("attrape-boule", "attrape-boule"))),
+        # secoué puis lâché, il reste vert pendant toute la chute et l'atterrissage, jusqu'à ce qu'il se remette : les mêmes animations, passées au vert
+        ("vol-vert", vert(SAUT[16:19])), ("chute-legere-vert", vert(SAUT[19:21])), ("atterrissage-vert", vert(SAUT[21:27])), ("chute-vert", vert(hand("chute", "chute", 0, 11))),
+        ("nausee", dizzy(vert(hand("crawl", "crawl")))), ("mange", hand("eat", "mange")), ("rot", hand("rot", "rot")),
         # chute : 0-1 = début, 2-11 = boucle ; 12-13 (la goutte qui descend dans l'image) sont sautées, c'est la fenêtre qui descend
         ("chute", hand("chute", "chute", 0, 11)), ("ecrase", hand("chute", "chute", 14, 22))]
 for name, seq in HAND:

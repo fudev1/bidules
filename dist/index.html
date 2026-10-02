@@ -332,6 +332,8 @@ function pullFinish() {
     watching = true; idleUntil = Date.now() + 700; lookKey = "";
   } });
 }// Un perso dessiné joue l'animation qui correspond à ce qu'il fait ; sheetOnce joue une animation une fois (saut, atterrissage, choc).
+// tenu par la souris : la boule avec une pointe (attrape-boule) si elle existe, sinon attrape
+const heldTag = T2 => T2["attrape-boule"] ? "attrape-boule" : "attrape";
 const SHEET_MODE_TAG = {held:"attrape", fly:"vol", dizzy:"etourdi", nausea:"nausee", recover:"remis", pet:"caresse", laugh:"rire", angry:"fache",
   sulk:"boude", ooh:"intrigue", sleep:"dort", carried:"attrape", waking:"reveil", evolving:"fier"};
 // Candy rebondit comme une balle quand on la lance ; crashed : la première chute était grosse, l'écrasement viendra à la fin des rebonds ; sing : elle chante pendant cette pause
@@ -366,6 +368,7 @@ function playOnce(tag) {
 }
 function sheetAnim(now) {
   const T2 = SHEET_DATA[style].tags;
+  if (swing.on && (mode === "held" || mode === "carried")) return;       // la goutte est dessinée en direct (swingDraw)
   // si son état a changé entre-temps (on l'énerve, on l'attrape...), l'animation en cours s'arrête : une seule animation à la fois
   if (sheetOnce && sheetOnce.mode !== mode) sheetOnce = null;
   if ((mode !== "fly" || sheetOnce) && img.style.translate) img.style.translate = "";
@@ -377,21 +380,23 @@ function sheetAnim(now) {
     }
     if (sheetOnce) return;
   }
+  // secoué puis lâché (nausea), il reste vert pendant la chute et l'atterrissage : les mêmes animations en vert, jusqu'à ce qu'il se remette
+  const tg = n => (nausea && T2[n + "-vert"]) || T2[n];
   if (mode === "fly" && T2.vol && T2.chute) {
     let f;
     // petite chute : la goutte du saut du collègue ; grande chute (au moins les deux tiers de l'écran) : l'animation de Thibault, il a peur
-    const L2 = T2["chute-legere"];
-    if (vy < 3) { f = T2.vol[0]; fall = null; }
+    const L2 = tg("chute-legere");
+    if (vy < 3) { f = tg("vol")[0]; fall = null; }
     // Candy panique (bras qui battent, larmes) pendant la première chute ; après le premier rebond, la chute légère
     else if (!bigFall() && L2 && !(style === "candy" && bounces === 0)) { f = vy < 9 ? L2[0] : L2[L2.length - 1]; fall = null; }
     else {
-      const C = T2.chute;
+      const C = tg("chute");
       if (!fall) fall = {i:0, next:now + C[0].dur};
       else if (now >= fall.next) { fall.i = fall.i + 1 >= C.length ? Math.min(2, C.length - 1) : fall.i + 1; fall.next = nextAt(fall.next, C[fall.i].dur, now); }
       f = C[fall.i];
     }
     // calé sur le sol ; pendant la boucle de chute, un calage fixe pour garder le mouvement dessiné par Thibault
-    const C2 = T2.chute.slice(2), lb = fall && fall.i >= 2 && C2.length ? Math.max(...C2.map(c => c.bot)) : f.bot;
+    const C2 = tg("chute").slice(2), lb = fall && fall.i >= 2 && C2.length ? Math.max(...C2.map(c => c.bot)) : f.bot;
     const lift = (SHEET_DATA[style].front.bot - lb) * 2 + "px";
     if (img.src !== f.src) img.src = f.src;
     if (img.style.translate !== "0px " + lift) img.style.translate = "0px " + lift;
@@ -399,8 +404,9 @@ function sheetAnim(now) {
   }
   if (mode === "turning") return;
   let tag = SHEET_MODE_TAG[mode];
+  if (tag === "attrape") tag = heldTag(T2);
   if (mode === "held" && drag && drag.shaken) tag = "secoue";
-  if (mode === "fly" && vy > 0 && T2.chute) tag = "chute";
+  if (mode === "fly" && vy > 0 && T2.chute) tag = nausea && T2["chute-vert"] ? "chute-vert" : "chute";
   if (mode === "sleep" && wake > 35) tag = "remue";
   if (mode === "walk") { if (watching) sing = false; if (watching || now >= idleUntil || faceSeq || !FRONT.has(img.src)) return; tag = sing && T2.chante ? "chante" : "repos"; }
   if (!tag || !T2[tag]) { if (tag === "boude" && T2.crawl) tag = "crawl"; else return; }
@@ -434,15 +440,18 @@ function buildFrames(s) {
     const D = SHEET_DATA[s], T2 = D.tags, front = D.front.src, nf = {}, nl = {};
     const pick = (tag, i = 0) => T2[tag] ? T2[tag][Math.min(i, T2[tag].length - 1)].src : front;
     for (const k of Object.keys(FRAME_STATES)) nf[k] = front;
-    Object.assign(nf, {normal:pick("repos"), p1:pick("attrape"), p2:pick("attrape", 1), d1:pick("etourdi"), d2:pick("etourdi", 1), content:pick("caresse"),
+    Object.assign(nf, {normal:pick("repos"), p1:pick(heldTag(T2)), p2:pick(heldTag(T2), 1), d1:pick("etourdi"), d2:pick("etourdi", 1), content:pick("caresse"),
       rire:pick("rire"), fache:pick("fache"), ooh:pick("intrigue"), n1:pick("nausee"), n2:pick("nausee", 1), dort:pick("dort"), remue:pick("remue"), baille:pick("baille", 1)});
     const LOOK_ORDER = ["0,-1", "0,0", "0,1", "1,-1", "1,0", "1,1"];
     for (const lx of [0, 1]) for (const ly of [-1, 0, 1]) { const key = lx + "," + ly; nl[key] = T2.regard ? T2.regard[LOOK_ORDER.indexOf(key)].src : front; }
     // images de face ; HALF = début du demi-tour, du profil jusqu'à l'image de face
     const mid = T2.turn ? T2.turn.reduce((b, f, i) => f.dur > T2.turn[b].dur ? i : b, 0) : -1;
-    FRONT = new Set(["repos", "regard", "baille", "reforme", "atterrissage", "intrigue", "caresse", "rire", "fache", "chante", "remis", "reveil", "fier"].flatMap(t => (T2[t] || []).map(f => f.src)));
+    FRONT = new Set(["repos", "regard", "baille", "reforme", "atterrissage", "atterrissage-vert", "intrigue", "caresse", "rire", "fache", "chante", "remis", "reveil", "fier"].flatMap(t => (T2[t] || []).map(f => f.src)));
     if (mid > 0) FRONT.add(T2.turn[mid].src);
     HALF = mid > 0 ? T2.turn.slice(0, mid + 1) : null; faceSeq = null;
+    const AR = T2["attrape-boule-arms"]; swing.armPx = null;
+    if (AR) { const im = new Image(); im.onload = () => { const c = document.createElement("canvas"); c.width = c.height = 64; const g = c.getContext("2d", {willReadFrequently:true}); g.drawImage(im, 0, 0); swing.armPx = g.getImageData(0, 0, 64, 64).data; }; im.src = AR[0].src; }
+    const P = T2["attrape-boule-parts"]; swing.parts = P ? P.map(f => { const im = new Image(); im.src = f.src; return im; }) : null; swing.durs = P ? P.map(f => f.dur) : [];
     FR = nf; LOOK = nl; style = s; return;
   }
   const G = MONSTRES[s] ? (st, look) => monstreURL(s, st, look, partsBy[s], mood)
@@ -520,7 +529,7 @@ function land() {
   } else if (maxImpact > 24 && !isSheet()) {
     mode = "dizzy"; dizzyUntil = Date.now() + 2400; img.src = FR.d1; say(`atterrissage brutal (${Math.round(maxImpact)}) : il est etourdi`);
   } else { mode = "walk"; img.src = FR.normal; say("atterrissage en douceur"); }
-  playOnce(mode === "splat" ? "ecrase" : "atterrissage"); fall = null; peakY = null; crashed = false;
+  playOnce(mode === "splat" ? "ecrase" : mode === "nausea" ? "atterrissage-vert" : "atterrissage"); fall = null; peakY = null; crashed = false;
   nausea = false; maxImpact = 0; if (!isSheet()) squash();
 }
 let lastT = performance.now();
@@ -530,6 +539,7 @@ function tick() {
   if (isSheet()) sheetAnim(Date.now());
   if (drag) {
     swayStep(dtMs / 1000);
+    if (swing.on && (mode === "held" || mode === "carried")) { swingStep(dtMs / 1000); swingDraw(); }
     if (pull.on && pull.ready) pullStep(dtMs / 1000);
     if (mode === "carried") {
       wake = Math.max(0, wake - 45 * dtMs / 1000);
@@ -672,7 +682,7 @@ let sway = {a:0, w:0};
 function swayStep(dt) {
   dt = Math.min(.05, Math.max(.004, dt));
   let target = 0;
-  if (drag && heldByHead !== null && (mode === "held" || mode === "carried")) {
+  if (drag && heldByHead !== null && !swing.on && (mode === "held" || mode === "carried")) {
     const now = performance.now(), last = samples[samples.length - 1], old = samples.find(s => now - s.t < 120);
     if (last && old && last !== old && now - last.t < 120) target = Math.max(-SWAY_MAX, Math.min(SWAY_MAX, (last.x - old.x) / Math.max(16, last.t - old.t) * 1000 * SWAY_GAIN));
   }
@@ -680,19 +690,111 @@ function swayStep(dt) {
   sway.w += (90 * (target - sway.a) - 6 * sway.w) * dt; sway.a += sway.w * dt;
   img.style.transform = "rotate(" + (sway.a * (dir < 0 ? -1 : 1)).toFixed(2) + "deg)";          // le retournement (scale -1) inverse le sens : on le compense
 }
+// Tenu par la tête, la goutte se balance au bout d'un ressort.
+// Comme celle que pullDraw dessine quand on décolle un Bidule éveillé : une boule et un cône qui s'amincit jusqu'au point tenu, calculés en direct.
+// La boule rebondit au bout du ressort (effet yoyo, le même ressort que pullStep) : la queue s'allonge, se raccourcit et penche avec elle.
+// Le visage, les sourcils, les bras et la sueur viennent d'attrape (tag attrape-boule-parts, voir tools/boule.py) et suivent la boule.
+const SW_R = 29 * .44, SW_L = SW_R + 3, SW_G = [31.5, 11], SW_B0 = [31.5, 11 + SW_L + 900 / 110];      // les mêmes valeurs que tools/boule.py
+const swing = {on:false, b:[0, 0], vb:[0, 0], pw:[0, 0], pv:[0, 0], aw:[0, 0], skip:0, cv:null, parts:null, durs:[], armPx:null};
+const SW_COL = {ink:[0, 0, 0], base:[99, 155, 255], shade:[69, 119, 224], light:[164, 198, 255]};
+const SW_GREEN = {"99,155,255":[127, 212, 106], "69,119,224":[79, 174, 69], "164,198,255":[198, 240, 176]};     // les verts de la nausée (gen.py : TO_VERT)
+// Les bras se débattent : ils tournent vite autour de leur attache, du haut vers le bas, avec des poses fantômes (les positions des instants précédents,
+// plus pâles, les plus anciennes tramées), comme un bras filmé en pose longue. Ce sont les bras dessinés dans attrape-boule (tag attrape-boule-arms), pas des traits.
+const SW_ROOT_Y = Math.round(SW_B0[1] - 3.5);                                     // ligne d'attache des bras (tools/boule.py : ROOT_Y)
+const SW_PIV = (() => { const xs = []; for (let X = 0; X < 64; X++) if (Math.hypot(X + .5 - SW_B0[0], SW_ROOT_Y + .5 - SW_B0[1]) <= SW_R) xs.push(X);
+  return [[Math.min(...xs) + .5, SW_ROOT_Y + .5], [Math.max(...xs) + .5, SW_ROOT_Y + .5]]; })();        // les deux attaches : les bords gauche et droit de la boule
+const SW_FLAIL = {T:260, ampl:52, mid:3, e0:30, ghosts:4, dt:18};        // période (ms), balayage (degrés), élévation de la pose dessinée, nombre de poses fantômes et espacement (ms)
+function swingArms(d, B, ms) {
+  const A = swing.armPx; if (!A) return;
+  const sx = Math.round(B[0] - SW_B0[0]), sy = Math.round(B[1] - SW_B0[1]), LIGHT = SW_COL.light;      // les bras suivent la boule
+  const elev = t => SW_FLAIL.mid + SW_FLAIL.ampl * Math.sin(2 * Math.PI * t / SW_FLAIL.T);              // élévation du bras à l'instant t, en degrés (positif = vers le haut)
+  for (let j = SW_FLAIL.ghosts; j >= 0; j--) {      // les plus anciennes d'abord, la pose actuelle (j = 0) en dernier, par-dessus
+    const delta = (elev(ms - j * SW_FLAIL.dt) - SW_FLAIL.e0) * Math.PI / 180;
+    for (let side = 0; side < 2; side++) {
+      const sg = side ? 1 : -1, P0 = SW_PIV[side], P1 = [P0[0] + sx, P0[1] + sy];
+      for (let Y = Math.floor(P1[1] - 18); Y <= Math.ceil(P1[1] + 18); Y++) for (let X = Math.floor(P1[0] - 18); X <= Math.ceil(P1[0] + 18); X++) {
+        if (X < 0 || Y < 0 || X > 63 || Y > 63 || (j >= 3 && (X + Y) % 2)) continue;        // les poses les plus anciennes sont tramées : elles s'estompent
+        const ox = X + .5 - P1[0], oy = Y + .5 - P1[1], r = Math.hypot(ox, oy);
+        const a = Math.atan2(-oy, ox) - sg * delta;                                           // on lit l'image du bras à l'angle d'origine (le bras gauche est le miroir du droit)
+        const U = Math.floor(P0[0] + r * Math.cos(a)), V = Math.floor(P0[1] - r * Math.sin(a));
+        if (U < 0 || V < 0 || U > 63 || V > 63) continue;
+        const i = (V * 64 + U) * 4; if (!A[i + 3]) continue;
+        const o = (Y * 64 + X) * 4, c = j ? LIGHT : [A[i], A[i + 1], A[i + 2]];
+        d[o] = c[0]; d[o + 1] = c[1]; d[o + 2] = c[2]; d[o + 3] = 255;
+      }
+    }
+  }
+}
+function swingStart() { Object.assign(swing, {on:true, b:[0, SW_L], vb:[0, 160], pw:[x, y], pv:[0, 0], aw:[0, 0], skip:2}); }
+function swingStep(dt) {
+  dt = Math.min(.05, Math.max(.008, dt));
+  if (swing.skip) { swing.skip--; swing.pw = [x, y]; swing.pv = [0, 0]; }
+  else {      // l'accélération de la fenêtre (donc de la souris) secoue la boule
+    const vw = [(x - swing.pw[0]) / dt / 2, (y - swing.pw[1]) / dt / 2];
+    swing.aw = swing.aw.map((a, k) => a * .5 + (vw[k] - swing.pv[k]) / dt * .5); swing.pw = [x, y]; swing.pv = vw;
+  }
+  const b = swing.b, vb = swing.vb, len = Math.hypot(b[0], b[1]) || 1, f = 110 * (SW_L - len) / len;
+  const ax = f * b[0] - 6 * vb[0] - Math.max(-4000, Math.min(4000, swing.aw[0]));
+  const ay = 900 + f * b[1] - 6 * vb[1] - Math.max(-4000, Math.min(4000, swing.aw[1]));
+  vb[0] += ax * dt; vb[1] += ay * dt; b[0] += vb[0] * dt; b[1] += vb[1] * dt;
+  if (b[1] < 3) { b[1] = 3; vb[1] = Math.max(0, vb[1]); }
+  const l2 = Math.hypot(b[0], b[1]), lmax = 63 - SW_R - SW_G[1] - 1;                  // la boule reste dans l'image
+  if (l2 > lmax) { swing.b = b.map(v => v * lmax / l2); swing.vb = vb.map(v => v * .5); }
+  const side = 31 - SW_R - 1; if (Math.abs(swing.b[0]) > side) { swing.b[0] = Math.sign(swing.b[0]) * side; swing.vb[0] *= .5; }
+}
+function swingDraw() {
+  const B = [SW_G[0] + swing.b[0], SW_G[1] + swing.b[1]], mask = new Uint8Array(4096), dx = B[0] - SW_G[0], dy = B[1] - SW_G[1], L2 = dx * dx + dy * dy || 1;
+  for (let Y = 0; Y < 64; Y++) for (let X = 0; X < 64; X++) {      // la boule, et le cône de la pointe à son centre (maskDrop)
+    const px = X + .5, py = Y + .5; let inside = Math.hypot(px - B[0], py - B[1]) <= SW_R;
+    if (!inside) { const t = Math.max(0, Math.min(1, ((px - SW_G[0]) * dx + (py - SW_G[1]) * dy) / L2));
+      inside = Math.hypot(px - SW_G[0] - t * dx, py - SW_G[1] - t * dy) <= (1.4 + (SW_R * 1.9 - 1.4) * t) / 2; }
+    if (inside) mask[Y * 64 + X] = 1;
+  }
+  const at = (X, Y) => X >= 0 && Y >= 0 && X < 64 && Y < 64 && mask[Y * 64 + X] === 1;
+  const spurs = []; for (let Y = 0; Y < 64; Y++) for (let X = 0; X < 64; X++) if (at(X, Y) && Y > B[1] && at(X, Y - 1) + at(X - 1, Y) + at(X + 1, Y) + at(X, Y + 1) < 2) spurs.push(Y * 64 + X);
+  spurs.forEach(i => { mask[i] = 0; });                           // un pixel isolé sous la boule
+  const inner = (X, Y) => at(X, Y) && at(X + 1, Y) && at(X - 1, Y) && at(X, Y + 1) && at(X, Y - 1);
+  let t0 = 64, b0 = 0, xa = 64, xb = 0;
+  for (let i = 0; i < 4096; i++) if (mask[i]) { const X = i % 64, Y = (i - X) / 64; t0 = Math.min(t0, Y); b0 = Math.max(b0, Y); xa = Math.min(xa, X); xb = Math.max(xb, X); }
+  const c0 = (xa + xb) / 2, green = !!(drag && drag.shaken);
+  const cv = swing.cv || (swing.cv = document.createElement("canvas")); cv.width = cv.height = 64;
+  const g = cv.getContext("2d", {willReadFrequently:true}), imd = g.createImageData(64, 64), d = imd.data;
+  swingArms(d, B, Date.now());                                    // les bras d'abord : ils passent derrière la boule
+  for (let Y = t0; Y <= b0; Y++) for (let X = xa; X <= xb; X++) {      // les couleurs de styleRender : contour, ombre, reflet
+    if (!mask[Y * 64 + X]) continue;
+    let c = SW_COL.base;
+    if (!inner(X, Y)) c = SW_COL.ink;
+    else if (!inner(X, Y + 3) || !inner(X + 2, Y)) c = SW_COL.shade;
+    else if ((!inner(X - 3, Y - 1) && X < c0 && Y < b0 - 7) || (!inner(X - 1, Y - 3) && X < c0 + 3 && Y < t0 + 6)) c = SW_COL.light;
+    const i = (Y * 64 + X) * 4; d[i] = c[0]; d[i + 1] = c[1]; d[i + 2] = c[2]; d[i + 3] = 255;
+  }
+  g.putImageData(imd, 0, 0);
+  if (swing.parts && swing.parts.length) {      // le visage, les bras et la sueur d'attrape, qui suivent la boule
+    const tot = swing.durs.reduce((a, v) => a + v, 0); let ms = Date.now() % tot, k = 0; while (k < swing.durs.length - 1 && ms >= swing.durs[k]) { ms -= swing.durs[k]; k++; }
+    g.imageSmoothingEnabled = false; g.drawImage(swing.parts[k], Math.round(B[0] - SW_B0[0]), Math.round(B[1] - SW_B0[1]));
+  }
+  if (green) {      // secoué : il verdit
+    const o = g.getImageData(0, 0, 64, 64), od = o.data;
+    for (let i = 0; i < od.length; i += 4) { const v = SW_GREEN[od[i] + "," + od[i + 1] + "," + od[i + 2]]; if (v) { od[i] = v[0]; od[i + 1] = v[1]; od[i + 2] = v[2]; } }
+    g.putImageData(o, 0, 0);
+  }
+  img.src = cv.toDataURL();
+}
 function holdByHead(cx = drag && drag.lastX, cy = drag && drag.lastY) {
-  const f = isSheet() && SHEET_DATA[style].tags.attrape && SHEET_DATA[style].tags.attrape[0];
+  const tg = isSheet() && SHEET_DATA[style].tags, f = tg && tg[heldTag(tg)] && tg[heldTag(tg)][0];
   if (!f || !drag) return;
-  const hx = f.tipx + .5, hy = f.top + 1.5;                      // le point tenu, en pixels de l'image (un peu sous la pointe)
+  const dyn = !!(tg["attrape-boule-parts"] && swing.parts);       // la goutte dessinée en direct : on la tient par sa pointe
+  const hx = dyn ? SW_G[0] : f.tipx + .5, hy = dyn ? SW_G[1] + .5 : f.top + 1.5;      // le point tenu, en pixels de l'image (un peu sous la pointe)
   x = cx - (24 + hx * 2); y = cy - (48 + hy * 2); push();       // l'image fait 128 px dans la fenêtre : à 24 px du bord gauche, collée en bas (176 - 128 = 48)
   drag.x0 = x - (cx - drag.sx); drag.y0 = y - (cy - drag.sy);
   if (heldByHead === null) heldByHead = img.style.transformOrigin;
+  if (dyn && !swing.on) swingStart();
   img.style.animation = "none";                                   // plus de balancement automatique : il ne bouge que selon la souris (ballottement)
   img.style.transformOrigin = hx / 64 * 100 + "% " + hy / 64 * 100 + "%";        // pivot : le point tenu (le retournement se fait aussi autour de lui)
 }
 function struggle(on) {
   clearInterval(flap); flap = null;
-  if (!on) { sway.a = sway.w = 0; img.style.transform = ""; img.style.animation = ""; }
+  if (!on) { sway.a = sway.w = 0; swing.on = false; img.style.transform = ""; img.style.animation = ""; }
   if (!on && heldByHead !== null) { img.style.transformOrigin = heldByHead; heldByHead = null; }
   if (on) { pose("struggle"); img.style.rotate = "0deg"; let f = 0; img.src = FR.p1; if (!isSheet()) flap = setInterval(() => { f = 1 - f; img.src = f ? FR.p2 : FR.p1; }, 160); }
 }
