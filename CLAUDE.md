@@ -10,7 +10,7 @@ Compagnon de bureau pour les utilisateurs de Claude Code. La vision et l'install
 - `src-tauri/src/main.rs` : l'app de bureau en Rust (fenêtre, icône, lecture des journaux de Claude Code).
 - `animations/` : les animations dessinées, un dossier par animation. `animations/limace-complete/gen.py` assemble la feuille de la limace.
 - `tools/sim.py` : page de test du Bidule dans un navigateur, sans l'app.
-- `moodboard/` : direction artistique, spec des animations (`animations-des-bidules.html`), animations à dessiner (`planches-limace.html`).
+- `moodboard/` : direction artistique, spec des animations (`animations-des-bidules.html`), animations à dessiner (`planches-limace.html`), et `style-bidules.md` : le style des Bidules, à lire avant de dessiner, générer ou retoucher une image.
 
 ## Lancer et vérifier
 
