@@ -1,0 +1,4 @@
+# Jeton de l'API PixelLab pour tools/pixellab.py. Copier ce fichier en mise.local.toml (ignoré par git) et y mettre le jeton
+# de son compte (https://www.pixellab.ai, page du compte). mise le charge dans le terminal dès qu'on entre dans le dossier du projet.
+[env]
+PIXELLAB_SECRET = "colle-ton-jeton-ici"

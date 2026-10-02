@@ -1,4 +1,5 @@
 # Remplace des images d'une animation dans son fichier .aseprite, puis réexporte feuille, JSON, gifs et frames/ (comme le fait Aseprite à la main).
+# En commande : python3 tools/aseprite_io.py <dossier> <nom>   réexporte animations/<dossier>/<nom>.aseprite
 import os, subprocess, sys, tempfile
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "animations", "limace-complete"))
 from png import frames, write
@@ -55,3 +56,7 @@ s:saveAs("{dst}")
 '''
     with tempfile.NamedTemporaryFile("w", suffix=".lua") as fh:
         fh.write(lua); fh.flush(); ase("--script", fh.name)
+
+if __name__ == "__main__":
+    if len(sys.argv) != 3: sys.exit("python3 tools/aseprite_io.py <dossier> <nom>   réexporte animations/<dossier>/<nom>.aseprite")
+    export(sys.argv[1], sys.argv[2])
