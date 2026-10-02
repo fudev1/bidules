@@ -398,6 +398,8 @@ def render(P):
         for s, off in ((-1, 0), (1, 1), (-1, 2)):
             t = ((k + off) % 4) / 3
             im.stamp(P["bx"] + s * (10.5 + 8 * t), P["by"] + 1 - 14 * t, TEAR, {})
+    if P.get("extra"):
+        P["extra"](im)
     return im
 
 
@@ -495,6 +497,46 @@ def anim_attrape():
             for eye, mouth, tilt, au, ear, lifts in spec]
 
 
+# ---------------------------------------------------------------- bonbons : ceux qu'elle laisse en marchant, et celui qu'elle mange
+SWEETS = {"menthe": ("M", "N"), "rose": ("H", "W"), "jaune": ("Y", "W")}   # corps, papillote
+
+
+def bonbon(im, cx, cy, color="menthe", s=1.0):
+    """un bonbon papillote, de la taille d'un de ses pieds (10 x 6 pixels) ; s le rapetisse quand elle le mange"""
+    body, wing = SWEETS[color]
+    c = ell(cx, cy, 2.0 * s, 1.6 * s)
+    left = tri((cx - 2.0 * s, cy), (cx - 4.0 * s, cy - 1.9 * s), (cx - 4.0 * s, cy + 1.9 * s))
+    right = tri((cx + 2.0 * s, cy), (cx + 4.0 * s, cy - 1.9 * s), (cx + 4.0 * s, cy + 1.9 * s))
+    ox, oy = round(cx), round(cy)
+    im.layer(im.mask(c, left, right), lambda x, y: wing if not c(x, y) else ("W" if (math.floor(x) - ox - (math.floor(y) - oy)) % 3 == 0 else body))
+
+
+def hand(im, hx, hy):
+    im.layer(im.mask(ell(hx, hy, 1.9, 1.7)), lambda x, y: "P" if y < hy + .5 else "S", outline="E")
+
+
+def sweet_extra(color, cx, cy, s=1.0, hands=()):
+    """le bonbon (rapetissé par les bouchées) et les mains qui le tiennent, dessinés par-dessus Candy"""
+    def draw(im):
+        for hx, hy in hands:
+            hand(im, hx, hy)
+        if s > 0:
+            bonbon(im, cx, cy, color, s)
+    return draw
+
+
+def write_bonbons(path):
+    """la planche des bonbons posés par terre : un par couleur, 10 x 6 pixels chacun"""
+    grid = [[None] * (10 * len(SWEETS)) for _ in range(6)]
+    for i, color in enumerate(SWEETS):
+        im = Img()
+        bonbon(im, 5.0, 3.0, color)
+        for y in range(6):
+            for x in range(10):
+                grid[y][i * 10 + x] = im.g[y][x]
+    write_png(path, grid)
+
+
 def jump_body(rx, ry, H, bottom=BOTTOM, **kw):
     P = Pz(**bod(rx, ry, H, bottom), **kw)
     if "feet" not in P or P["feet"] is None:
@@ -574,6 +616,31 @@ def anim_chute():
                       bow=(sw, -2), wing=(0, -2.4), feet=stand_feet(0, 4.6, lift=(9 + sw, 9 - sw)), fx=f"larmes{k}")
         out.append((P, 70 if k < 2 else 80))
     return out
+
+
+def anim_mange(color):
+    """elle ramasse le bonbon posé devant son pied (à sa droite, 15 pixels de l'axe), le tient par les bouts devant elle, le mange en mâchant, puis saute de contentement"""
+    G = 58.0   # le bas du bonbon sur la ligne des pieds
+    X = sweet_extra
+    J = jump_body
+    return [
+        (Pz(eye="open", mouth="smile", look=(.4, 1), extra=X(color, 47.0, G)), 100),
+        (J(14.8, 12.0, 0, 57.6, eye="open", mouth="smile", look=(.4, 1), tilt=-4, ear=(6, 6), bow=(0, 1.2), wing=(0, 1.5),
+           extra=X(color, 47.0, G, hands=[(43.0, 57.5)])), 90),
+        (J(13.8, 13.2, 0, 57.0, eye="open", mouth="smile", look=(.2, 1), tilt=-2, ear=(2, 2),
+           extra=X(color, 43.0, 54.5, hands=[(38.5, 54.5), (47.5, 54.5)])), 80),
+        (Pz(eye="open", mouth="smile", look=(0, 1), blush=2, extra=X(color, 36.0, 51.0, hands=[(31.2, 51.0), (40.8, 51.0)])), 80),
+        (Pz(eye="open", mouth="oSmall", look=(0, 1), blush=2, extra=X(color, 32.0, 51.0, hands=[(27.2, 51.0), (36.8, 51.0)])), 100),
+        (Pz(eye="arc", mouth="wave", blush=2, tilt=2, ear=(-6, -6), extra=X(color, 32.0, 51.0, .65, hands=[(28.4, 51.0), (35.6, 51.0)])), 100),
+        (Pz(eye="arc", mouth="wave2", blush=2, tilt=-2, ear=(-10, -10), extra=X(color, 32.0, 51.0, .4, hands=[(29.4, 51.0), (34.6, 51.0)])), 90),
+        (Pz(eye="arc", mouth="wave", blush=2, tilt=2, ear=(-6, -6)), 90),
+        (Pz(eye="arc", mouth="wave2", blush=2, tilt=-2, ear=(-10, -10)), 90),
+        (Pz(eye="arc", mouth="smile", blush=2, ear=(-8, -8), bow=(0, -.6), wing=(0, -1)), 120),
+        (J(12.8, 14.6, 4, eye="arc", mouth="openSmall", arms_up=.9, ear=(-16, -16), bow=(0, -1.4), wing=(0, -2), blush=2), 70),
+        (J(13.2, 14.0, 6, eye="arc", mouth="openSmall", arms_up=.8, ear=(-6, -6), tilt=3, bow=(.8, .6), wing=(0, 1), blush=2), 80),
+        (impact(16.4, 10.0, 58.5), 70),
+        (Pz(), 100),
+    ]
 
 
 def anim_ecrase():
@@ -702,7 +769,8 @@ def build():
                        ("repos", anim_repos()), ("regard", anim_regard()), ("attrape", anim_attrape()), ("chute", anim_chute()),
                        ("ecrase", anim_ecrase()), ("reforme", anim_reforme()), ("baille", anim_baille()), ("dort", anim_dort()), ("remue", anim_remue()),
                        ("caresse", anim_caresse()), ("rire", anim_rire()), ("fache", anim_fache()), ("chante", anim_chante()), ("intrigue", anim_intrigue()),
-                       ("secoue", anim_secoue()), ("nausee", anim_nausee()), ("sautille", anim_sautille())):
+                       ("secoue", anim_secoue()), ("nausee", anim_nausee()), ("sautille", anim_sautille()),
+                       ("mange", anim_mange("menthe")), ("mange-rose", anim_mange("rose")), ("mange-jaune", anim_mange("jaune"))):
         add(name, anim)
     return frames, tags
 
@@ -809,10 +877,11 @@ if __name__ == "__main__":
     write_outputs(frames, tags, HERE, "candy_sheet.png", "candy_sheet.json")
     os.makedirs(DIST, exist_ok=True)
     write_outputs(frames, tags, DIST)
+    write_bonbons(os.path.join(DIST, "bonbons.png"))
     T = {n: (a, b) for n, a, b in tags}
     write_png(os.path.join(DIST, "thumb.png"), frames[T["repos"][0]][0].g)
     from gif import write_gif
-    seq = [("crawl", 3), ("sautille", 3)] + [(nm, 1) for nm in ("turn", "repos")] + [("attrape", 3), ("chute", 3), ("caresse", 3), ("rire", 3), ("fache", 3), ("chante", 3), ("saut-face", 1), ("ecrase", 1), ("reforme", 1), ("dort", 2)]
+    seq = [("crawl", 3), ("sautille", 3)] + [(nm, 1) for nm in ("turn", "repos")] + [("attrape", 3), ("chute", 3), ("caresse", 3), ("rire", 3), ("fache", 3), ("chante", 3), ("mange", 2), ("saut-face", 1), ("ecrase", 1), ("reforme", 1), ("dort", 2)]
     order = []
     for nm, rep_ in seq:
         order += list(range(T[nm][0], T[nm][1] + 1)) * rep_
@@ -822,7 +891,7 @@ if __name__ == "__main__":
         os.makedirs(prev, exist_ok=True)
         groups = [("crawl", ["crawl", "sautille"]), ("turn", ["turn"]), ("saut", ["saut-face", "vol", "chute-legere", "rebond", "atterrissage"]), ("crash", ["chute", "ecrase", "reforme"]),
                   ("autres", ["repos", "regard", "attrape", "baille"]),
-                  ("reste", ["dort", "remue", "caresse", "rire", "fache", "chante", "intrigue", "secoue", "nausee"])]
+                  ("reste", ["dort", "remue", "caresse", "rire", "fache", "chante", "intrigue", "secoue", "nausee", "mange", "mange-rose", "mange-jaune"])]
         for gname, names in groups:
             sel = [f for nm in names for f in frames[T[nm][0]:T[nm][1] + 1]]
             contact(os.path.join(prev, f"c_{gname}.png"), [f[0] for f in sel], cols=8 if gname == "crawl" else 7, scale=3)
