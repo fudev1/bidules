@@ -8,11 +8,48 @@ use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant, SystemTime};
 use tauri::menu::{Menu, MenuItem};
 use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent};
-use tauri::{AppHandle, Emitter, Manager, PhysicalPosition, WindowEvent};
+use tauri::{AppHandle, Emitter, Manager, PhysicalPosition, WebviewUrl, WebviewWindowBuilder, WindowEvent};
 
 #[tauri::command]
 fn log(msg: String) {
     println!("[bidule] {msg}");
+}
+
+// Un bonbon laissé par Candy : une petite fenêtre transparente posée là où elle l'a laissé (sa propre fenêtre la suit partout,
+// elle ne peut pas porter un bonbon resté en arrière). Cliquer dessus prévient la fenêtre principale.
+#[tauri::command]
+async fn bonbon_poser(app: AppHandle, id: u32, x: f64, y: f64, couleur: String) -> Result<(), String> {
+    if !["menthe", "rose", "jaune"].contains(&couleur.as_str()) {
+        return Err(format!("couleur de bonbon inconnue : {couleur}"));
+    }
+    WebviewWindowBuilder::new(&app, format!("bonbon-{id}"), WebviewUrl::App("bonbon.html".into()))
+        .initialization_script(format!("window.BONBON = {{id: {id}, couleur: '{couleur}'}};"))
+        .inner_size(32.0, 24.0)
+        .position(x, y)
+        .transparent(true)
+        .decorations(false)
+        .always_on_top(true)
+        .resizable(false)
+        .shadow(false)
+        .skip_taskbar(true)
+        .visible_on_all_workspaces(true)
+        .focused(false)
+        .accept_first_mouse(true)
+        .build()
+        .map_err(|e| e.to_string())?;
+    Ok(())
+}
+
+#[tauri::command]
+fn bonbon_retirer(app: AppHandle, id: u32) {
+    if let Some(w) = app.get_webview_window(&format!("bonbon-{id}")) {
+        let _ = w.close();
+    }
+}
+
+#[tauri::command]
+fn bonbon_clic(app: AppHandle, id: u32) {
+    let _ = app.emit("bonbon-clic", id);
 }
 
 #[tauri::command]
@@ -115,7 +152,7 @@ fn prompt_times() -> Vec<f64> {
 
 fn main() {
     tauri::Builder::default()
-        .invoke_handler(tauri::generate_handler![log, quit, hide_panel, prompt_times])
+        .invoke_handler(tauri::generate_handler![log, quit, hide_panel, prompt_times, bonbon_poser, bonbon_retirer, bonbon_clic])
         .setup(|app| {
             #[cfg(target_os = "macos")]
             app.set_activation_policy(tauri::ActivationPolicy::Accessory);

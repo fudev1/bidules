@@ -5,6 +5,8 @@
 # Pour avancer le temps image par image (dans la console de la page) :
 #   V = Date.now(); Date.now = () => V; performance.now = () => V; realTick = tick; tick = () => {}; lastT = V;
 #   for (let t = 0; t < 3000; t += 16) { V += 16; realTick(); }      // 3 s de vie du Bidule
+# Les appels aux commandes Rust (hors "log") sont gardés dans CALLS ; LISTEN[nom] liste les fonctions qui écoutent un événement, pour en simuler un :
+#   LISTEN["bonbon-clic"].forEach(f => f({payload: 1}))
 # La souris : T.window.cursorPosition = async () => ({x: ..., y: ...}), puis appeler watchCursor() de temps en temps.
 import os, sys
 DIST = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "dist")
@@ -14,11 +16,11 @@ for name in ("bidule64.js", "monstre64.js", "persos"):
     link = os.path.join(out, name)
     if not os.path.lexists(link): os.symlink(os.path.join(DIST, name), link)
 STUB = """<script>
-window.LOG = [];
+window.LOG = []; window.CALLS = []; window.LISTEN = {};
 const noop = async () => {};
 window.__TAURI__ = {
-  core: {invoke: async (c, a) => { if (c === "log") LOG.push([Date.now(), a.msg]); return c === "prompt_times" ? [] : null; }},
-  event: {emit: noop, listen: async () => () => {}},
+  core: {invoke: async (c, a) => { if (c === "log") LOG.push([Date.now(), a.msg]); else CALLS.push([Date.now(), c, a]); return c === "prompt_times" ? [] : null; }},
+  event: {emit: noop, listen: async (n, f) => { (LISTEN[n] = LISTEN[n] || []).push(f); return () => {}; }},
   dpi: {LogicalPosition: function (x, y) { this.x = x; this.y = y; }, LogicalSize: function (w, h) { this.w = w; this.h = h; }},
   window: {cursorPosition: async () => ({x: -5000, y: -5000}),
     currentMonitor: async () => ({scaleFactor: 1, position: {x: 0, y: 0}, size: {width: 1400, height: 900}, workArea: {position: {x: 0, y: 0}, size: {width: 1400, height: 900}}}),
