@@ -635,7 +635,7 @@ function tick() {
   }
   if (burpAt && now > burpAt && isSheet() && !sheetOnce) { burpAt = 0; playInPlace("rot"); bubble("Burp !", 900); return; }
   if (isSheet() && HALF && !sheetOnce && faceStep(now)) return;
-  if (now < idleUntil) { if (img.className === "walk") pose(""); return; }
+  if (now < idleUntil && !airborne()) { if (img.className === "walk") pose(""); return; }
   if (img.className === "") pose("walk");
   if (Math.random() < 0.0025 * k) moodExtra();
   if (!airborne() && Math.random() < MV().idle * k * (hopping() ? 3 : 1)) {
