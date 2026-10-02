@@ -123,7 +123,7 @@ Après `gh pr checkout`, `git switch test` ramène sur `test`.
 | `animations/candy/` | Candy, dessinée image par image (123 images, 24 balises) : `gen.py` génère les images, la planche et le JSON, et les copie dans `dist/persos/candy/` ; `apercu_x4.gif` pour la voir bouger |
 | `moodboard/` | Direction artistique ; `planches-limace.html` (animations de la limace à dessiner) et `animations-des-bidules.html` (spec des animations d'un Bidule), à ouvrir dans un navigateur |
 | `sprites/`, `prototype/` | Fichiers Aseprite des blobs, prototype de la chambre |
-| `tools/` | `publier.py` : du fichier Aseprite à l'app ; `sim.py` : page de test du Bidule dans un navigateur, sans l'app ; les autres scripts créent ou alignent des animations (voir leur en-tête) |
+| `tools/` | `publier.py` : du fichier Aseprite à l'app ; `sim.py` : page de test du Bidule dans un navigateur, sans l'app ; `boule.py` : la forme de la goutte du Bidule tenu par la tête ; les autres scripts créent ou alignent des animations (voir leur en-tête) |
 | `.claude/`, `CLAUDE.md` | Consignes pour Claude Code : skill de commit, règles git, garde-fou contre les push sur `main`, pas de mention de Claude dans les commits et les PR |
 | `.githooks/`, `.github/` | Garde-fou git pour les humains, modèle de pull request |
 
