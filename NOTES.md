@@ -44,6 +44,7 @@ Mise à jour : 2 octobre 2026. Ce fichier suit l'état du projet : ce qui est d�
 - Candy : le seul style Candy, dessiné image par image (planche, comme la limace), bondissante au lieu de s'étaler. Marche sautillante comme un enfant (ronchon ou vaseuse : elle garde la reptation), demi-tour, pause, regard, saut en "boing boing", rebonds réels et doux quand on la lance (3 au plus, élan de côté et petite toupie au hasard à chaque rebond, inclinaison continue limitée à 60° et remise à plat avant l'atterrissage ; réservés à Candy, `BOUNCY` dans `index.html`), pas d'étirement quand on la soulève (`NO_PULL`) : elle râle "Hey !", apeurée et fâchée, elle panique en tombant (bras qui battent, quelques larmes, pas pendant les rebonds), grosse chute suivie d'une bouderie, bâillement, sommeil (de face), caresse, rire, bouderie, chant pendant 37 % des pauses (jamais en humeur ronchon, un clic ou la souris le coupe). Pas encore : mange, rot, évolution, parties.
 - Lien avec Claude : l'humeur est lue dans les heures des prompts de `~/.claude` et `~/.claude-masana`, jamais dans le texte.
 - Outils : `animations/limace-complete/gen.py` assemble la feuille de la limace, `tools/sim.py` fait tourner le Bidule dans un navigateur sans l'app.
+- Chaîne PixelLab (README, « Générer avec PixelLab ») : `tools/pixellab.py` (animer une pose, interpoler entre deux poses, proposer dans le style de références), `planche.py`, `importer.py` (64 × 64, palette du personnage, poussières, recalage sur la source), `verifier.py`, `bilan.py` (ce que la retouche a changé). Skills `animer-bidule` et `creer-bidule`. La bible du style (`moodboard/style-bidules.md`) grandit d'une leçon à chaque animation terminée. Testée de bout en bout avec une fausse API ; avec la vraie, seul le solde a été lu (essai de 40 générations), pas encore de génération.
 - Documents :
   - la spec des animations (`moodboard/animations-des-bidules.html`) ;
   - les animations à dessiner (`moodboard/planches-limace.html`) ;
@@ -83,6 +84,8 @@ Mise à jour : 2 octobre 2026. Ce fichier suit l'état du projet : ce qui est d�
 - Besoins, pièces, boutique, chambre, accessoires.
 
 ### Animations (Thibault)
+
+- Premier vrai essai PixelLab : « Caressé » avec le skill `animer-bidule`, et la première leçon dans `moodboard/style-bidules.md`. Selon le résultat, décider si PixelLab sert à toutes les animations ou seulement aux ébauches et aux images intermédiaires.
 
 - Les 8 animations restantes (porte-endormi est remplacée par attrape ; secoue est attrape en vert ; nausee est la reptation en vert, avec des spirales) de `moodboard/planches-limace.html`, en commençant par « Caressé » (`caresse`, n° 6). Les animations générées (regard, reforme et attrape exceptées) reprennent la silhouette de repos : à redessiner à la main avec sa queue à gauche.
 

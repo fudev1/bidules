@@ -111,7 +111,7 @@ Après `gh pr checkout`, `git switch test` ramène sur `test`.
 - **App de bureau** : [Tauri 2](https://tauri.app) en Rust. Fenêtre transparente toujours au premier plan, icône dans la barre de menus, lecture des journaux de Claude Code (`serde`, `serde_json`).
 - **Interface** : HTML, CSS et JavaScript sans framework ni étape de build (`dist/`). Les monstres sont dessinés par le code, en pixel art 64 × 64, et l'étirement de la limace est dessiné sur un canvas.
 - **Animations** : dessinées dans [Aseprite](https://www.aseprite.org), exportées en feuille PNG + JSON, puis assemblées par des scripts Python 3 sans dépendance.
-- **Outils** : mise pour Rust et la commande de lancement.
+- **Outils** : mise pour Rust et la commande de lancement. [PixelLab](https://www.pixellab.ai) (API, payante) pour les ébauches d'animations et de nouveaux Bidules.
 
 ## Organisation
 
@@ -121,10 +121,10 @@ Après `gh pr checkout`, `git switch test` ramène sur `test`.
 | `src-tauri/` | L'app de bureau en Rust |
 | `animations/` | Les animations dessinées, un dossier par animation ; `limace-complete/gen.py` assemble la feuille de la limace |
 | `animations/candy/` | Candy, dessinée image par image (123 images, 24 balises) : `gen.py` génère les images, la planche et le JSON, et les copie dans `dist/persos/candy/` ; `apercu_x4.gif` pour la voir bouger |
-| `moodboard/` | Direction artistique ; `planches-limace.html` (animations de la limace à dessiner) et `animations-des-bidules.html` (spec des animations d'un Bidule), à ouvrir dans un navigateur |
+| `moodboard/` | Direction artistique ; `style-bidules.md` (le style des Bidules : règles, palettes, références, leçons), `planches-limace.html` (animations de la limace à dessiner) et `animations-des-bidules.html` (spec des animations d'un Bidule), à ouvrir dans un navigateur |
 | `sprites/`, `prototype/` | Fichiers Aseprite des blobs, prototype de la chambre |
-| `tools/` | `publier.py` : du fichier Aseprite à l'app ; `sim.py` : page de test du Bidule dans un navigateur, sans l'app ; les autres scripts créent ou alignent des animations (voir leur en-tête) |
-| `.claude/`, `CLAUDE.md` | Consignes pour Claude Code : skill de commit, règles git, garde-fou contre les push sur `main`, pas de mention de Claude dans les commits et les PR |
+| `tools/` | `publier.py` : du fichier Aseprite à l'app ; `sim.py` : page de test du Bidule dans un navigateur, sans l'app ; `pixellab.py`, `planche.py`, `importer.py`, `verifier.py`, `bilan.py` : générer avec PixelLab (voir plus bas) ; les autres scripts créent ou alignent des animations (voir leur en-tête) |
+| `.claude/`, `CLAUDE.md` | Consignes pour Claude Code : skills de commit, `animer-bidule` et `creer-bidule`, règles git, garde-fou contre les push sur `main`, pas de mention de Claude dans les commits et les PR |
 | `.githooks/`, `.github/` | Garde-fou git pour les humains, modèle de pull request |
 
 ## Ajouter une animation à la limace
@@ -140,6 +140,30 @@ Une animation qui remplace une existante (même nom de balise, par exemple `dort
 Format attendu : 64 × 64 pixels, fond transparent, tourné vers la droite (l'app le retourne pour la gauche). De profil, le bas du contour est sur la ligne 60, comme la reptation. De face, le corps est placé comme la pose de repos (`repos`, aussi l'image de face du demi-tour) : centré sur 31,5, petite queue à gauche, sans jupe au bas du corps.
 
 Le retournement gauche/droite se fait autour d'un axe que l'app calcule depuis `crawl[0]` et la dernière image de `turn` : ici 31,5, le milieu de l'image, donc un simple miroir de l'image. Pour que reptation droite, demi-tour et reptation gauche s'enchaînent sans saut : `turn[0]` est identique à `crawl[0]`, `turn[12]` en est le miroir exact (reflet compris), et la reptation retournée doit tenir dans l'image (x de 2 à 61). Toutes les animations sont centrées sur 31,5 et posées sur la ligne 60. Si la reptation change, `tools/align_turn.py` reconstruit le demi-tour (voir son en-tête) ; le saut commence et finit par les images de ce demi-tour, `gen.py` les reprend tout seul.
+
+## Générer avec PixelLab
+
+PixelLab produit des ébauches en pixel art à partir des images des Bidules : il anime une pose, interpole entre deux poses dessinées, ou propose de nouveaux Bidules dans le style de ceux qui existent. L'ébauche est nettoyée, retouchée à la main, puis comparée à la retouche : ce qui a été corrigé devient une leçon dans `moodboard/style-bidules.md`. Avec Claude Code, les skills `animer-bidule` et `creer-bidule` déroulent tout ça.
+
+Mise en place, une fois par poste :
+
+1. Un compte sur [pixellab.ai](https://www.pixellab.ai) et son jeton d'API (page du compte).
+2. `cp mise.local.toml.exemple mise.local.toml`, puis coller le jeton dedans. Le fichier est ignoré par git.
+3. Facultatif, pour que Claude Code l'utilise directement : `claude mcp add pixellab https://api.pixellab.ai/mcp -t http -H "Authorization: Bearer <jeton>"`.
+
+La chaîne, du brut à l'app (le mode d'emploi complet est en tête de chaque script) :
+
+```bash
+python3 tools/pixellab.py animer caresse limace:repos "gets petted, squashes down happily" --fin limace:repos
+python3 tools/planche.py animations/caresse/pixellab/<essai>      # planche.png : choisir
+python3 tools/importer.py animations/caresse/pixellab/<essai>     # caresse.aseprite, nettoyé, recalé et vérifié
+# retoucher et enregistrer dans Aseprite, déclarer l'animation (voir plus haut), mise run publier
+python3 tools/bilan.py caresse                                     # ce que la retouche a changé
+```
+
+`tools/verifier.py` contrôle n'importe quelle animation contre les règles des Bidules (palette, transparence, ligne 60, contour). Une image se désigne par `perso:balise:n` (la n-ième image de la balise dans `dist/persos/<perso>/sheet.png`) ou par un chemin de PNG.
+
+Extensions Aseprite utiles (gratuites, MIT) : [Pixel-Import](https://github.com/LucienTo/Pixel-Import) (importer une image en la ramenant sur la palette du sprite), [EaseSprite](https://github.com/JRiggles/EaseSprite) (accélérations sur la durée des images), [OKShift](https://github.com/WangleLine/OKShift) (décaler une teinte sans changer sa luminosité), et les scripts [Tween et Skeleton2Animation](https://github.com/alca259/aseprite-2.5d-animation-pipeline) (entre-deux et squelette).
 
 ## Tester sans l'app
 
