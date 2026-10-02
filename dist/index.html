@@ -466,7 +466,7 @@ const WW = 176, WH = 176;
 const REACT = new Set(["pet", "laugh", "angry", "sulk", "eat", "ooh"]);
 let scale = 2, watching = false, lookKey = "", cursor = null;
 let x = 600, y = 200, minX = 0, maxX = 1200, minY = 0, floorY = 700;
-let mode = "fly", dir = 1, vx = 0, vy = 0, angle = 0, idleUntil = 0, dizzyUntil = 0, bounces = 0, maxImpact = 0, ticks = 0;
+let mode = "fly", dir = 1, vx = 0, vy = 0, angle = 0, spin = 0, idleUntil = 0, dizzyUntil = 0, bounces = 0, maxImpact = 0, ticks = 0;
 let calm = 0, wake = 0, sleepSince = 0, nextZ = 0, stirred = false;
 let reactUntil = 0, nextFx = 0, nausea = false, nextDrop = 0, clicks = [], pet = {dir:0, flips:[], last:null};
 let drag = null, samples = [], want = null, sending = false, flap = null;
@@ -511,7 +511,7 @@ async function flush() {
 }
 function land() {
   if (vx) { dir = vx < 0 ? -1 : 1; face(); }
-  vx = vy = 0; angle = 0; img.style.rotate = "0deg"; bounces = 0;
+  vx = vy = 0; angle = 0; spin = 0; img.style.rotate = "0deg"; bounces = 0;
   if (nausea) {
     mode = "nausea"; reactUntil = Date.now() + 3500; img.src = FR.n1; bubble("Beurk...", 1400); say("secoue : il a la nausee");
   } else if (isSheet() && SHEET_DATA[style].tags.ecrase && (bigFall() || crashed)) {
@@ -546,24 +546,30 @@ function tick() {
   }
   if (mode === "fly") {
     peakY = peakY === null ? y : Math.min(peakY, y);
-    vy += 1.3 * k; vx *= Math.pow(0.985, k); x += vx * k; y += vy * k; angle += vx * (BOUNCY.has(style) ? .7 : 1.2) * k; if (BOUNCY.has(style)) angle = Math.max(-60, Math.min(60, angle));
+    vy += 1.3 * k; vx *= Math.pow(0.985, k); x += vx * k; y += vy * k;
+    if (BOUNCY.has(style)) {
+      // inclinaison continue : penchée dans le sens du déplacement, un coup de toupie amorti à chaque rebond, ramenée à plat en approchant du sol
+      const near = vy > 0 ? Math.max(0, 1 - (floorY - y) / 90) : 0;
+      angle += spin * k + (Math.max(-20, Math.min(20, vx * .8)) * (1 - near) - angle) * Math.min(1, (.1 + .3 * near) * k);
+      spin *= Math.pow(.88, k); angle = Math.max(-60, Math.min(60, angle));
+    } else angle += vx * 1.2 * k;
     if (x < minX) { x = minX; vx = -vx * (BOUNCY.has(style) ? .7 : .25); squash("wall"); playOnce("choc-bord"); }
     if (x > maxX) { x = maxX; vx = -vx * (BOUNCY.has(style) ? .7 : .25); squash("wall"); playOnce("choc-bord"); }
     if (y < minY) { y = minY; vy = -vy * 0.4; }
     if (y >= floorY) {
       y = floorY; const impact = Math.abs(vy); maxImpact = Math.max(maxImpact, impact);
-      if (impact > 7 && bounces < (isSheet() ? 6 : 4) && (!isSheet() || BOUNCY.has(style))) {
+      if (impact > (isSheet() ? 10 : 7) && bounces < (isSheet() ? 3 : 4) && (!isSheet() || BOUNCY.has(style))) {
         if (isSheet() && bigFall()) crashed = true;
         if (isSheet()) {
-          // elle rebondit dans tous les sens : à chaque rebond, un élan de côté au hasard et un coup de toupie
-          vy = -impact * (.55 + Math.random() * .25); vx = vx * .7 + (Math.random() - .5) * Math.min(impact, 16) * 1.2;
-          angle = angle * .5 + (Math.random() - .5) * 50; peakY = y; playOnce("rebond");
+          // elle rebondit dans tous les sens, mais peu : à chaque rebond, un élan de côté et un coup de toupie au hasard, tous deux doux
+          vy = -impact * (.45 + Math.random() * .15); vx = vx * .8 + (Math.random() - .5) * Math.min(impact, 16) * .6;
+          spin = (Math.random() - .5) * 10 * Math.min(1, impact / 20); peakY = y; playOnce("rebond");
         } else { vy = -impact * 0.45; vx *= 0.7; angle *= 0.4; squash(); }
         bounces++;
       }
       else land();
     }
-    img.style.rotate = (mode === "fly" && (!isSheet() || (BOUNCY.has(style) && bounces > 0)) ? angle : 0).toFixed(1) + "deg";
+    img.style.rotate = (mode === "fly" && (!isSheet() || BOUNCY.has(style)) ? angle : 0).toFixed(1) + "deg";
     push(); return;
   }
   const now = Date.now();
@@ -767,7 +773,7 @@ img.addEventListener("pointerup", async () => {
   if (asleep) { bubble("Hein ?!", 900); say(Math.hypot(vx, vy) > 10 ? "reveille : lance" : "reveille : repose au sol"); calm = 0; wake = 0; }     // attrapé endormi, il ne se rendort pas : il retombe réveillé
   disturb();
   say(`lance : vitesse ${Math.round(vx)}, ${Math.round(vy)}`);
-  if (!isSheet()) img.src = FR.p1; pose(""); mode = "fly"; bounces = 0; maxImpact = 0; crashed = false;
+  if (!isSheet()) img.src = FR.p1; pose(""); mode = "fly"; bounces = 0; angle = 0; spin = 0; maxImpact = 0; crashed = false;
   if (isSheet()) sheetAnim(Date.now());
   if (fromPull) img.style.opacity = "";
 });
