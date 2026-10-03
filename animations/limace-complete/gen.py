@@ -186,7 +186,7 @@ def dizzy(seq):
                     if ch == "#": g[cy - 2 + r][cx - 2 + c] = B
         out.append((g, d))
     return out
-HAND = [("baille", hand("baille", "baille")), ("repos", hand("repos", "repos")), ("dort", hand("dort", "dort")), ("remue", hand("remue", "remue")), ("regard", hand("regard", "regard")), ("reforme", hand("reforme", "reforme")), ("attrape", hand("attrape", "attrape")), ("secoue", vert(hand("attrape", "attrape"))), ("nausee", dizzy(vert(hand("crawl", "crawl")))), ("mange", hand("eat", "mange")), ("rot", hand("rot", "rot")),
+HAND = [("baille", hand("baille", "baille")), ("repos", hand("repos", "repos")), ("dort", hand("dort", "dort")), ("remue", hand("remue", "remue")), ("regard", hand("regard", "regard")), ("reforme", hand("reforme", "reforme")), ("attrape", hand("attrape", "attrape")), ("secoue", vert(hand("attrape", "attrape"))), ("nausee", dizzy(vert(hand("crawl", "crawl")))), ("mange", hand("eat", "mange")), ("rot", hand("rot", "rot")), ("caresse", hand("caresse", "caresse", 0, 5)), ("caresse-fin", hand("caresse", "caresse", 6, 8)),
         # chute : 0-1 = début, 2-11 = boucle ; 12-13 (la goutte qui descend dans l'image) sont sautées, c'est la fenêtre qui descend
         ("chute", hand("chute", "chute", 0, 11)), ("ecrase", hand("chute", "chute", 14, 22))]
 for name, seq in HAND:

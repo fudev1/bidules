@@ -1474,7 +1474,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 70
+   "duration": 80
   },
   "limace 164.aseprite": {
    "frame": {
@@ -1483,7 +1483,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 70
+   "duration": 80
   },
   "limace 165.aseprite": {
    "frame": {
@@ -1528,7 +1528,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 80
+   "duration": 160
   },
   "limace 170.aseprite": {
    "frame": {
@@ -1537,7 +1537,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 80
+   "duration": 90
   },
   "limace 171.aseprite": {
    "frame": {
@@ -1546,7 +1546,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 80
+   "duration": 240
   },
   "limace 172.aseprite": {
    "frame": {
@@ -1555,7 +1555,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 80
+   "duration": 70
   },
   "limace 173.aseprite": {
    "frame": {
@@ -1564,7 +1564,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 80
+   "duration": 70
   },
   "limace 174.aseprite": {
    "frame": {
@@ -1582,7 +1582,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 50
+   "duration": 80
   },
   "limace 176.aseprite": {
    "frame": {
@@ -1591,7 +1591,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 60
+   "duration": 80
   },
   "limace 177.aseprite": {
    "frame": {
@@ -1600,7 +1600,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 70
+   "duration": 80
   },
   "limace 178.aseprite": {
    "frame": {
@@ -1618,7 +1618,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 90
+   "duration": 80
   },
   "limace 180.aseprite": {
    "frame": {
@@ -1627,7 +1627,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 100
+   "duration": 80
   },
   "limace 181.aseprite": {
    "frame": {
@@ -1636,7 +1636,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 120
+   "duration": 80
   },
   "limace 182.aseprite": {
    "frame": {
@@ -1645,7 +1645,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 200
+   "duration": 80
   },
   "limace 183.aseprite": {
    "frame": {
@@ -1654,7 +1654,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 600
+   "duration": 80
   },
   "limace 184.aseprite": {
    "frame": {
@@ -1663,7 +1663,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 140
+   "duration": 50
   },
   "limace 185.aseprite": {
    "frame": {
@@ -1672,7 +1672,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 140
+   "duration": 60
   },
   "limace 186.aseprite": {
    "frame": {
@@ -1681,7 +1681,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 140
+   "duration": 70
   },
   "limace 187.aseprite": {
    "frame": {
@@ -1690,7 +1690,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 140
+   "duration": 80
   },
   "limace 188.aseprite": {
    "frame": {
@@ -1699,7 +1699,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 140
+   "duration": 90
   },
   "limace 189.aseprite": {
    "frame": {
@@ -1708,7 +1708,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 70
+   "duration": 100
   },
   "limace 190.aseprite": {
    "frame": {
@@ -1717,7 +1717,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 70
+   "duration": 120
   },
   "limace 191.aseprite": {
    "frame": {
@@ -1726,7 +1726,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 70
+   "duration": 200
   },
   "limace 192.aseprite": {
    "frame": {
@@ -1735,7 +1735,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 90
+   "duration": 600
   },
   "limace 193.aseprite": {
    "frame": {
@@ -1744,7 +1744,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 300
+   "duration": 140
   },
   "limace 194.aseprite": {
    "frame": {
@@ -1753,7 +1753,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 300
+   "duration": 140
   },
   "limace 195.aseprite": {
    "frame": {
@@ -1762,7 +1762,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 120
+   "duration": 140
   },
   "limace 196.aseprite": {
    "frame": {
@@ -1771,7 +1771,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 120
+   "duration": 140
   },
   "limace 197.aseprite": {
    "frame": {
@@ -1780,7 +1780,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 100
+   "duration": 140
   },
   "limace 198.aseprite": {
    "frame": {
@@ -1789,7 +1789,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 100
+   "duration": 70
   },
   "limace 199.aseprite": {
    "frame": {
@@ -1798,7 +1798,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 400
+   "duration": 70
   },
   "limace 200.aseprite": {
    "frame": {
@@ -1807,7 +1807,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 160
+   "duration": 70
   },
   "limace 201.aseprite": {
    "frame": {
@@ -1816,7 +1816,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 160
+   "duration": 90
   },
   "limace 202.aseprite": {
    "frame": {
@@ -1825,11 +1825,74 @@
     "w": 64,
     "h": 64
    },
-   "duration": 160
+   "duration": 120
   },
   "limace 203.aseprite": {
    "frame": {
     "x": 12992,
+    "y": 0,
+    "w": 64,
+    "h": 64
+   },
+   "duration": 120
+  },
+  "limace 204.aseprite": {
+   "frame": {
+    "x": 13056,
+    "y": 0,
+    "w": 64,
+    "h": 64
+   },
+   "duration": 100
+  },
+  "limace 205.aseprite": {
+   "frame": {
+    "x": 13120,
+    "y": 0,
+    "w": 64,
+    "h": 64
+   },
+   "duration": 100
+  },
+  "limace 206.aseprite": {
+   "frame": {
+    "x": 13184,
+    "y": 0,
+    "w": 64,
+    "h": 64
+   },
+   "duration": 400
+  },
+  "limace 207.aseprite": {
+   "frame": {
+    "x": 13248,
+    "y": 0,
+    "w": 64,
+    "h": 64
+   },
+   "duration": 160
+  },
+  "limace 208.aseprite": {
+   "frame": {
+    "x": 13312,
+    "y": 0,
+    "w": 64,
+    "h": 64
+   },
+   "duration": 160
+  },
+  "limace 209.aseprite": {
+   "frame": {
+    "x": 13376,
+    "y": 0,
+    "w": 64,
+    "h": 64
+   },
+   "duration": 160
+  },
+  "limace 210.aseprite": {
+   "frame": {
+    "x": 13440,
     "y": 0,
     "w": 64,
     "h": 64
@@ -1842,7 +1905,7 @@
   "image": "limace_sheet.png",
   "format": "RGBA8888",
   "size": {
-   "w": 13056,
+   "w": 13504,
    "h": 64
   },
   "scale": "1",
@@ -1956,69 +2019,75 @@
     "direction": "forward"
    },
    {
-    "name": "chute",
+    "name": "caresse",
     "from": 163,
-    "to": 174,
+    "to": 168,
     "direction": "forward"
    },
    {
-    "name": "ecrase",
-    "from": 175,
+    "name": "caresse-fin",
+    "from": 169,
+    "to": 171,
+    "direction": "forward"
+   },
+   {
+    "name": "chute",
+    "from": 172,
     "to": 183,
     "direction": "forward"
    },
    {
-    "name": "choc-bord",
+    "name": "ecrase",
     "from": 184,
-    "to": 184,
-    "direction": "forward"
-   },
-   {
-    "name": "etourdi",
-    "from": 185,
-    "to": 188,
-    "direction": "forward"
-   },
-   {
-    "name": "remis",
-    "from": 189,
     "to": 192,
     "direction": "forward"
    },
    {
-    "name": "caresse",
+    "name": "choc-bord",
     "from": 193,
-    "to": 194,
+    "to": 193,
+    "direction": "forward"
+   },
+   {
+    "name": "etourdi",
+    "from": 194,
+    "to": 197,
+    "direction": "forward"
+   },
+   {
+    "name": "remis",
+    "from": 198,
+    "to": 201,
     "direction": "forward"
    },
    {
     "name": "rire",
-    "from": 195,
-    "to": 196,
+    "from": 202,
+    "to": 203,
     "direction": "forward"
    },
    {
     "name": "fache",
-    "from": 197,
-    "to": 198,
+    "from": 204,
+    "to": 205,
     "direction": "forward"
    },
    {
     "name": "intrigue",
-    "from": 199,
-    "to": 199,
+    "from": 206,
+    "to": 206,
     "direction": "forward"
    },
    {
     "name": "reveil",
-    "from": 200,
-    "to": 202,
+    "from": 207,
+    "to": 209,
     "direction": "forward"
    },
    {
     "name": "fier",
-    "from": 203,
-    "to": 203,
+    "from": 210,
+    "to": 210,
     "direction": "forward"
    }
   ]

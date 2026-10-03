@@ -440,7 +440,7 @@ function buildFrames(s) {
     for (const lx of [0, 1]) for (const ly of [-1, 0, 1]) { const key = lx + "," + ly; nl[key] = T2.regard ? T2.regard[LOOK_ORDER.indexOf(key)].src : front; }
     // images de face ; HALF = début du demi-tour, du profil jusqu'à l'image de face
     const mid = T2.turn ? T2.turn.reduce((b, f, i) => f.dur > T2.turn[b].dur ? i : b, 0) : -1;
-    FRONT = new Set(["repos", "regard", "baille", "reforme", "atterrissage", "intrigue", "caresse", "rire", "fache", "chante", "remis", "reveil", "fier"].flatMap(t => (T2[t] || []).map(f => f.src)));
+    FRONT = new Set(["repos", "regard", "baille", "reforme", "atterrissage", "intrigue", "caresse", "caresse-fin", "rire", "fache", "chante", "remis", "reveil", "fier"].flatMap(t => (T2[t] || []).map(f => f.src)));
     if (mid > 0) FRONT.add(T2.turn[mid].src);
     HALF = mid > 0 ? T2.turn.slice(0, mid + 1) : null; faceSeq = null;
     FR = nf; LOOK = nl; style = s; return;
@@ -610,7 +610,8 @@ function tick() {
   if (mode === "recover") { if (now > reactUntil) toWalk(); return; }
   if (REACT.has(mode)) {
     if (mode === "ooh") return;
-    if (mode === "pet") { if (now > reactUntil) toWalk(); else if (now > nextFx) { heart(); nextFx = now + 320; } return; }
+    // la caresse finie, il rouvre les yeux (caresse-fin) avant de reprendre sa marche
+    if (mode === "pet") { if (now > reactUntil) { if (isSheet() && SHEET_DATA[style].tags["caresse-fin"]) playInPlace("caresse-fin"); else toWalk(); } else if (now > nextFx) { heart(); nextFx = now + 320; } return; }
     if (mode === "laugh") { if (now > reactUntil) toWalk(); else if (!isSheet() && Math.random() < 0.25 * k) img.src = img.src === FR.rire ? FR.content : FR.rire; return; }
     if (mode === "angry") {
       if (now > reactUntil) { dir = cursor && cursor.x < x + 88 ? 1 : -1; face(); react("sulk", 2000, FR.fache, "walk"); say("il boude et s'en va"); }
