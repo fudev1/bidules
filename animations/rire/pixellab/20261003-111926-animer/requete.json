@@ -1,0 +1,19 @@
+{
+ "commande": "animer",
+ "point_d_entree": "/animate-with-text-v3",
+ "sources": {
+  "debut": "limace:repos",
+  "fin": "limace:repos"
+ },
+ "parametres": {
+  "action": "laughs with eyes squeezed shut and mouth wide open, body bounces up and down quickly and wobbles",
+  "frame_count": 6,
+  "seed": 2035023681,
+  "no_background": true
+ },
+ "cout": {
+  "type": "generations",
+  "generations": 1.0
+ },
+ "date": "2026-10-03T11:19:26"
+}
