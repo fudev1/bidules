@@ -117,23 +117,12 @@ def fx(px, box, kind, k=0):
 # (balise, [(déformation, yeux, bouche, couleur, effet, durée)])
 def F(sx=1, sy=1, **kw): return params(sx, sy, **kw)
 ANIMS = [
-  ("repos", [(F(1.02, .98), "line", "line", BLEU, None, 520), (F(), "line", "line", BLEU, None, 520)]),
-  ("attrape", [(F(.86, 1.34, neck=.45, wob=2.2, top=11), "dot", "open", BLEU, "sweat", 110), (F(.84, 1.4, neck=.5, wob=-2.2, top=11), "dot", "open", BLEU, None, 110),
-               (F(.86, 1.34, neck=.45, wob=1.5, top=11), "dot", "wavy", BLEU, "sweat", 110), (F(.83, 1.44, neck=.52, wob=-1.5, top=11), "dot", "open", BLEU, None, 110)]),
-  ("choc-bord", [(F(.72, 1.22), "closed", "small", BLEU, None, 140)]),
   ("etourdi", [(F(1.04, .97, wob=2.2), "x", "wavy", BLEU, ("stars", 0), 140), (F(1.04, .97), "x", "wavy", BLEU, ("stars", 1), 140),
                (F(1.04, .97, wob=-2.2), "x", "wavy", BLEU, ("stars", 0), 140), (F(1.04, .97), "x", "wavy", BLEU, ("stars", 1), 140)]),
-  ("remis", [(F(1, 1, shear=3), "closed", "line", BLEU, None, 70), (F(1, 1, shear=-3), "closed", "line", BLEU, None, 70), (F(1, 1, shear=2), "line", "smile", BLEU, None, 70), (F(), "line", "smile", BLEU, None, 90)]),
-  ("caresse", [(F(1.1, .92), "happy", "smile", BLEU, None, 300), (F(1.04, .97), "happy", "smile", BLEU, None, 300)]),
   ("rire", [(F(1.08, .93), "happy", "open", BLEU, None, 120), (F(.95, 1.06, dy=-2), "happy", "open", BLEU, None, 120)]),
+  ("remis", [(F(1, 1, shear=3), "closed", "line", BLEU, None, 70), (F(1, 1, shear=-3), "closed", "line", BLEU, None, 70), (F(1, 1, shear=2), "line", "smile", BLEU, None, 70), (F(), "line", "smile", BLEU, None, 90)]),
   ("fache", [(F(1.08, 1.02, shear=1), "angry", "frown", BLEU, "steam", 100), (F(1.08, 1.02, shear=-1), "angry", "frown", BLEU, "steam", 100)]),
   ("intrigue", [(F(.95, 1.06), "big", "o", BLEU, None, 400)]),
-  ("mange", [(F(1.1, .9), "happy", "open", BLEU, None, 170), (F(.96, 1.05), "happy", "line", BLEU, None, 170)]),
-  ("rot", [(F(.9, 1.16), "closed", "open", BLEU, None, 400)]),
-  ("baille", [(F(.95, 1.08), "closed", "small", BLEU, None, 220), (F(.88, 1.2), "closed", "yawn", BLEU, None, 450), (F(1.05, .95), "closed", "small", BLEU, None, 220)]),
-  ("dort", [(F(1.12, .88), "closed", "small", BLEU, None, 1300), (F(1.16, .85), "closed", "small", BLEU, None, 1300)]),
-  ("remue", [(F(1.12, .88), ("line", "closed"), "small", BLEU, None, 600)]),
-  ("reveil", [(F(.9, 1.18), "closed", "o", BLEU, None, 160), (F(.92, 1.14), "line", "small", BLEU, None, 160), (F(1.04, .97), "line", "line", BLEU, None, 160)]),
   ("fier", [(F(.92, 1.12), "happy", "smile", BLEU, None, 1500)]),
 ]
 
@@ -156,7 +145,6 @@ tags += [("vol", S0 + 16, S0 + 18), ("chute-legere", S0 + 19, S0 + 20), ("atterr
 # repos : de face, 8 images (il cligne deux fois) ; sa petite queue est à gauche, côté d'où il vient quand il marche vers la droite : l'app retourne tout autour de l'axe 31,5
 # secoue et nausee : attrape-boule (secoue) et la reptation (nausee) passées au vert de la nausée (le bleu de base, son ombre et son reflet deviennent leurs verts)
 TO_VERT = {BLEU[k]: VERT[k] for k in "ACD"}
-TO_VERT[(63, 63, 116, 255)] = (45, 95, 50, 255)      # le bleu marine de la bouche de chute devient un vert foncé ; le blanc des dents reste blanc
 def vert(seq): return [([[TO_VERT.get(p, p) for p in row] for row in f], d) for f, d in seq]
 # nausee (au sol) : la reptation classique passée au vert, avec des spirales à la place des yeux ; elles tournent d'un quart de tour toutes les 3 images
 SPIRAL = ["#####", "....#", "###.#", "#...#", "#####"]
@@ -189,14 +177,33 @@ def dizzy(seq):
                     if ch == "#": g[cy - 2 + r][cx - 2 + c] = B
         out.append((g, d))
     return out
-HAND = [("baille", hand("baille", "baille")), ("repos", hand("repos", "repos")), ("dort", hand("dort", "dort")), ("remue", hand("remue", "remue")), ("regard", hand("regard", "regard")), ("reforme", hand("reforme", "reforme")), ("attrape", hand("attrape", "attrape")), ("attrape-boule", hand("attrape-boule", "attrape-boule")),
+# endort : la transition entre le bâillement (fini de face) et le sommeil (de profil) : de face, les paupières tombent (le clignement de repos),
+# puis, les yeux fermés, le corps se couche jusqu'à la pose de dort (sans la bulle ni la bave, qui apparaissent avec dort)
+from align_turn import morph as _morph
+def _sans_bulle(f):
+    keep = {(0, 0, 0, 255), (0xa4, 0xc6, 0xff, 255), (0x63, 0x9b, 0xff, 255), (0x45, 0x77, 0xe0, 255)}
+    pts = {(x, y) for y in range(64) for x in range(64) if f[y][x] in keep}
+    todo, best = set(pts), set()
+    while todo:                                                   # le plus grand morceau : le corps (la bulle et son contour sont à part)
+        c = {todo.pop()}; st = list(c)
+        while st:
+            x, y = st.pop()
+            for a, b in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+                if (x + a, y + b) in todo: todo.remove((x + a, y + b)); c.add((x + a, y + b)); st.append((x + a, y + b))
+        if len(c) > len(best): best = c
+    return [[f[y][x] if (x, y) in best else (0, 0, 0, 0) for x in range(64)] for y in range(64)]
+def endort():
+    rep = hand("repos", "repos"); half, closed = rep[1][0], rep[2][0]      # repos : ouverts, mi-clos, fermés, mi-clos…
+    lie = _sans_bulle(hand("dort", "dort")[0][0])
+    return [(half, 300), (closed, 300)] + [(_morph(closed, lie, t), 170) for t in (.25, .5, .75)]
+HAND = [("endort", endort()), ("baille", hand("baille", "baille")), ("repos", hand("repos", "repos")), ("dort", hand("dort", "dort")), ("remue", hand("remue", "remue")), ("regard", hand("regard", "regard")), ("reforme", hand("reforme", "reforme")), ("attrape-boule", hand("attrape-boule", "attrape-boule")),
         # ce qu'attrape-boule ajoute à la goutte nue : le visage, les sourcils et la sueur (une image par image) ; les bras, eux, sont pris sur la première image
         # (bras levés) : le code les fait tourner autour de leur attache, avec des poses fantômes ; la boule et sa queue, il les dessine en direct
         ("attrape-boule-parts", [(parts_of(f), d) for f, d in hand("attrape-boule", "attrape-boule")]),
         ("attrape-boule-arms", [(arms_of(hand("attrape-boule", "attrape-boule")[0][0]), 100)]), ("secoue", vert(hand("attrape-boule", "attrape-boule"))),
         # secoué puis lâché, il reste vert pendant toute la chute et l'atterrissage, jusqu'à ce qu'il se remette : les mêmes animations, passées au vert
         ("vol-vert", vert(SAUT[16:19])), ("chute-legere-vert", vert(SAUT[19:21])), ("atterrissage-vert", vert(SAUT[21:27])), ("chute-vert", vert(hand("chute", "chute", 0, 11))),
-        ("nausee", dizzy(vert(hand("crawl", "crawl")))), ("mange", hand("eat", "mange")), ("rot", hand("rot", "rot")), ("caresse", hand("caresse", "caresse", 0, 5)), ("caresse-fin", hand("caresse", "caresse", 6, 8)),
+        ("nausee", dizzy(vert(hand("crawl", "crawl")))), ("mange", hand("eat", "mange")), ("rot", hand("rot", "rot")), ("caresse", hand("caresse", "caresse", 0, 5)), ("caresse-fin", hand("caresse", "caresse", 6, 8)), ("rire", hand("rire", "rire")), ("choc-bord", hand("choc-bord", "choc-bord")), ("coule", hand("coule", "coule")), ("coule-fin", hand("coule-fin", "coule-fin")), ("choc-bord-vert", vert(hand("choc-bord", "choc-bord"))), ("coule-vert", vert(hand("coule", "coule"))),
         # chute : 0-1 = début, 2-11 = boucle ; 12-13 (la goutte qui descend dans l'image) sont sautées, c'est la fenêtre qui descend
         ("chute", hand("chute", "chute", 0, 11)), ("ecrase", hand("chute", "chute", 14, 22))]
 for name, seq in HAND:
