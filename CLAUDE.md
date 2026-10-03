@@ -11,6 +11,7 @@ Compagnon de bureau pour les utilisateurs de Claude Code. La vision et l'install
 - `animations/` : les animations dessinées, un dossier par animation. `animations/limace-complete/gen.py` assemble la feuille de la limace.
 - `tools/sim.py` : page de test du Bidule dans un navigateur, sans l'app.
 - `moodboard/` : direction artistique, spec des animations (`animations-des-bidules.html`), animations à dessiner (`planches-limace.html`), et `style-bidules.md` : le style des Bidules, à lire avant de dessiner, générer ou retoucher une image.
+- `.mcp.json` : les serveurs MCP `aseprite` (fichiers `.aseprite`, sans ouvrir l'app), `aseprite-live` (dessin en direct dans l'Aseprite ouvert) et `pixellab` (anime une pose, calcule les images entre deux poses ; jeton dans `PIXELLAB_SECRET`). Installation : README, « Faire éditer Aseprite par Claude Code ». Après une retouche d'un `.aseprite`, `mise run publier` pour que l'app la voie. Pour travailler dans Aseprite avec Claude (connexion, réparation, règles) : skill `aseprite-mcp`.
 
 ## Lancer et vérifier
 

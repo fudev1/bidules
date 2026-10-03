@@ -125,7 +125,8 @@ Après `gh pr checkout`, `git switch test` ramène sur `test`.
 | `moodboard/` | Direction artistique ; `style-bidules.md` (le style des Bidules : règles, palettes, références, leçons), `planches-limace.html` (animations de la limace à dessiner) et `animations-des-bidules.html` (spec des animations d'un Bidule), à ouvrir dans un navigateur |
 | `sprites/`, `prototype/` | Fichiers Aseprite des blobs, prototype de la chambre |
 | `tools/` | `publier.py` : du fichier Aseprite à l'app ; `sim.py` : page de test du Bidule dans un navigateur, sans l'app ; `boule.py` : la forme de la goutte du Bidule tenu par la tête ; `pixellab.py`, `planche.py`, `importer.py`, `verifier.py`, `bilan.py` : générer avec PixelLab (voir plus bas) ; les autres scripts créent ou alignent des animations (voir leur en-tête) |
-| `.claude/`, `CLAUDE.md` | Consignes pour Claude Code : skills de commit, `animer-bidule` et `creer-bidule`, règles git, garde-fou contre les push sur `main`, pas de mention de Claude dans les commits et les PR |
+| `.mcp.json` | Serveurs MCP pour faire éditer Aseprite par Claude Code (voir « Faire éditer Aseprite par Claude Code ») |
+| `.claude/`, `CLAUDE.md` | Consignes pour Claude Code : skills de commit, `animer-bidule`, `creer-bidule` et `aseprite-mcp`, règles git, garde-fou contre les push sur `main`, pas de mention de Claude dans les commits et les PR |
 | `.githooks/`, `.github/` | Garde-fou git pour les humains, modèle de pull request |
 
 ## Ajouter une animation à la limace
@@ -150,7 +151,7 @@ Mise en place, une fois par poste :
 
 1. Un compte sur [pixellab.ai](https://www.pixellab.ai) et son jeton d'API (page du compte).
 2. `cp mise.local.toml.exemple mise.local.toml`, puis coller le jeton dedans. Le fichier est ignoré par git.
-3. Facultatif, pour que Claude Code l'utilise directement : `claude mcp add pixellab https://api.pixellab.ai/mcp -t http -H "Authorization: Bearer <jeton>"`.
+3. Pour Claude Code : le serveur MCP `pixellab` est déclaré dans `.mcp.json` (animer, interpoler entre deux poses). Il lit le jeton dans `PIXELLAB_SECRET` : lancer Claude Code depuis un terminal ouvert dans le projet, où mise l'a chargé.
 
 La chaîne, du brut à l'app (le mode d'emploi complet est en tête de chaque script) :
 
@@ -165,6 +166,28 @@ python3 tools/bilan.py caresse                                     # ce que la r
 `tools/verifier.py` contrôle n'importe quelle animation contre les règles des Bidules (palette, transparence, ligne 60, contour). Une image se désigne par `perso:balise:n` (la n-ième image de la balise dans `dist/persos/<perso>/sheet.png`) ou par un chemin de PNG.
 
 Extensions Aseprite utiles (gratuites, MIT) : [Pixel-Import](https://github.com/LucienTo/Pixel-Import) (importer une image en la ramenant sur la palette du sprite), [EaseSprite](https://github.com/JRiggles/EaseSprite) (accélérations sur la durée des images), [OKShift](https://github.com/WangleLine/OKShift) (décaler une teinte sans changer sa luminosité), et les scripts [Tween et Skeleton2Animation](https://github.com/alca259/aseprite-2.5d-animation-pipeline) (entre-deux et squelette).
+
+## Faire éditer Aseprite par Claude Code
+
+Le projet déclare trois serveurs MCP dans `.mcp.json` (le troisième, `pixellab`, calcule les animations entre deux poses : voir « Générer avec PixelLab »), déjà approuvés dans `.claude/settings.json` : Claude Code les charge en ouvrant le projet.
+
+- `aseprite` ([diivi/aseprite-mcp](https://github.com/diivi/aseprite-mcp)) : travaille sur les fichiers `.aseprite` sans ouvrir l'app (dessin, calques, images, palettes, exports, scripts Lua).
+- `aseprite-live` ([sloplink/aseprite-mcp](https://github.com/sloplink/aseprite-mcp)) : dessine en direct dans l'Aseprite ouvert, et on voit les changements à l'écran.
+
+Mise en place, une fois par poste (Aseprite installé dans `/Applications`, [uv](https://docs.astral.sh/uv/) et Node 20 ou plus) :
+
+```bash
+mkdir -p ~/mcp && cd ~/mcp
+git clone https://github.com/diivi/aseprite-mcp
+git clone https://github.com/sloplink/aseprite-mcp aseprite-mcp-live
+cd aseprite-mcp-live && npm install && node server.mjs token     # affiche le jeton d'appairage
+```
+
+Puis, pour `aseprite-live`, installer l'extension `aseprite-mcp-bridge.aseprite-extension` (page des versions du dépôt) dans Aseprite : **Edit › Preferences › Extensions › Add Extension**, redémarrer Aseprite, et coller le jeton dans **File › MCP Bridge…**. Le jeton reste sur le poste (`~/.config/aseprite-mcp/token`), il n'est pas dans le projet.
+
+Les chemins de `.mcp.json` partent de `~/mcp/` : cloner ailleurs demande d'y adapter les chemins. `/mcp` dans Claude Code montre si les deux serveurs sont connectés.
+
+Le serveur `aseprite-live` est lancé par Claude Code et ne vit que pendant une session ouverte dans le projet : à chaque nouvelle session, recliquer sur **Connect** dans File › MCP Bridge d'Aseprite. En cas de doute, `python3 tools/aseprite_mcp.py` diagnostique l'installation, les processus et la connexion ; avec Claude Code, le skill `aseprite-mcp` déroule la mise en place et les réparations.
 
 ## Tester sans l'app
 

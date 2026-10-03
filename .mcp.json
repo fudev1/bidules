@@ -1,0 +1,33 @@
+{
+  "mcpServers": {
+    "aseprite": {
+      "type": "stdio",
+      "command": "uv",
+      "args": [
+        "--directory",
+        "${HOME}/mcp/aseprite-mcp",
+        "run",
+        "-m",
+        "aseprite_mcp"
+      ],
+      "env": {
+        "ASEPRITE_PATH": "/Applications/Aseprite.app/Contents/MacOS/aseprite"
+      }
+    },
+    "aseprite-live": {
+      "type": "stdio",
+      "command": "node",
+      "args": [
+        "${HOME}/mcp/aseprite-mcp-live/server.mjs"
+      ],
+      "env": {}
+    },
+    "pixellab": {
+      "type": "http",
+      "url": "https://api.pixellab.ai/mcp",
+      "headers": {
+        "Authorization": "Bearer ${PIXELLAB_SECRET}"
+      }
+    }
+  }
+}
