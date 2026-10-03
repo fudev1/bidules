@@ -19,6 +19,7 @@ Inspiration : l'app "Claude Usage" (PokéBurn), sans le thème Pokémon.
 - Il marche en bas de l'écran, suit la souris des yeux, fait des pauses, bâille puis s'endort quand on le laisse tranquille.
 - On peut l'attraper, le lancer, le secouer, le caresser, le chatouiller, lui glisser un fichier à "manger" (le fichier n'est pas touché).
 - La limace s'étire quand on la tire du sol, décolle, et s'écrase si elle tombe de haut.
+- Candy laisse de petits bonbons en marchant quand elle est de bonne humeur ; un clic sur l'un d'eux et elle vient le manger.
 - Son humeur est devinée d'après le rythme de tes prompts (heure, durée de session, cadence), et tu peux la corriger dans le panneau.
 - Le panneau de la barre de menus permet de choisir le personnage, d'ajouter des parties et de forcer une humeur.
 
@@ -123,7 +124,7 @@ Après `gh pr checkout`, `git switch test` ramène sur `test`.
 | `animations/candy/` | Candy, dessinée image par image (123 images, 24 balises) : `gen.py` génère les images, la planche et le JSON, et les copie dans `dist/persos/candy/` ; `apercu_x4.gif` pour la voir bouger |
 | `moodboard/` | Direction artistique ; `style-bidules.md` (le style des Bidules : règles, palettes, références, leçons), `planches-limace.html` (animations de la limace à dessiner) et `animations-des-bidules.html` (spec des animations d'un Bidule), à ouvrir dans un navigateur |
 | `sprites/`, `prototype/` | Fichiers Aseprite des blobs, prototype de la chambre |
-| `tools/` | `publier.py` : du fichier Aseprite à l'app ; `sim.py` : page de test du Bidule dans un navigateur, sans l'app ; `pixellab.py`, `planche.py`, `importer.py`, `verifier.py`, `bilan.py` : générer avec PixelLab (voir plus bas) ; les autres scripts créent ou alignent des animations (voir leur en-tête) |
+| `tools/` | `publier.py` : du fichier Aseprite à l'app ; `sim.py` : page de test du Bidule dans un navigateur, sans l'app ; `boule.py` : la forme de la goutte du Bidule tenu par la tête ; `pixellab.py`, `planche.py`, `importer.py`, `verifier.py`, `bilan.py` : générer avec PixelLab (voir plus bas) ; les autres scripts créent ou alignent des animations (voir leur en-tête) |
 | `.claude/`, `CLAUDE.md` | Consignes pour Claude Code : skills de commit, `animer-bidule` et `creer-bidule`, règles git, garde-fou contre les push sur `main`, pas de mention de Claude dans les commits et les PR |
 | `.githooks/`, `.github/` | Garde-fou git pour les humains, modèle de pull request |
 
