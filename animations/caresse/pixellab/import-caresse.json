@@ -1,0 +1,15 @@
+{
+ "essai": "animations/caresse/pixellab/20261002-202006-animer",
+ "balise": "caresse",
+ "perso": "limace",
+ "images": 6,
+ "decalage": [
+  0,
+  0
+ ],
+ "poussieres": 0,
+ "options": {
+  "duree": "80",
+  "choix": "0,1,2,3,4,5"
+ }
+}

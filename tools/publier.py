@@ -6,7 +6,7 @@ import os, subprocess, sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from aseprite_io import ROOT, export
 
-ANIMS = [("crawl", "crawl"), ("turn", "turn"), ("jump", "saut"), ("repos", "repos"), ("baille", "baille"), ("eat", "mange"), ("rot", "rot"), ("dort", "dort"), ("remue", "remue"), ("regard", "regard"), ("reforme", "reforme"), ("attrape", "attrape"), ("attrape-boule", "attrape-boule"), ("chute", "chute")]
+ANIMS = [("crawl", "crawl"), ("turn", "turn"), ("jump", "saut"), ("repos", "repos"), ("baille", "baille"), ("eat", "mange"), ("rot", "rot"), ("dort", "dort"), ("remue", "remue"), ("regard", "regard"), ("reforme", "reforme"), ("attrape-boule", "attrape-boule"), ("chute", "chute"), ("caresse", "caresse"), ("rire", "rire"), ("choc-bord", "choc-bord"), ("coule", "coule"), ("coule-fin", "coule-fin")]
 A = f"{ROOT}/animations"
 for folder, name in ANIMS:
     src, sheet = f"{A}/{folder}/{name}.aseprite", f"{A}/{folder}/{name}_sheet.png"

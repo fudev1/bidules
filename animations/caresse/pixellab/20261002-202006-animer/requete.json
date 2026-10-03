@@ -1,0 +1,19 @@
+{
+ "commande": "animer",
+ "point_d_entree": "/animate-with-text-v3",
+ "sources": {
+  "debut": "limace:repos",
+  "fin": "limace:repos"
+ },
+ "parametres": {
+  "action": "closes eyes in a happy smile, body gently squashes down and sways left and right, then returns",
+  "frame_count": 6,
+  "seed": 356720207,
+  "no_background": true
+ },
+ "cout": {
+  "type": "generations",
+  "generations": 1.0
+ },
+ "date": "2026-10-02T20:20:06"
+}

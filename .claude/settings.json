@@ -16,5 +16,10 @@
         ]
       }
     ]
-  }
+  },
+  "enabledMcpjsonServers": [
+    "aseprite",
+    "aseprite-live",
+    "pixellab"
+  ]
 }

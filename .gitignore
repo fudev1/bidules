@@ -9,3 +9,6 @@ __pycache__/
 # réglages personnels de Claude Code
 .claude/settings.local.json
 CLAUDE.local.md
+
+# jeton PixelLab (voir mise.local.toml.exemple)
+mise.local.toml

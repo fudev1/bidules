@@ -1,0 +1,14 @@
+{
+ "essai": "animations/rire/pixellab/20261003-111926-animer",
+ "balise": "rire",
+ "perso": "limace",
+ "images": 7,
+ "decalage": [
+  0,
+  0
+ ],
+ "poussieres": 0,
+ "options": {
+  "duree": "80"
+ }
+}

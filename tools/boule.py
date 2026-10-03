@@ -1,5 +1,5 @@
 # La goutte (une boule et un cône qui s'amincit jusqu'à la pointe tenue par la souris) : la forme et les couleurs que dist/index.html dessine en direct
-# (maskDrop et styleRender de pullDraw, et swingDraw pour le Bidule tenu par la tête). Partagé par tools/attrape_boule.py et gen.py.
+# (maskDrop et styleRender de pullDraw, et swingDraw pour le Bidule tenu par la tête). Utilisé par gen.py (animations/attrape-boule montre la goutte à l'équilibre, à retoucher dans Aseprite).
 import math
 
 INK, BASE, SHADE, LIGHT, CLEAR = (0, 0, 0, 255), (99, 155, 255, 255), (69, 119, 224, 255), (164, 198, 255, 255), (0, 0, 0, 0)
@@ -41,12 +41,14 @@ def parts_of(frame):
     """ce que l'image ajoute à la goutte nue au milieu de la boule : le visage et les sourcils (et toute retouche à la main), et la sueur ; le reste est
     transparent. Le code les pose sur la goutte qu'il dessine, au même endroit que la boule."""
     base, mask = ball()
-    return [[frame[y][x] if frame[y][x][3] and frame[y][x] != base[y][x] and ((x, y) in mask and abs(x + .5 - BX) < R - 2 or in_sweat(x, y)) else CLEAR for x in range(64)] for y in range(64)]
+    top = BY - R + 2.5          # le trait noir du sommet de la tête (dessiné dans l'image) est laissé de côté : le cône du code se raccorde à la boule sans cette ligne
+    return [[frame[y][x] if frame[y][x][3] and frame[y][x] != base[y][x] and ((x, y) in mask and abs(x + .5 - BX) < R - 2 and not (frame[y][x] == INK and y + .5 < top) or in_sweat(x, y)) else CLEAR for x in range(64)] for y in range(64)]
 
 def arms_of(frame):
     """les bras d'une image : tout ce qui dépasse de la boule (hors sueur). Le code les fait tourner autour de leur attache, avec des poses fantômes."""
     base, mask = ball()
-    return [[frame[y][x] if frame[y][x][3] and (x, y) not in mask and not in_sweat(x, y) else CLEAR for x in range(64)] for y in range(64)]
+    # seulement l'encre et le bleu des bras : les fantômes et les arcs de vitesse dessinés dans le fichier (tools/attrape_vitesse.py) ne tournent pas avec eux
+    return [[frame[y][x] if frame[y][x][3] and (x, y) not in mask and not in_sweat(x, y) and frame[y][x][:3] in ((0, 0, 0), (99, 155, 255)) else CLEAR for x in range(64)] for y in range(64)]
 
 def pivots():
     """les points d'attache des deux bras : les pixels du bord de la boule, à la ligne ROOT_Y (centres de pixels)"""

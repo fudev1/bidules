@@ -112,7 +112,7 @@ Après `gh pr checkout`, `git switch test` ramène sur `test`.
 - **App de bureau** : [Tauri 2](https://tauri.app) en Rust. Fenêtre transparente toujours au premier plan, icône dans la barre de menus, lecture des journaux de Claude Code (`serde`, `serde_json`).
 - **Interface** : HTML, CSS et JavaScript sans framework ni étape de build (`dist/`). Les monstres sont dessinés par le code, en pixel art 64 × 64, et l'étirement de la limace est dessiné sur un canvas.
 - **Animations** : dessinées dans [Aseprite](https://www.aseprite.org), exportées en feuille PNG + JSON, puis assemblées par des scripts Python 3 sans dépendance.
-- **Outils** : mise pour Rust et la commande de lancement.
+- **Outils** : mise pour Rust et la commande de lancement. [PixelLab](https://www.pixellab.ai) (API, payante) pour les ébauches d'animations et de nouveaux Bidules.
 
 ## Organisation
 
@@ -122,10 +122,11 @@ Après `gh pr checkout`, `git switch test` ramène sur `test`.
 | `src-tauri/` | L'app de bureau en Rust |
 | `animations/` | Les animations dessinées, un dossier par animation ; `limace-complete/gen.py` assemble la feuille de la limace |
 | `animations/candy/` | Candy, dessinée image par image (123 images, 24 balises) : `gen.py` génère les images, la planche et le JSON, et les copie dans `dist/persos/candy/` ; `apercu_x4.gif` pour la voir bouger |
-| `moodboard/` | Direction artistique ; `planches-limace.html` (animations de la limace à dessiner) et `animations-des-bidules.html` (spec des animations d'un Bidule), à ouvrir dans un navigateur |
+| `moodboard/` | Direction artistique ; `style-bidules.md` (le style des Bidules : règles, palettes, références, leçons), `planches-limace.html` (animations de la limace à dessiner) et `animations-des-bidules.html` (spec des animations d'un Bidule), à ouvrir dans un navigateur |
 | `sprites/`, `prototype/` | Fichiers Aseprite des blobs, prototype de la chambre |
-| `tools/` | `publier.py` : du fichier Aseprite à l'app ; `sim.py` : page de test du Bidule dans un navigateur, sans l'app ; `boule.py` : la forme de la goutte du Bidule tenu par la tête ; les autres scripts créent ou alignent des animations (voir leur en-tête) |
-| `.claude/`, `CLAUDE.md` | Consignes pour Claude Code : skill de commit, règles git, garde-fou contre les push sur `main`, pas de mention de Claude dans les commits et les PR |
+| `tools/` | `publier.py` : du fichier Aseprite à l'app ; `sim.py` : page de test du Bidule dans un navigateur, sans l'app ; `boule.py` : la forme de la goutte du Bidule tenu par la tête ; `pixellab.py`, `planche.py`, `importer.py`, `verifier.py`, `bilan.py` : générer avec PixelLab (voir plus bas) ; les autres scripts créent ou alignent des animations (voir leur en-tête) |
+| `.mcp.json` | Serveurs MCP pour faire éditer Aseprite par Claude Code (voir « Faire éditer Aseprite par Claude Code ») |
+| `.claude/`, `CLAUDE.md` | Consignes pour Claude Code : skills de commit, `animer-bidule`, `creer-bidule` et `aseprite-mcp`, règles git, garde-fou contre les push sur `main`, pas de mention de Claude dans les commits et les PR |
 | `.githooks/`, `.github/` | Garde-fou git pour les humains, modèle de pull request |
 
 ## Ajouter une animation à la limace
@@ -141,6 +142,52 @@ Une animation qui remplace une existante (même nom de balise, par exemple `dort
 Format attendu : 64 × 64 pixels, fond transparent, tourné vers la droite (l'app le retourne pour la gauche). De profil, le bas du contour est sur la ligne 60, comme la reptation. De face, le corps est placé comme la pose de repos (`repos`, aussi l'image de face du demi-tour) : centré sur 31,5, petite queue à gauche, sans jupe au bas du corps.
 
 Le retournement gauche/droite se fait autour d'un axe que l'app calcule depuis `crawl[0]` et la dernière image de `turn` : ici 31,5, le milieu de l'image, donc un simple miroir de l'image. Pour que reptation droite, demi-tour et reptation gauche s'enchaînent sans saut : `turn[0]` est identique à `crawl[0]`, `turn[12]` en est le miroir exact (reflet compris), et la reptation retournée doit tenir dans l'image (x de 2 à 61). Toutes les animations sont centrées sur 31,5 et posées sur la ligne 60. Si la reptation change, `tools/align_turn.py` reconstruit le demi-tour (voir son en-tête) ; le saut commence et finit par les images de ce demi-tour, `gen.py` les reprend tout seul.
+
+## Générer avec PixelLab
+
+PixelLab produit des ébauches en pixel art à partir des images des Bidules : il anime une pose, interpole entre deux poses dessinées, ou propose de nouveaux Bidules dans le style de ceux qui existent. L'ébauche est nettoyée, retouchée à la main, puis comparée à la retouche : ce qui a été corrigé devient une leçon dans `moodboard/style-bidules.md`. Avec Claude Code, les skills `animer-bidule` et `creer-bidule` déroulent tout ça.
+
+Mise en place, une fois par poste :
+
+1. Un compte sur [pixellab.ai](https://www.pixellab.ai) et son jeton d'API (page du compte).
+2. `cp mise.local.toml.exemple mise.local.toml`, puis coller le jeton dedans. Le fichier est ignoré par git.
+3. Pour Claude Code : le serveur MCP `pixellab` est déclaré dans `.mcp.json` (animer, interpoler entre deux poses). Il lit le jeton dans `PIXELLAB_SECRET` : lancer Claude Code depuis un terminal ouvert dans le projet, où mise l'a chargé.
+
+La chaîne, du brut à l'app (le mode d'emploi complet est en tête de chaque script) :
+
+```bash
+python3 tools/pixellab.py animer caresse limace:repos "gets petted, squashes down happily" --fin limace:repos
+python3 tools/planche.py animations/caresse/pixellab/<essai>      # planche.png : choisir
+python3 tools/importer.py animations/caresse/pixellab/<essai>     # caresse.aseprite, nettoyé, recalé et vérifié
+# retoucher et enregistrer dans Aseprite, déclarer l'animation (voir plus haut), mise run publier
+python3 tools/bilan.py caresse                                     # ce que la retouche a changé
+```
+
+`tools/verifier.py` contrôle n'importe quelle animation contre les règles des Bidules (palette, transparence, ligne 60, contour). Une image se désigne par `perso:balise:n` (la n-ième image de la balise dans `dist/persos/<perso>/sheet.png`) ou par un chemin de PNG.
+
+Extensions Aseprite utiles (gratuites, MIT) : [Pixel-Import](https://github.com/LucienTo/Pixel-Import) (importer une image en la ramenant sur la palette du sprite), [EaseSprite](https://github.com/JRiggles/EaseSprite) (accélérations sur la durée des images), [OKShift](https://github.com/WangleLine/OKShift) (décaler une teinte sans changer sa luminosité), et les scripts [Tween et Skeleton2Animation](https://github.com/alca259/aseprite-2.5d-animation-pipeline) (entre-deux et squelette).
+
+## Faire éditer Aseprite par Claude Code
+
+Le projet déclare trois serveurs MCP dans `.mcp.json` (le troisième, `pixellab`, calcule les animations entre deux poses : voir « Générer avec PixelLab »), déjà approuvés dans `.claude/settings.json` : Claude Code les charge en ouvrant le projet.
+
+- `aseprite` ([diivi/aseprite-mcp](https://github.com/diivi/aseprite-mcp)) : travaille sur les fichiers `.aseprite` sans ouvrir l'app (dessin, calques, images, palettes, exports, scripts Lua).
+- `aseprite-live` ([sloplink/aseprite-mcp](https://github.com/sloplink/aseprite-mcp)) : dessine en direct dans l'Aseprite ouvert, et on voit les changements à l'écran.
+
+Mise en place, une fois par poste (Aseprite installé dans `/Applications`, [uv](https://docs.astral.sh/uv/) et Node 20 ou plus) :
+
+```bash
+mkdir -p ~/mcp && cd ~/mcp
+git clone https://github.com/diivi/aseprite-mcp
+git clone https://github.com/sloplink/aseprite-mcp aseprite-mcp-live
+cd aseprite-mcp-live && npm install && node server.mjs token     # affiche le jeton d'appairage
+```
+
+Puis, pour `aseprite-live`, installer l'extension `aseprite-mcp-bridge.aseprite-extension` (page des versions du dépôt) dans Aseprite : **Edit › Preferences › Extensions › Add Extension**, redémarrer Aseprite, et coller le jeton dans **File › MCP Bridge…**. Le jeton reste sur le poste (`~/.config/aseprite-mcp/token`), il n'est pas dans le projet.
+
+Les chemins de `.mcp.json` partent de `~/mcp/` : cloner ailleurs demande d'y adapter les chemins. `/mcp` dans Claude Code montre si les deux serveurs sont connectés.
+
+Le serveur `aseprite-live` est lancé par Claude Code et ne vit que pendant une session ouverte dans le projet : à chaque nouvelle session, recliquer sur **Connect** dans File › MCP Bridge d'Aseprite. En cas de doute, `python3 tools/aseprite_mcp.py` diagnostique l'installation, les processus et la connexion ; avec Claude Code, le skill `aseprite-mcp` déroule la mise en place et les réparations.
 
 ## Tester sans l'app
 

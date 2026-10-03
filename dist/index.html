@@ -289,12 +289,15 @@ function pullStep(dt) {
   if (pull.phase === "ground") {
     // il décolle quand on a tiré assez loin
     if (Math.hypot(pull.d[0], pull.d[1]) > (S0.bot + 1 - S0.top) * 2.4) {
-      const {B, G} = pullGeom();
-      pull.phase = "hang"; pull.b = [0, (S0.bot + 1 - S0.top) * .44 + 3]; pull.vb = [0, 160];
-      x += (G[0] - HANG_G[0]) * 2; y += (G[1] - HANG_G[1]) * 2; push();
-      drag.x0 = x - (drag.lastX - drag.sx); drag.y0 = y - (drag.lastY - drag.sy);
-      pull.pw = [x, y]; pull.pv = [0, 0]; pull.aw = [0, 0]; pull.skip = 2;
+      // décollé : la fenêtre reprend sa taille et il est tenu comme dans tous les autres cas (la goutte qui se balance)
       say("il se decolle du sol"); bubble("Plop !", 900);
+      x += (BIG_W - WW) / 2; y += BIG_H - WH; pull.phase = "closing"; pull.ready = false;
+      setBigWindow(false).then(() => {
+        pull.on = false; pull.phase = null; img.style.opacity = "";
+        if (drag) { mode = "held"; struggle(true); holdByHead(drag.lastX, drag.lastY); }
+        else { vx = vy = 0; mode = "fly"; bounces = 0; angle = 0; spin = 0; if (isSheet()) sheetAnim(Date.now()); }
+      });
+      return;
     }
   } else if (pull.phase === "hang") {
     if (pull.skip) { pull.skip--; pull.pw = [x, y]; pull.pv = [0, 0]; }
@@ -335,7 +338,7 @@ function pullFinish() {
 // tenu par la souris : la boule avec une pointe (attrape-boule) si elle existe, sinon attrape
 const heldTag = T2 => T2["attrape-boule"] ? "attrape-boule" : "attrape";
 const SHEET_MODE_TAG = {held:"attrape", fly:"vol", dizzy:"etourdi", nausea:"nausee", recover:"remis", pet:"caresse", laugh:"rire", angry:"fache",
-  sulk:"boude", ooh:"intrigue", sleep:"dort", carried:"attrape", waking:"reveil", evolving:"fier"};
+  sulk:"boude", wall:"coule", ooh:"intrigue", sleep:"dort", carried:"attrape", waking:"baille", evolving:"fier"};
 // Candy rebondit comme une balle quand on la lance ; crashed : la première chute était grosse, l'écrasement viendra à la fin des rebonds ; sing : elle chante pendant cette pause
 const BOUNCY = new Set(["candy"]);
 // pas d'étirement collant quand on la soulève : elle réagit avec ses images (balise attrape)
@@ -407,6 +410,7 @@ function sheetAnim(now) {
   if (tag === "attrape") tag = heldTag(T2);
   if (mode === "held" && drag && drag.shaken) tag = "secoue";
   if (mode === "fly" && vy > 0 && T2.chute) tag = nausea && T2["chute-vert"] ? "chute-vert" : "chute";
+  if (mode === "wall" && nausea && T2["coule-vert"]) tag = "coule-vert";          // secoué, il reste vert en coulant le long du mur
   if (mode === "sleep" && wake > 35) tag = "remue";
   if (mode === "walk") { if (watching) sing = false; if (watching || now >= idleUntil || faceSeq || !FRONT.has(img.src)) return; tag = sing && T2.chante ? "chante" : "repos"; }
   if (!tag || !T2[tag]) { if (tag === "boude" && T2.crawl) tag = "crawl"; else return; }
@@ -478,11 +482,15 @@ function buildFrames(s) {
     for (const lx of [0, 1]) for (const ly of [-1, 0, 1]) { const key = lx + "," + ly; nl[key] = T2.regard ? T2.regard[LOOK_ORDER.indexOf(key)].src : front; }
     // images de face ; HALF = début du demi-tour, du profil jusqu'à l'image de face
     const mid = T2.turn ? T2.turn.reduce((b, f, i) => f.dur > T2.turn[b].dur ? i : b, 0) : -1;
-    FRONT = new Set(["repos", "regard", "baille", "reforme", "atterrissage", "atterrissage-vert", "intrigue", "caresse", "rire", "fache", "chante", "remis", "reveil", "fier"].flatMap(t => (T2[t] || []).map(f => f.src)));
+    FRONT = new Set(["repos", "regard", "baille", "reforme", "atterrissage", "atterrissage-vert", "intrigue", "caresse", "caresse-fin", "rire", "fache", "chante", "remis", "fier"].flatMap(t => (T2[t] || []).map(f => f.src)));
     if (mid > 0) FRONT.add(T2.turn[mid].src);
     HALF = mid > 0 ? T2.turn.slice(0, mid + 1) : null; faceSeq = null;
     const AR = T2["attrape-boule-arms"]; swing.armPx = null;
-    if (AR) { const im = new Image(); im.onload = () => { const c = document.createElement("canvas"); c.width = c.height = 64; const g = c.getContext("2d", {willReadFrequently:true}); g.drawImage(im, 0, 0); swing.armPx = g.getImageData(0, 0, 64, 64).data; }; im.src = AR[0].src; }
+    swing.hand = null;
+    if (AR) { const im = new Image(); im.onload = () => { try { const c = document.createElement("canvas"); c.width = c.height = 64; const g = c.getContext("2d", {willReadFrequently:true}); g.drawImage(im, 0, 0); swing.armPx = g.getImageData(0, 0, 64, 64).data;
+      let n = 0; for (let i = 3; i < swing.armPx.length; i += 4) if (swing.armPx[i]) n++; say(`goutte : bras charges (${n} pixels)`); } catch (e) { say("goutte : bras illisibles : " + e); } };
+      im.onerror = () => say("goutte : image des bras introuvable"); im.src = AR[0].src; }
+    else say("goutte : pas de bras dans la feuille (attrape-boule-arms)");
     const P = T2["attrape-boule-parts"]; swing.parts = P ? P.map(f => { const im = new Image(); im.src = f.src; return im; }) : null; swing.durs = P ? P.map(f => f.dur) : [];
     FR = nf; LOOK = nl; style = s; return;
   }
@@ -531,9 +539,11 @@ function zz() {
   z.animate([{transform:"translate(0,0) scale(.7)", opacity:0}, {opacity:1, offset:.2}, {transform:`translate(${14 + Math.random() * 16}px,-58px) scale(1.2)`, opacity:0}], {duration:1800, easing:"ease-out"}).finished.then(() => z.remove());
 }
 function disturb() { calm = 0; }
+let drowsyEnd = false;
 function fallAsleep() { mode = "sleep"; img.src = FR.dort; pose("breathe"); sleepSince = Date.now(); wake = 0; stirred = false; say("il s'endort"); }
 function wakeUp(why) {
-  mode = "waking"; reactUntil = Date.now() + 1100; img.src = FR.baille; pose("shake"); wake = 0; calm = 0;
+  mode = "waking"; reactUntil = Date.now() + (isSheet() && tagDur("baille") || 1100); img.src = FR.baille; pose(isSheet() ? "" : "shake"); wake = 0; calm = 0;
+  if (isSheet()) playOnce("baille");          // dessiné : il se réveille avec son bâillement, une fois, sans tremblement
   bubble(why === "seul" ? "*s'étire*" : "Hein ?", 1000); say(`il se reveille (${why})`);
 }
 function react(m, ms, frame, cls = "") { mode = m; reactUntil = Date.now() + ms; img.src = frame; pose(cls); img.style.rotate = "0deg"; watching = false; lookKey = ""; }
@@ -549,6 +559,17 @@ async function flush() {
   while (want) { const [a, b] = want; want = null; sending = true;
     try { await win.setPosition(new LogicalPosition(Math.round(a), Math.round(b))); } catch (e) { say("setPosition: " + e); }
     sending = false; }
+}
+// Lancé contre le bord de l'écran, un perso dessiné s'écrase contre lui (choc-bord) puis coule le long du mur (coule) jusqu'au sol.
+// La fenêtre dépasse un peu de l'écran (WALL_OVER) pour que le corps touche le bord : le dessin laisse 24 px de marge de chaque côté.
+const WALL_OVER = 22, WALL_SLIDE = 380; let wallV = 0, wallSide = 1, wallEnd = 0;      // WALL_SLIDE : durée (ms) des dernières images de coule-fin, pendant lesquelles la fenêtre rentre
+function hitWall(side) {
+  const T2 = isSheet() && SHEET_DATA[style].tags;
+  if (!T2 || !T2.coule || !T2["choc-bord"] || Math.abs(vx) < 4 || y > floorY - 60) return false;
+  mode = "wall"; wallSide = side; dir = side; face(); pose(""); vx = vy = 0; angle = 0; spin = 0; img.style.rotate = "0deg"; wallV = .3; peakY = y; fall = null;
+  x = side < 0 ? minX - WALL_OVER : maxX + WALL_OVER; watching = false; lookKey = "";
+  playOnce(nausea && T2["choc-bord-vert"] ? "choc-bord-vert" : "choc-bord"); say("il percute le bord : il coule le long du mur");
+  return true;
 }
 function land() {
   if (vx) { dir = vx < 0 ? -1 : 1; face(); }
@@ -585,7 +606,7 @@ function tick() {
   if (mode === "walk" && style === "candy" && mood === "guilleret" && sweets.length < 3 && !feeding) sweetTimer -= dtMs;
   if (mode === "pet") calm += dtMs * PET_BOOST;
   if ((mode === "walk" || mode === "pet") && calm > (MV().sleepAfter || SLEEP_AFTER)) {
-    mode = "drowsy"; reactUntil = Date.now() + (tagDur("baille") ? tagDur("baille") + 300 : 2600); img.src = FR.baille; pose(""); watching = false; lookKey = ""; playOnce("baille");
+    drowsyEnd = false; mode = "drowsy"; reactUntil = Date.now() + (tagDur("baille") ? tagDur("baille") + 300 : 2600); img.src = FR.baille; pose(""); watching = false; lookKey = ""; playOnce("baille");
     bubble("*bâille*", 1300); say("il a sommeil");
   }
   if (mode === "fly") {
@@ -597,8 +618,8 @@ function tick() {
       angle += spin * k + (Math.max(-20, Math.min(20, vx * .8)) * (1 - near) - angle) * Math.min(1, (.1 + .3 * near) * k);
       spin *= Math.pow(.88, k); angle = Math.max(-60, Math.min(60, angle));
     } else angle += vx * 1.2 * k;
-    if (x < minX) { x = minX; vx = -vx * (BOUNCY.has(style) ? .7 : .25); squash("wall"); playOnce("choc-bord"); }
-    if (x > maxX) { x = maxX; vx = -vx * (BOUNCY.has(style) ? .7 : .25); squash("wall"); playOnce("choc-bord"); }
+    if (x < minX) { if (hitWall(-1)) { push(); return; } x = minX; vx = -vx * (BOUNCY.has(style) ? .7 : .25); squash("wall"); }
+    if (x > maxX) { if (hitWall(1)) { push(); return; } x = maxX; vx = -vx * (BOUNCY.has(style) ? .7 : .25); squash("wall"); }
     if (y < minY) { y = minY; vy = -vy * 0.4; }
     if (y >= floorY) {
       y = floorY; const impact = Math.abs(vy); maxImpact = Math.max(maxImpact, impact);
@@ -617,6 +638,22 @@ function tick() {
     push(); return;
   }
   const now = Date.now();
+  if (mode === "wall") {      // collé au bord de l'écran : il coule, de plus en plus vite, jusqu'au sol
+    const impact = sheetOnce && /^choc-bord/.test(sheetOnce.tag);          // pendant l'écrasement il reste en place, ensuite il coule
+    if (!impact) { wallV = Math.min(1, wallV + .01 * k); y += wallV * k; }
+    if (y >= floorY) {
+      y = floorY;
+      if (nausea || !SHEET_DATA[style].tags["coule-fin"]) { x = Math.max(minX, Math.min(maxX, x)); push(); land(); return; }      // vert : il rampe, comme avant
+      mode = "wallland"; wallEnd = now + tagDur("coule-fin"); playOnce("coule-fin"); say("coule jusqu'au sol : il se reforme");
+    }
+    push(); return;
+  }
+  if (mode === "wallland") {      // il se détache du mur et se reforme ; sur les dernières images la fenêtre rentre dans l'écran (le dessin glisse vers le centre)
+    const p = Math.max(0, Math.min(1, 1 - (wallEnd - now - WALL_SLIDE) / WALL_SLIDE));
+    x = wallSide < 0 ? minX - WALL_OVER * (1 - p) : maxX + WALL_OVER * (1 - p); y = floorY; push();
+    if (now >= wallEnd && !sheetOnce) { x = Math.max(minX, Math.min(maxX, x)); push(); vx = vy = 0; peakY = null; toWalk(); }          // la dernière image est la pose de repos
+    return;
+  }
   if (mode === "splat") { if (now > reactUntil) { mode = "reform"; playOnce("reforme"); say("il se reforme"); } return; }
   if (mode === "reform" || mode === "still") { if (!sheetOnce) { if (mode === "reform") toWalk(); else { mode = "walk"; pose("walk"); } } return; }
   if (mode === "dizzy") {
@@ -637,7 +674,11 @@ function tick() {
     }
     return;
   }
-  if (mode === "drowsy") { if (now > reactUntil && !sheetOnce) fallAsleep(); return; }
+  if (mode === "drowsy") {
+    // le bâillement fini (de face), il s'endort doucement : endort (paupières qui tombent, puis il se couche), puis le sommeil
+    if (now > reactUntil && !sheetOnce) { if (isSheet() && SHEET_DATA[style].tags.endort && !drowsyEnd) { drowsyEnd = true; playOnce("endort"); } else { drowsyEnd = false; fallAsleep(); } }
+    return;
+  }
   if (mode === "sleep") {
     wake = Math.max(0, wake - 30 * dtMs / 1000);
     if (now > nextZ) { zz(); nextZ = now + 1100; }
@@ -654,7 +695,8 @@ function tick() {
   if (mode === "recover") { if (now > reactUntil) toWalk(); return; }
   if (REACT.has(mode)) {
     if (mode === "ooh") return;
-    if (mode === "pet") { if (now > reactUntil) toWalk(); else if (now > nextFx) { heart(); nextFx = now + 320; } return; }
+    // la caresse finie, il rouvre les yeux (caresse-fin) avant de reprendre sa marche
+    if (mode === "pet") { if (now > reactUntil) { if (isSheet() && SHEET_DATA[style].tags["caresse-fin"]) playInPlace("caresse-fin"); else toWalk(); } else if (now > nextFx) { heart(); nextFx = now + 320; } return; }
     if (mode === "laugh") { if (now > reactUntil) toWalk(); else if (!isSheet() && Math.random() < 0.25 * k) img.src = img.src === FR.rire ? FR.content : FR.rire; return; }
     if (mode === "angry") {
       if (now > reactUntil) { dir = cursor && cursor.x < x + 88 ? 1 : -1; face(); react("sulk", 2000, FR.fache, "walk"); say("il boude et s'en va"); }
@@ -741,32 +783,62 @@ const SW_R = 29 * .44, SW_L = SW_R + 3, SW_G = [31.5, 11], SW_B0 = [31.5, 11 + S
 const swing = {on:false, b:[0, 0], vb:[0, 0], pw:[0, 0], pv:[0, 0], aw:[0, 0], skip:0, cv:null, parts:null, durs:[], armPx:null};
 const SW_COL = {ink:[0, 0, 0], base:[99, 155, 255], shade:[69, 119, 224], light:[164, 198, 255]};
 const SW_GREEN = {"99,155,255":[127, 212, 106], "69,119,224":[79, 174, 69], "164,198,255":[198, 240, 176]};     // les verts de la nausée (gen.py : TO_VERT)
-// Les bras se débattent : ils tournent vite autour de leur attache, du haut vers le bas, avec des poses fantômes (les positions des instants précédents,
-// plus pâles, les plus anciennes tramées), comme un bras filmé en pose longue. Ce sont les bras dessinés dans attrape-boule (tag attrape-boule-arms), pas des traits.
+// Les bras se débattent si vite qu'on les voit flous, comme un bras d'anime qui s'agite : à chaque image, tout l'éventail du balayage est dessiné en
+// poses fantômes (bleu pâle, tramées), avec des arcs de vitesse au bout des mains, et le bras de l'instant en plein par-dessus. L'éventail ne dépend
+// pas de la cadence d'affichage : même si la fenêtre est rafraîchie lentement, le flou se voit. Ce sont les bras dessinés dans attrape-boule
+// (tag attrape-boule-arms), qu'on fait tourner autour de leur attache.
 const SW_ROOT_Y = Math.round(SW_B0[1] - 3.5);                                     // ligne d'attache des bras (tools/boule.py : ROOT_Y)
 const SW_PIV = (() => { const xs = []; for (let X = 0; X < 64; X++) if (Math.hypot(X + .5 - SW_B0[0], SW_ROOT_Y + .5 - SW_B0[1]) <= SW_R) xs.push(X);
   return [[Math.min(...xs) + .5, SW_ROOT_Y + .5], [Math.max(...xs) + .5, SW_ROOT_Y + .5]]; })();        // les deux attaches : les bords gauche et droit de la boule
-const SW_FLAIL = {T:260, ampl:52, mid:3, e0:30, ghosts:4, dt:18};        // période (ms), balayage (degrés), élévation de la pose dessinée, nombre de poses fantômes et espacement (ms)
+// période (ms), demi-balayage et centre du balayage (degrés), élévation de la pose dessinée, nombre de poses de l'éventail
+const SW_FLAIL = {T:220, ampl:50, mid:3, e0:30, fan:6};
+// la main : le point du bras droit le plus loin de son attache (son rayon et son angle), pour les arcs de vitesse
+function swingHand(A) {
+  const P0 = SW_PIV[1]; let best = null;
+  for (let V = 0; V < 64; V++) for (let U = 32; U < 64; U++) if (A[(V * 64 + U) * 4 + 3]) {
+    const r = Math.hypot(U + .5 - P0[0], V + .5 - P0[1]); if (!best || r > best.r) best = {r, a:Math.atan2(-(V + .5 - P0[1]), U + .5 - P0[0])};
+  }
+  return best;
+}
+// un bras tourné de `delta` (radians) : plein, ou fantôme (une seule couleur, tramé selon la parité `dither` ; -1 = pas de trame)
+function swingArm(d, A, side, sx, sy, delta, ghost, dither) {
+  const sg = side ? 1 : -1, P0 = SW_PIV[side], P1 = [P0[0] + sx, P0[1] + sy];
+  for (let Y = Math.floor(P1[1] - 18); Y <= Math.ceil(P1[1] + 18); Y++) for (let X = Math.floor(P1[0] - 18); X <= Math.ceil(P1[0] + 18); X++) {
+    if (X < 0 || Y < 0 || X > 63 || Y > 63 || (dither >= 0 && (X + Y) % 2 !== dither)) continue;
+    const ox = X + .5 - P1[0], oy = Y + .5 - P1[1], r = Math.hypot(ox, oy);
+    const a = Math.atan2(-oy, ox) - sg * delta;                                           // on lit l'image du bras à l'angle d'origine (le bras gauche est le miroir du droit)
+    const U = Math.floor(P0[0] + r * Math.cos(a)), V = Math.floor(P0[1] - r * Math.sin(a));
+    if (U < 0 || V < 0 || U > 63 || V > 63) continue;
+    const i = (V * 64 + U) * 4; if (!A[i + 3]) continue;
+    const o = (Y * 64 + X) * 4;
+    if (ghost && d[o + 3]) continue;                                                      // un fantôme ne recouvre pas ce qui est déjà dessiné
+    const c = ghost || [A[i], A[i + 1], A[i + 2]];
+    d[o] = c[0]; d[o + 1] = c[1]; d[o + 2] = c[2]; d[o + 3] = 255;
+  }
+}
 function swingArms(d, B, ms) {
   const A = swing.armPx; if (!A) return;
-  const sx = Math.round(B[0] - SW_B0[0]), sy = Math.round(B[1] - SW_B0[1]), LIGHT = SW_COL.light;      // les bras suivent la boule
-  const elev = t => SW_FLAIL.mid + SW_FLAIL.ampl * Math.sin(2 * Math.PI * t / SW_FLAIL.T);              // élévation du bras à l'instant t, en degrés (positif = vers le haut)
-  for (let j = SW_FLAIL.ghosts; j >= 0; j--) {      // les plus anciennes d'abord, la pose actuelle (j = 0) en dernier, par-dessus
-    const delta = (elev(ms - j * SW_FLAIL.dt) - SW_FLAIL.e0) * Math.PI / 180;
-    for (let side = 0; side < 2; side++) {
-      const sg = side ? 1 : -1, P0 = SW_PIV[side], P1 = [P0[0] + sx, P0[1] + sy];
-      for (let Y = Math.floor(P1[1] - 18); Y <= Math.ceil(P1[1] + 18); Y++) for (let X = Math.floor(P1[0] - 18); X <= Math.ceil(P1[0] + 18); X++) {
-        if (X < 0 || Y < 0 || X > 63 || Y > 63 || (j >= 3 && (X + Y) % 2)) continue;        // les poses les plus anciennes sont tramées : elles s'estompent
-        const ox = X + .5 - P1[0], oy = Y + .5 - P1[1], r = Math.hypot(ox, oy);
-        const a = Math.atan2(-oy, ox) - sg * delta;                                           // on lit l'image du bras à l'angle d'origine (le bras gauche est le miroir du droit)
-        const U = Math.floor(P0[0] + r * Math.cos(a)), V = Math.floor(P0[1] - r * Math.sin(a));
-        if (U < 0 || V < 0 || U > 63 || V > 63) continue;
-        const i = (V * 64 + U) * 4; if (!A[i + 3]) continue;
-        const o = (Y * 64 + X) * 4, c = j ? LIGHT : [A[i], A[i + 1], A[i + 2]];
-        d[o] = c[0]; d[o + 1] = c[1]; d[o + 2] = c[2]; d[o + 3] = 255;
+  const sx = Math.round(B[0] - SW_B0[0]), sy = Math.round(B[1] - SW_B0[1]);      // les bras suivent la boule
+  const F = SW_FLAIL, lo = F.mid - F.ampl, hi = F.mid + F.ampl, rad = e => (e - F.e0) * Math.PI / 180;
+  const now = F.mid + F.ampl * Math.sin(2 * Math.PI * ms / F.T);                  // élévation du bras à cet instant, en degrés (positif = vers le haut)
+  for (let side = 0; side < 2; side++) {
+    // l'éventail : les poses du balayage entier, en bleu pâle, tramées une sur deux en alternance (le flou)
+    for (let k = 0; k < F.fan; k++) swingArm(d, A, side, sx, sy, rad(lo + (hi - lo) * k / (F.fan - 1)), SW_COL.light, (k + Math.floor(ms / 60)) % 2);
+    // les arcs de vitesse, juste au-delà des mains, sur tout le balayage
+    const h = swing.hand || (swing.hand = swingHand(A));
+    if (h) {
+      const P1 = [SW_PIV[side][0] + sx, SW_PIV[side][1] + sy];
+      for (const dr of [2.5, 4.5]) for (let e = lo + 6; e <= hi - 6; e += 2) {
+        const th = side ? h.a + rad(e) : Math.PI - h.a - rad(e);                       // l'angle de la main tournée de e (le bras gauche est le miroir du droit)
+        const X = Math.floor(P1[0] + (h.r + dr) * Math.cos(th)), Y = Math.floor(P1[1] - (h.r + dr) * Math.sin(th));
+        if (X < 0 || Y < 0 || X > 63 || Y > 63 || (X + Y + (dr > 3 ? 1 : 0)) % 2) continue;
+        const o = (Y * 64 + X) * 4; if (d[o + 3]) continue;
+        d[o] = SW_COL.shade[0]; d[o + 1] = SW_COL.shade[1]; d[o + 2] = SW_COL.shade[2]; d[o + 3] = 255;
       }
     }
   }
+  // le bras de l'instant, en plein, par-dessus l'éventail
+  for (let side = 0; side < 2; side++) swingArm(d, A, side, sx, sy, rad(now), null, -1);
 }
 function swingStart() { Object.assign(swing, {on:true, b:[0, SW_L], vb:[0, 160], pw:[x, y], pv:[0, 0], aw:[0, 0], skip:2}); }
 function swingStep(dt) {
@@ -839,7 +911,7 @@ function struggle(on) {
   clearInterval(flap); flap = null;
   if (!on) { sway.a = sway.w = 0; swing.on = false; img.style.transform = ""; img.style.animation = ""; }
   if (!on && heldByHead !== null) { img.style.transformOrigin = heldByHead; heldByHead = null; }
-  if (on) { pose("struggle"); img.style.rotate = "0deg"; let f = 0; img.src = FR.p1; if (!isSheet()) flap = setInterval(() => { f = 1 - f; img.src = f ? FR.p2 : FR.p1; }, 160); }
+  if (on) { pose(isSheet() ? "" : "struggle"); img.style.rotate = "0deg"; let f = 0; img.src = FR.p1; if (!isSheet()) flap = setInterval(() => { f = 1 - f; img.src = f ? FR.p2 : FR.p1; }, 160); }
 }
 function clicked() {
   const now = Date.now();
@@ -855,7 +927,7 @@ function clicked() {
   if (clicks.length >= 7) { clicks = []; react("angry", 1300, FR.fache, "shake"); bubble("Grrr !", 1300); say("chatouilles : il se fache"); }
   else if (clicks.length >= 3) {
     if (mode !== "laugh") { say("chatouilles : il rit"); bubble("Hi hi !", 900); }
-    react("laugh", 1400, FR.rire, "giggle");
+    react("laugh", 1400, FR.rire, isSheet() ? "" : "giggle");      // perso dessiné : son animation rire suffit, pas de tremblement en plus
   } else if (isSheet()) playOnce(watching || Date.now() < idleUntil ? "saut-face" : "saut");
   else { pose("hop"); setTimeout(() => { if (mode === "walk") pose("walk"); }, 450); }
 }
@@ -865,15 +937,22 @@ img.addEventListener("pointerdown", e => {
   drag = {sx:e.screenX, sy:e.screenY, x0:x, y0:y, gx:e.clientX, gy:e.clientY, moved:false, rev:[], sign:0, shaken:false, asleep:mode === "sleep"};
   samples = [{t:performance.now(), x:e.screenX, y:e.screenY}];
   img.style.cursor = "grabbing";
+  if (mode === "fly" || mode === "wall" || mode === "wallland") {      // rattrapé en l'air (ou décroché du mur) : il se débat dès le clic, sans attendre que la souris bouge
+    if (mode === "wall" || mode === "wallland") { x = Math.max(minX, Math.min(maxX, x)); drag.x0 = x; }
+    drag.moved = true; drag.lastX = e.screenX; drag.lastY = e.screenY;
+    mode = "held"; struggle(true); if (isSheet()) holdByHead(e.screenX, e.screenY); disturb(); if (style === "candy") bubble("Hé !", 900);
+    say("rattrape en l'air");
+  }
 });
 img.addEventListener("pointermove", e => {
   if (!drag) return;
   const dx = e.screenX - drag.sx, dy = e.screenY - drag.sy;
   if (!drag.moved && Math.abs(dx) + Math.abs(dy) > 3) {
     drag.moved = true;
+    if (mode === "wall") { x = Math.max(minX, Math.min(maxX, x)); drag.x0 = x; }          // décroché du mur : la fenêtre revient dans l'écran
     if (isSheet() && !NO_PULL.has(style) && !drag.asleep && !["fly", "splat", "reform"].includes(mode) && y >= floorY - 4) pullStart();
-    if (drag.asleep) { mode = "carried"; pose("dangle"); img.src = isSheet() ? FR.p1 : FR.dort; holdByHead(e.screenX, e.screenY); say("porte endormi"); }
-    else { mode = "held"; struggle(true); disturb(); if (style === "candy") bubble("Hé !", 900); }
+    if (drag.asleep) { mode = "carried"; pose(isSheet() ? "" : "dangle"); img.src = isSheet() ? FR.p1 : FR.dort; holdByHead(e.screenX, e.screenY); say("porte endormi"); }
+    else { mode = "held"; struggle(true); if (isSheet() && !pull.on) holdByHead(e.screenX, e.screenY); disturb(); if (style === "candy") bubble("Hé !", 900); }
   }
   if (!drag.moved) return;
   drag.lastX = e.screenX; drag.lastY = e.screenY;
@@ -987,7 +1066,12 @@ function refreshSprite() {
   img.src = FR[cur || "normal"];
 }
 function moodExtra() {
-  if (mood === "guilleret") { pose("hop"); setTimeout(() => { if (mode === "walk") pose("walk"); }, 450); if (Math.random() < .4) bubble("Youpi !", 900); }
+  if (mood === "guilleret") {
+    // perso dessiné : son animation de saut (Aseprite), de profil ou de face, sans le petit bond ajouté par le code
+    if (isSheet()) playOnce(watching || Date.now() < idleUntil ? "saut-face" : "saut");
+    else { pose("hop"); setTimeout(() => { if (mode === "walk") pose("walk"); }, 450); }
+    if (Math.random() < .4) bubble("Youpi !", 900);
+  }
   else if (mood === "ronchon") bubble(Math.random() < .5 ? "Pff..." : "Mouais.", 1000);
   else if (mood === "vaseux" && isSheet()) { playInPlace("baille"); bubble("*bâille*", 1100); }
   else if (mood === "vaseux") { img.src = FR.baille; bubble("*bâille*", 1100); setTimeout(() => { if (mode === "walk") img.src = FR.normal; }, 1100); }
