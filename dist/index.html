@@ -512,7 +512,7 @@ function buildFrames(s) {
     for (const lx of [0, 1]) for (const ly of [-1, 0, 1]) { const key = lx + "," + ly; nl[key] = T2.regard ? T2.regard[LOOK_ORDER.indexOf(key)].src : front; }
     // images de face ; HALF = début du demi-tour, du profil jusqu'à l'image de face
     const mid = T2.turn ? T2.turn.reduce((b, f, i) => f.dur > T2.turn[b].dur ? i : b, 0) : -1;
-    FRONT = new Set(["repos", "regard", "baille", "reforme", "atterrissage", "atterrissage-vert", "intrigue", "caresse", "caresse-fin", "rire", "fache", "chante", "remis", "fier"].flatMap(t => (T2[t] || []).map(f => f.src)));
+    FRONT = new Set(["repos", "regard", "baille", "reforme", "atterrissage", "atterrissage-vert", "intrigue", "caresse", "caresse-fin", "rire", "fache", "chante", "fier"].flatMap(t => (T2[t] || []).map(f => f.src)));
     if (mid > 0) FRONT.add(T2.turn[mid].src);
     for (const [o, c] of BLINK) if (FRONT.has(o)) FRONT.add(c);         // l'image alternée d'une image de face reste une image de face
     HALF = mid > 0 ? T2.turn.slice(0, mid + 1) : null; faceSeq = null;
@@ -724,12 +724,19 @@ function tickBody() {
   }
   if (mode === "waking") { if (now > reactUntil) toWalk(); return; }
   if (mode === "nausea") {
-    if (now > reactUntil) { mode = "recover"; reactUntil = now + 500; img.src = FR.normal; pose("shake"); bubble("Ça va mieux", 1000); return; }
+    if (now > reactUntil) {          // remis : un perso dessiné se secoue la tête (remis, de profil, jouée une fois) ; les autres tremblent
+      mode = "recover"; bubble("Ça va mieux", 1000);
+      if (isSheet() && SHEET_DATA[style].tags.remis) { pose(""); playOnce("remis"); reactUntil = now + tagDur("remis"); } else { reactUntil = now + 500; img.src = FR.normal; pose("shake"); }
+      return;
+    }
     if (now > nextFx) { if (!isSheet()) img.src = img.src === FR.n1 ? FR.n2 : FR.n1; nextFx = now + 220; if (Math.random() < 0.35) { dir = -dir; face(); } }
     if (!isSheet()) x += dir * 0.8 * k;
     y = floorY; x = Math.max(minX, Math.min(maxX, x)); push(); return;
   }
-  if (mode === "recover") { if (now > reactUntil) toWalk(); return; }
+  if (mode === "recover") {          // remis finit de profil, sur la pose de la reptation : il reprend sa marche sans repasser par la face
+    if (now > reactUntil && !sheetOnce) { if (isSheet() && SHEET_DATA[style].tags.remis) { mode = "walk"; pose("walk"); crawlIdx = walkFrames().length - 1; crawlNext = now; } else toWalk(); }
+    return;
+  }
   if (REACT.has(mode)) {
     if (mode === "ooh") return;
     // la caresse finie, il rouvre les yeux (caresse-fin) avant de reprendre sa marche
