@@ -676,15 +676,19 @@ function tickBody() {
     if (!impact) { wallV = Math.min(1, wallV + .01 * k); y += wallV * k; }
     if (y >= floorY) {
       y = floorY;
-      if (nausea || !SHEET_DATA[style].tags["coule-fin"]) { x = Math.max(minX, Math.min(maxX, x)); push(); land(); return; }      // vert : il rampe, comme avant
-      mode = "wallland"; wallEnd = now + tagDur("coule-fin"); playOnce("coule-fin"); say("coule jusqu'au sol : il se reforme");
+      const T2 = SHEET_DATA[style].tags, fin = nausea && T2["coule-fin-vert"] ? "coule-fin-vert" : "coule-fin";      // secoué, il se reforme en vert
+      if (!T2[fin]) { x = Math.max(minX, Math.min(maxX, x)); push(); land(); return; }
+      mode = "wallland"; wallEnd = now + tagDur(fin); playOnce(fin); say("coule jusqu'au sol : il se reforme");
     }
     push(); return;
   }
   if (mode === "wallland") {      // il se détache du mur et se reforme ; sur les dernières images la fenêtre rentre dans l'écran (le dessin glisse vers le centre)
     const p = Math.max(0, Math.min(1, 1 - (wallEnd - now - WALL_SLIDE) / WALL_SLIDE));
     x = wallSide < 0 ? minX - WALL_OVER * (1 - p) : maxX + WALL_OVER * (1 - p); y = floorY; push();
-    if (now >= wallEnd && !sheetOnce) { x = Math.max(minX, Math.min(maxX, x)); push(); vx = vy = 0; peakY = null; toWalk(); }          // la dernière image est la pose de repos
+    if (now >= wallEnd && !sheetOnce) {          // la dernière image est la pose de repos ; secoué, il garde la nausée
+      x = Math.max(minX, Math.min(maxX, x)); push(); vx = vy = 0; peakY = null;
+      if (nausea) { nausea = false; mode = "nausea"; reactUntil = now + 3500; bubble("Beurk...", 1400); say("secoue : il a la nausee"); } else toWalk();
+    }
     return;
   }
   if (mode === "splat") { if (now > reactUntil) { mode = "reform"; playOnce("reforme"); say("il se reforme"); } return; }
