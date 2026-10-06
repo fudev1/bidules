@@ -2,16 +2,22 @@
 # et la copie dans dist/. Ensuite, relancer l'app (mise run bidule).
 #   python3 tools/publier.py          seulement les animations dont le .aseprite est plus récent que la feuille exportée
 #   python3 tools/publier.py --tout   toutes
-import os, subprocess, sys
+import glob, os, subprocess, sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from aseprite_io import ROOT, export
 
-ANIMS = [("crawl", "crawl"), ("turn", "turn"), ("jump", "saut"), ("repos", "repos"), ("baille", "baille"), ("eat", "mange"), ("rot", "rot"), ("dort", "dort"), ("remue", "remue"), ("regard", "regard"), ("reforme", "reforme"), ("attrape-boule", "attrape-boule"), ("chute", "chute"), ("caresse", "caresse"), ("rire", "rire"), ("choc-bord", "choc-bord"), ("coule", "coule"), ("coule-fin", "coule-fin")]
+ANIMS = [("crawl", "crawl"), ("turn", "turn"), ("jump", "saut"), ("repos", "repos"), ("baille", "baille"), ("eat", "mange"), ("rot", "rot"), ("dort", "dort"), ("remue", "remue"), ("regard", "regard"), ("reforme", "reforme"), ("attrape-boule", "attrape-boule"), ("chute", "chute"), ("caresse", "caresse"), ("rire", "rire"), ("choc-bord", "choc-bord"), ("coule", "coule"), ("coule-fin", "coule-fin"), ("visages-face", "visages-face")]
 A = f"{ROOT}/animations"
 for folder, name in ANIMS:
     src, sheet = f"{A}/{folder}/{name}.aseprite", f"{A}/{folder}/{name}_sheet.png"
     if "--tout" in sys.argv or not os.path.exists(sheet) or os.path.getmtime(src) > os.path.getmtime(sheet):
         export(folder, name); print("exportée :", name)
+# les animations de chaque humeur (animations/humeurs/<humeur>/<nom>.aseprite, écrites par gen.py --fichiers puis retouchées à la main)
+for src in sorted(glob.glob(f"{A}/humeurs/*/*.aseprite")):
+    folder, name = os.path.relpath(os.path.dirname(src), A), os.path.basename(src)[:-9]
+    sheet = f"{A}/{folder}/{name}_sheet.png"
+    if "--tout" in sys.argv or not os.path.exists(sheet) or os.path.getmtime(src) > os.path.getmtime(sheet):
+        export(folder, name); print("exportée :", f"{folder}/{name}")
 subprocess.run([sys.executable, f"{A}/limace-complete/gen.py"], check=True)
 for f in ("sheet.png", "sheet.json"):
     subprocess.run(["cp", f"{A}/limace-complete/limace_{f}", f"{ROOT}/dist/persos/limace/{f}"], check=True)
