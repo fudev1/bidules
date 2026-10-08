@@ -1,20 +1,20 @@
 ---
 name: pull-request
-description: Écrire le titre et la description d'une pull request du repo Bidules - titre au format Conventional Commits en anglais, description en français, simple et sans jargon. À utiliser pour ouvrir une pull request, mettre à jour sa description après de nouveaux commits, ou réécrire celle d'un collègue ("ouvre une PR", "mets à jour la PR", "réécris la description").
+description: Écrire le titre et la description d'une pull request du repo Bidules - titre au format Conventional Commits et description, tout en français, simple et sans jargon. À utiliser pour ouvrir une pull request, mettre à jour sa description après de nouveaux commits, ou réécrire celle d'un collègue ("ouvre une PR", "mets à jour la PR", "réécris la description").
 ---
 
-# Pull request : titre en anglais, description en français
+# Pull request : titre et description en français
 
 La description est lue par toute l'équipe, y compris des personnes qui ne lisent pas le code. Elle dit ce que la pull request apporte, avec des mots ordinaires.
 
 ## Titre
 
 ```
-<type>(<domaine>): <summary in English>
+<type>(<domaine>): <résumé en français>
 ```
 
-- Format Conventional Commits, **en anglais** : mêmes types et mêmes domaines que le skill `commit` (`feat`, `fix`, `docs`... ; `limace`, `app`, `panneau`...).
-- Résumé en minuscule, sans point final, 72 caractères au plus : `feat(limace): three moods on every animation`.
+- Même format que les commits (skill `commit`) : le type reste en anglais, c'est la convention (`feat`, `fix`, `docs`...), le domaine aussi (`limace`, `app`, `panneau`...), le résumé est en français.
+- Résumé en minuscule, sans point final, 72 caractères au plus : `feat(limace): trois humeurs sur toutes les animations`.
 
 ## Description
 
@@ -59,7 +59,7 @@ Pour la pull request d'un collègue : `gh pr edit <numéro> --title "..." --body
 
 ## Exemple
 
-Titre : `feat(limace): three moods (neutral, happy, tired) on every animation`
+Titre : `feat(limace): trois humeurs (neutre, joyeuse, fatiguée) sur toutes les animations`
 
 ```markdown
 ## Ce que ça apporte

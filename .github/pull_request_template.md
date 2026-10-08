@@ -1,4 +1,4 @@
-<!-- Titre : Conventional Commits en anglais, par exemple feat(limace): three moods on every animation -->
+<!-- Titre au format des commits, en français : par exemple feat(limace): trois humeurs sur toutes les animations -->
 <!-- Description en français, avec des mots ordinaires : pas de noms de fichiers, d'outils ni de numéros d'images (voir le skill pull-request). -->
 
 ## Ce que ça apporte
@@ -18,5 +18,5 @@
 ## Avant de demander une relecture
 
 - [ ] La pull request vise `test`
-- [ ] Le titre suit le format `type(domaine): summary in English`
+- [ ] Le titre suit le format `type(domaine): résumé en français`
 - [ ] `NOTES.md` est à jour si une décision ou l'état du projet change

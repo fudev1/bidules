@@ -86,7 +86,7 @@ L'interface est embarquée dans l'app à la compilation : après une modificatio
 - **Taille** : une grosse pull request n'est pas un problème. Inutile de découper un gros chantier.
 - **Nom de branche** : en anglais.
 - **Avant de pousser** : lancer `mise run publier`, pour que la feuille de la limace dans `dist/persos/limace/` corresponde aux fichiers Aseprite enregistrés. La feuille est commitée avec les animations, et l'app lit la feuille, pas le fichier Aseprite.
-- **Titre et description** : le titre au format Conventional Commits en anglais (`feat(limace): ...`) ; la description en français, avec des mots ordinaires, en trois parties : ce que ça apporte, les gros changements, le résultat (y compris ce qui a été vérifié et ce qui ne l'a pas été). Le skill `pull-request` et le modèle de PR donnent le format. Aucune ligne d'attribution du type « Generated with Claude Code ».
+- **Titre et description** : en français. Le titre au format Conventional Commits (`feat(limace): ...`), comme les commits ; la description avec des mots ordinaires, en trois parties : ce que ça apporte, les gros changements, le résultat (y compris ce qui a été vérifié et ce qui ne l'a pas été). Le skill `pull-request` et le modèle de PR donnent le format. Aucune ligne d'attribution du type « Generated with Claude Code ».
 - **Une PR déjà relue ou approuvée n'est pas alourdie** de nouveaux commits : le nouveau travail part sur une nouvelle branche, avec sa propre PR vers `test`. Elle contient les commits de la précédente tant que celle-ci n'est pas fusionnée, puis son diff se réduit tout seul.
 
 ### Avec `gh`
