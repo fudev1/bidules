@@ -5,6 +5,8 @@ description: Écrire et faire un commit dans le repo Bidules au format Conventio
 
 # Commit au format Conventional Commits, en français
 
+Les messages de commit sont en français. Le titre d'une pull request, lui, est en anglais : voir le skill `pull-request`.
+
 ## Format
 
 ```
