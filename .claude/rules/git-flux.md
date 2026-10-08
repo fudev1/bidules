@@ -13,7 +13,7 @@ ma-branche  --PR-->  test  --PR test -> main-->  main
   git switch -c <sujet>
   ```
 
-- **Il arrive par une pull request vers `test`**, la branche par défaut du repo (`gh pr create --fill` la vise d'office).
+- **Il arrive par une pull request vers `test`**, la branche par défaut du repo. Titre et description : le skill `pull-request`.
 - **`main` est mise à jour par une pull request de `test` vers `main`**, seulement quand Matteo le demande.
 - **Ne jamais merger une pull request sans accord explicite** de la personne qui la demande, même si elle est approuvée.
 - Ne pas commiter sur `main` ni sur `test` : si on y est, créer d'abord une branche.

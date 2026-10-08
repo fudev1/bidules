@@ -86,7 +86,7 @@ L'interface est embarquée dans l'app à la compilation : après une modificatio
 - **Taille** : une grosse pull request n'est pas un problème. Inutile de découper un gros chantier.
 - **Nom de branche** : en anglais.
 - **Avant de pousser** : lancer `mise run publier`, pour que la feuille de la limace dans `dist/persos/limace/` corresponde aux fichiers Aseprite enregistrés. La feuille est commitée avec les animations, et l'app lit la feuille, pas le fichier Aseprite.
-- **Description** : ce que fait la PR, ce qui a été vérifié (et ce qui ne l'a pas été : par exemple « pas testé dans l'app Tauri réelle »), et ce qu'il faut savoir. Aucune ligne d'attribution du type « Generated with Claude Code ».
+- **Titre et description** : le titre au format Conventional Commits en anglais (`feat(limace): ...`) ; la description en français, avec des mots ordinaires, en trois parties : ce que ça apporte, les gros changements, le résultat (y compris ce qui a été vérifié et ce qui ne l'a pas été). Le skill `pull-request` et le modèle de PR donnent le format. Aucune ligne d'attribution du type « Generated with Claude Code ».
 - **Une PR déjà relue ou approuvée n'est pas alourdie** de nouveaux commits : le nouveau travail part sur une nouvelle branche, avec sa propre PR vers `test`. Elle contient les commits de la précédente tant que celle-ci n'est pas fusionnée, puis son diff se réduit tout seul.
 
 ### Avec `gh`
@@ -101,7 +101,7 @@ L'interface est embarquée dans l'app à la compilation : après une modificatio
 | `gh pr checkout 12` | Récupère la branche de la pull request n°12 et bascule dessus. Pratique pour essayer le travail d'un collègue : ensuite `mise run bidule`. |
 | `gh pr diff 12` | Affiche les changements de la pull request n°12 dans le terminal. |
 | `gh pr view 12 --web` | Ouvre la pull request n°12 dans le navigateur. |
-| `gh pr create --fill` | Ouvre une pull request depuis ta branche, vers `test` (la branche par défaut). `--fill` reprend le titre et le texte de tes commits. |
+| `gh pr create` | Ouvre une pull request depuis ta branche, vers `test` (la branche par défaut). Titre et description : voir « Règles pour les pull requests ». |
 | `gh pr review 12 --approve` | Approuve la pull request n°12. `--comment -b "..."` laisse un commentaire à la place. |
 | `gh pr merge 12` | Merge la pull request n°12 sur `test`. La commande demande la méthode (merge, squash ou rebase). |
 
@@ -126,7 +126,7 @@ Après `gh pr checkout`, `git switch test` ramène sur `test`.
 | `sprites/`, `prototype/` | Fichiers Aseprite des blobs, prototype de la chambre |
 | `tools/` | `publier.py` : du fichier Aseprite à l'app ; `sim.py` : page de test du Bidule dans un navigateur, sans l'app ; `boule.py` : la forme de la goutte du Bidule tenu par la tête ; `pixellab.py`, `planche.py`, `importer.py`, `verifier.py`, `bilan.py` : générer avec PixelLab (voir plus bas) ; les autres scripts créent ou alignent des animations (voir leur en-tête) |
 | `.mcp.json` | Serveurs MCP pour faire éditer Aseprite par Claude Code (voir « Faire éditer Aseprite par Claude Code ») |
-| `.claude/`, `CLAUDE.md` | Consignes pour Claude Code : skills de commit, `animer-bidule`, `creer-bidule` et `aseprite-mcp`, règles git, garde-fou contre les push sur `main`, pas de mention de Claude dans les commits et les PR |
+| `.claude/`, `CLAUDE.md` | Consignes pour Claude Code : skills de commit, `pull-request`, `animer-bidule`, `creer-bidule` et `aseprite-mcp`, règles git, garde-fou contre les push sur `main`, pas de mention de Claude dans les commits et les PR |
 | `.githooks/`, `.github/` | Garde-fou git pour les humains, modèle de pull request |
 
 ## Ajouter une animation à la limace

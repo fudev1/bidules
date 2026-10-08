@@ -1,24 +1,22 @@
-## Quoi
+<!-- Titre : Conventional Commits en anglais, par exemple feat(limace): three moods on every animation -->
+<!-- Description en français, avec des mots ordinaires : pas de noms de fichiers, d'outils ni de numéros d'images (voir le skill pull-request). -->
 
-<!-- Ce qui change, en une ou deux phrases. -->
+## Ce que ça apporte
 
-## Pourquoi
+<!-- Une ou deux phrases : ce qui change pour la personne qui utilise le Bidule. -->
 
-<!-- Le problème réglé ou ce que ça apporte. -->
+## Les gros changements
 
-## Comment tester
+- 
 
-<!-- Les étapes pour voir le changement, par exemple : -->
-1. `gh pr checkout <numéro>`
-2. `mise run bidule`
-3. 
+## Résultat
 
-## Captures
-
-<!-- Pour une animation ou un changement visible : une capture ou un GIF. -->
+- <!-- ce qu'on obtient maintenant -->
+- <!-- ce qui a été vérifié, et ce qui ne l'a pas été -->
+- Pour le voir : 
 
 ## Avant de demander une relecture
 
 - [ ] La pull request vise `test`
-- [ ] Le titre suit le format des commits : `type(domaine): résumé en français`
+- [ ] Le titre suit le format `type(domaine): summary in English`
 - [ ] `NOTES.md` est à jour si une décision ou l'état du projet change
