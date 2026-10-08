@@ -23,4 +23,5 @@ def write(p, px):
     ch=lambda t,d: struct.pack(">I",len(d))+t+d+struct.pack(">I",zlib.crc32(t+d)&0xffffffff)
     open(p,"wb").write(b"\x89PNG\r\n\x1a\n"+ch(b"IHDR",struct.pack(">IIBBBBB",w,h,8,6,0,0,0))+ch(b"IDAT",zlib.compress(raw,9))+ch(b"IEND",b""))
 def frames(p):
-    w,h,px=read(p); return [[row[k*64:(k+1)*64] for row in px] for k in range(w//64)]
+    # une ligne d'images de 64 x 64, ou une grille (lue ligne par ligne) ; les cases vides de la dernière ligne sont gardées
+    w,h,px=read(p); return [[row[k*64:(k+1)*64] for row in px[r*64:(r+1)*64]] for r in range(h//64) for k in range(w//64)]

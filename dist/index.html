@@ -89,8 +89,10 @@ async function loadSheet(id) {
   const axis = tags.crawl && tags.turn ? (tags.crawl[0].cx + tags.turn[tags.turn.length - 1].cx) / 2 : 31.5;
   // pas de la reptation : d'une image à l'autre, un bout reste collé au sol, l'autre avance ; la fenêtre avance juste de quoi garder ce bout immobile
   if (tags.crawl) { const c = tags.crawl, n = c.length; c.forEach((b, i) => { const a = c[(i - 1 + n) % n]; b.step = Math.max(0, -Math.min(b.tail - a.tail, b.head - a.head)); }); }
-  if (tags.nausee && tags.crawl && tags.nausee.length === tags.crawl.length) tags.nausee.forEach((b, i) => { b.step = tags.crawl[i].step; });
-  SHEET_DATA[id] = {frames, tags, front, axis};
+  // nausee et les reptations des humeurs (crawl@guilleret…) : les mêmes images avec un autre visage, donc le même pas
+  for (const n in tags) if ((n === "nausee" || n.startsWith("crawl@")) && tags.crawl && tags[n].length === tags.crawl.length) tags[n].forEach((b, i) => { b.step = tags.crawl[i].step; });
+  SHEET_DATA[id] = {frames, all:tags, tags, front, axis};
+  moodTags(id);
   say(`perso ${id} : ${frames.length} images, animations ${Object.keys(tags).join(", ")}`);
 }
 const isSheet = () => !!(SHEETS[style] && SHEET_DATA[style]);
@@ -423,6 +425,33 @@ function sheetAnim(now) {
 // Candy sautille en marchant, sauf ronchon ou vaseuse (elle garde la reptation) ; la marche ne change qu'en fin de cycle
 let walkTag = "crawl";
 const walkFrames = () => { const T = SHEET_DATA[style].tags; return T[walkTag] || T.crawl || SHEET_DATA[style].frames; };
+// Humeur : les animations sont dessinées avec le visage neutre ; gen.py en tire une version par humeur (balise « repos@guilleret ») avec le visage de
+// l'humeur, et sa version alternée (« repos@guilleret:cligne ») : yeux fermés pour le joyeux, ouverts pour le fatigué. tags = les animations de l'humeur
+// du moment (la neutre quand l'humeur n'en a pas), all = toutes les balises de la feuille. BLINK : chaque image habituelle -> la même, alternée.
+let BLINK = new Map(), UNBLINK = new Map(), blinkAt = 0, blinkEnd = 0;
+function moodTags(id) {
+  const D = SHEET_DATA[id]; if (!D) return;
+  D.tags = {};
+  for (const n in D.all) if (!n.includes("@")) D.tags[n] = D.all[n + "@" + mood] || D.all[n];
+}
+function moodBlinks(id) {
+  const D = SHEET_DATA[id]; BLINK = new Map(); UNBLINK = new Map();
+  if (!D) return;
+  for (const n in D.all) {
+    const c = D.all[n + ":cligne"];
+    if (n.endsWith("@" + mood) && c) D.all[n].forEach((f, i) => { if (c[i] && c[i].src !== f.src) { BLINK.set(f.src, c[i].src); UNBLINK.set(c[i].src, f.src); } });
+  }
+}
+// De temps en temps, quelle que soit l'animation, l'image affichée est remplacée par la même, alternée (si elle en a une : pas pendant une expression,
+// ni dans l'humeur neutre, dont les animations ont leurs clignements dessinés). Joyeux : il cligne (140 ms, toutes les 2 à 6 s, parfois deux fois de
+// suite) ; fatigué : il garde les yeux fermés et les ouvre 0,6 à 1,5 s, toutes les 3 à 9 s.
+const BLINK_TIME = {vaseux:{dur:[600, 1500], gap:[3000, 9000], twice:0}, autre:{dur:[140, 140], gap:[2000, 6000], twice:.25}};
+const rnd = ([a, b]) => a + Math.random() * (b - a);
+function blinkStep(now) {
+  if (now >= blinkAt) { const B = BLINK_TIME[mood] || BLINK_TIME.autre, d = rnd(B.dur); blinkEnd = now + d; blinkAt = now + d + (Math.random() < B.twice ? 180 : rnd(B.gap)); }
+  const s = img.src, to = now < blinkEnd ? BLINK.get(s) : UNBLINK.get(s);
+  if (to) img.src = to;
+}
 const hopping = () => isSheet() && walkTag === "sautille" && !!SHEET_DATA[style].tags.sautille;
 const airborne = () => hopping() && crawlIdx % 4 !== 0;
 let crawlIdx = 0, crawlNext = 0, turnSeq = null, turnIdx = 0, turnNext = 0, pendingDir = 1, turnWanted = null, turnWantedUntil = 0;
@@ -472,6 +501,7 @@ const PART_NAME = {"tete:antennes":"antennes", "tete:cornes":"cornes", "bouche:c
 function buildFrames(s) {
   document.body.classList.toggle("sheet", !!SHEETS[s]);
   img.style.transformOrigin = SHEETS[s] ? (SHEET_DATA[s].axis + .5) / 64 * 100 + "% 60%" : "";
+  moodBlinks(s);
   if (SHEETS[s]) {
     const D = SHEET_DATA[s], T2 = D.tags, front = D.front.src, nf = {}, nl = {};
     const pick = (tag, i = 0) => T2[tag] ? T2[tag][Math.min(i, T2[tag].length - 1)].src : front;
@@ -482,8 +512,9 @@ function buildFrames(s) {
     for (const lx of [0, 1]) for (const ly of [-1, 0, 1]) { const key = lx + "," + ly; nl[key] = T2.regard ? T2.regard[LOOK_ORDER.indexOf(key)].src : front; }
     // images de face ; HALF = début du demi-tour, du profil jusqu'à l'image de face
     const mid = T2.turn ? T2.turn.reduce((b, f, i) => f.dur > T2.turn[b].dur ? i : b, 0) : -1;
-    FRONT = new Set(["repos", "regard", "baille", "reforme", "atterrissage", "atterrissage-vert", "intrigue", "caresse", "caresse-fin", "rire", "fache", "chante", "remis", "fier"].flatMap(t => (T2[t] || []).map(f => f.src)));
+    FRONT = new Set(["repos", "regard", "baille", "reforme", "atterrissage", "atterrissage-vert", "intrigue", "caresse", "caresse-fin", "rire", "fache", "chante", "fier"].flatMap(t => (T2[t] || []).map(f => f.src)));
     if (mid > 0) FRONT.add(T2.turn[mid].src);
+    for (const [o, c] of BLINK) if (FRONT.has(o)) FRONT.add(c);         // l'image alternée d'une image de face reste une image de face
     HALF = mid > 0 ? T2.turn.slice(0, mid + 1) : null; faceSeq = null;
     const AR = T2["attrape-boule-arms"]; swing.armPx = null;
     swing.hand = null;
@@ -586,7 +617,9 @@ function land() {
   nausea = false; maxImpact = 0; if (!isSheet()) squash();
 }
 let lastT = performance.now();
-function tick() {
+// le clignement passe après tout le reste : une image posée pendant ce pas est remplacée tout de suite, sans flash du visage habituel
+function tick() { tickBody(); if (isSheet()) blinkStep(Date.now()); }
+function tickBody() {
   ticks++;
   const t2 = performance.now(), dtMs = Math.min(200, t2 - lastT), k = Math.min(4, (t2 - lastT) / 33); lastT = t2;
   if (isSheet()) sheetAnim(Date.now());
@@ -643,15 +676,19 @@ function tick() {
     if (!impact) { wallV = Math.min(1, wallV + .01 * k); y += wallV * k; }
     if (y >= floorY) {
       y = floorY;
-      if (nausea || !SHEET_DATA[style].tags["coule-fin"]) { x = Math.max(minX, Math.min(maxX, x)); push(); land(); return; }      // vert : il rampe, comme avant
-      mode = "wallland"; wallEnd = now + tagDur("coule-fin"); playOnce("coule-fin"); say("coule jusqu'au sol : il se reforme");
+      const T2 = SHEET_DATA[style].tags, fin = nausea && T2["coule-fin-vert"] ? "coule-fin-vert" : "coule-fin";      // secoué, il se reforme en vert
+      if (!T2[fin]) { x = Math.max(minX, Math.min(maxX, x)); push(); land(); return; }
+      mode = "wallland"; wallEnd = now + tagDur(fin); playOnce(fin); say("coule jusqu'au sol : il se reforme");
     }
     push(); return;
   }
   if (mode === "wallland") {      // il se détache du mur et se reforme ; sur les dernières images la fenêtre rentre dans l'écran (le dessin glisse vers le centre)
     const p = Math.max(0, Math.min(1, 1 - (wallEnd - now - WALL_SLIDE) / WALL_SLIDE));
     x = wallSide < 0 ? minX - WALL_OVER * (1 - p) : maxX + WALL_OVER * (1 - p); y = floorY; push();
-    if (now >= wallEnd && !sheetOnce) { x = Math.max(minX, Math.min(maxX, x)); push(); vx = vy = 0; peakY = null; toWalk(); }          // la dernière image est la pose de repos
+    if (now >= wallEnd && !sheetOnce) {          // la dernière image est la pose de repos ; secoué, il garde la nausée
+      x = Math.max(minX, Math.min(maxX, x)); push(); vx = vy = 0; peakY = null;
+      if (nausea) { nausea = false; mode = "nausea"; reactUntil = now + 3500; bubble("Beurk...", 1400); say("secoue : il a la nausee"); } else toWalk();
+    }
     return;
   }
   if (mode === "splat") { if (now > reactUntil) { mode = "reform"; playOnce("reforme"); say("il se reforme"); } return; }
@@ -687,12 +724,19 @@ function tick() {
   }
   if (mode === "waking") { if (now > reactUntil) toWalk(); return; }
   if (mode === "nausea") {
-    if (now > reactUntil) { mode = "recover"; reactUntil = now + 500; img.src = FR.normal; pose("shake"); bubble("Ça va mieux", 1000); return; }
+    if (now > reactUntil) {          // remis : un perso dessiné se secoue la tête (remis, de profil, jouée une fois) ; les autres tremblent
+      mode = "recover"; bubble("Ça va mieux", 1000);
+      if (isSheet() && SHEET_DATA[style].tags.remis) { pose(""); playOnce("remis"); reactUntil = now + tagDur("remis"); } else { reactUntil = now + 500; img.src = FR.normal; pose("shake"); }
+      return;
+    }
     if (now > nextFx) { if (!isSheet()) img.src = img.src === FR.n1 ? FR.n2 : FR.n1; nextFx = now + 220; if (Math.random() < 0.35) { dir = -dir; face(); } }
     if (!isSheet()) x += dir * 0.8 * k;
     y = floorY; x = Math.max(minX, Math.min(maxX, x)); push(); return;
   }
-  if (mode === "recover") { if (now > reactUntil) toWalk(); return; }
+  if (mode === "recover") {          // remis finit de profil, sur la pose de la reptation : il reprend sa marche sans repasser par la face
+    if (now > reactUntil && !sheetOnce) { if (isSheet() && SHEET_DATA[style].tags.remis) { mode = "walk"; pose("walk"); crawlIdx = walkFrames().length - 1; crawlNext = now; } else toWalk(); }
+    return;
+  }
   if (REACT.has(mode)) {
     if (mode === "ooh") return;
     // la caresse finie, il rouvre les yeux (caresse-fin) avant de reprendre sa marche
@@ -1082,7 +1126,7 @@ function moodExtra() {
   }
 }
 function applyMood(m) {
-  mood = m; document.body.dataset.mood = m || ""; buildFrames(style); lookKey = ""; refreshSprite(); sendState();
+  mood = m; document.body.dataset.mood = m || ""; for (const id in SHEET_DATA) moodTags(id); buildFrames(style); lookKey = ""; refreshSprite(); sendState();
 }
 // Humeur devinée d'après le rythme : l'app ne reçoit que les heures des prompts, jamais leur texte.
 async function guessMood() {
