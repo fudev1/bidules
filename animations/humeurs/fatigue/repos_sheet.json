@@ -79,69 +79,6 @@
     "spriteSourceSize": { "x": 0, "y": 0, "w": 64, "h": 64 },
     "sourceSize": { "w": 64, "h": 64 },
     "duration": 900
-   },
-   {
-    "filename": "repos 9.aseprite",
-    "frame": { "x": 576, "y": 0, "w": 64, "h": 64 },
-    "rotated": false,
-    "trimmed": false,
-    "spriteSourceSize": { "x": 0, "y": 0, "w": 64, "h": 64 },
-    "sourceSize": { "w": 64, "h": 64 },
-    "duration": 60
-   },
-   {
-    "filename": "repos 10.aseprite",
-    "frame": { "x": 640, "y": 0, "w": 64, "h": 64 },
-    "rotated": false,
-    "trimmed": false,
-    "spriteSourceSize": { "x": 0, "y": 0, "w": 64, "h": 64 },
-    "sourceSize": { "w": 64, "h": 64 },
-    "duration": 90
-   },
-   {
-    "filename": "repos 11.aseprite",
-    "frame": { "x": 704, "y": 0, "w": 64, "h": 64 },
-    "rotated": false,
-    "trimmed": false,
-    "spriteSourceSize": { "x": 0, "y": 0, "w": 64, "h": 64 },
-    "sourceSize": { "w": 64, "h": 64 },
-    "duration": 60
-   },
-   {
-    "filename": "repos 12.aseprite",
-    "frame": { "x": 768, "y": 0, "w": 64, "h": 64 },
-    "rotated": false,
-    "trimmed": false,
-    "spriteSourceSize": { "x": 0, "y": 0, "w": 64, "h": 64 },
-    "sourceSize": { "w": 64, "h": 64 },
-    "duration": 140
-   },
-   {
-    "filename": "repos 13.aseprite",
-    "frame": { "x": 832, "y": 0, "w": 64, "h": 64 },
-    "rotated": false,
-    "trimmed": false,
-    "spriteSourceSize": { "x": 0, "y": 0, "w": 64, "h": 64 },
-    "sourceSize": { "w": 64, "h": 64 },
-    "duration": 60
-   },
-   {
-    "filename": "repos 14.aseprite",
-    "frame": { "x": 896, "y": 0, "w": 64, "h": 64 },
-    "rotated": false,
-    "trimmed": false,
-    "spriteSourceSize": { "x": 0, "y": 0, "w": 64, "h": 64 },
-    "sourceSize": { "w": 64, "h": 64 },
-    "duration": 90
-   },
-   {
-    "filename": "repos 15.aseprite",
-    "frame": { "x": 960, "y": 0, "w": 64, "h": 64 },
-    "rotated": false,
-    "trimmed": false,
-    "spriteSourceSize": { "x": 0, "y": 0, "w": 64, "h": 64 },
-    "sourceSize": { "w": 64, "h": 64 },
-    "duration": 60
    }
  ],
  "meta": {
@@ -149,11 +86,11 @@
   "version": "1.3.18.6-arm64",
   "image": "repos_sheet.png",
   "format": "RGBA8888",
-  "size": { "w": 1024, "h": 64 },
+  "size": { "w": 576, "h": 64 },
   "scale": "1",
   "frameTags": [
    { "name": "normal", "from": 0, "to": 7, "direction": "forward", "color": "#000000ff" },
-   { "name": "cligne", "from": 8, "to": 15, "direction": "forward", "color": "#000000ff" }
+   { "name": "cligne", "from": 8, "to": 8, "direction": "forward", "color": "#000000ff" }
   ]
  }
 }
