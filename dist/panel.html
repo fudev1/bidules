@@ -39,7 +39,7 @@ main{flex:1;overflow:auto;padding:0 14px 14px}
 .pane{display:grid;gap:12px}
 .hint{margin:0;font-size:12px;opacity:.9}
 /* tuiles en aplats qui alternent, motif ondulé, aucun bord ; le Bidule choisi a son nom sur une pastille blanche et une étoile */
-.styles{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.styles{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
 .st{position:relative;display:grid;justify-items:center;align-content:center;gap:4px;border-radius:18px;padding:12px 4px 10px;background:var(--plum) var(--waves);background-size:120px}
 .st.c1{background-color:var(--lime);color:var(--ink)}.st.c2{background-color:var(--yellow);color:var(--ink)}.st.c3{background-color:var(--pink-deep)}
 .st img{width:64px;height:64px}
@@ -117,7 +117,7 @@ function render() {
   $("sub").textContent = st.style ? "Humeur : " + ml : "";
   $("moodNow").innerHTML = `Humeur actuelle : <b>${ml}</b>` + (st.moodReason ? ` (${st.moodMode === "auto" ? "devinée : " : ""}${st.moodReason})` : "");
   $("moods").innerHTML = MOODS.map(([id, name]) => `<button class="chip ${st.moodMode === id ? "on" : ""}" data-mood="${id}">${name}</button>`).join("");
-  $("styles").innerHTML = STYLES.map(([id, name], i) => `<button class="st c${i % 4} ${id === st.style ? "on" : ""}" data-style="${id}" ${READY.has(id) ? "" : "disabled"}>${READY.has(id) ? (id === st.style && st.cache ? '<i class="soon">Caché</i>' : "") : '<i class="soon">Bientôt</i>'}<i class="spark"></i><span class="ground"><img class="mon" src="${render64(id, st.partsBy[id] || {}, READY.has(id) ? st.mood : null)}" alt=""></span><span class="nm">${name}</span></button>`).join("");
+  $("styles").innerHTML = STYLES.map(([id, name], i) => `<button class="st c${(i + Math.floor(i / 4)) % 4} ${id === st.style ? "on" : ""}" data-style="${id}" ${READY.has(id) ? "" : "disabled"}>${READY.has(id) ? (id === st.style && st.cache ? '<i class="soon">Caché</i>' : "") : '<i class="soon">Bientôt</i>'}<i class="spark"></i><span class="ground"><img class="mon" src="${render64(id, st.partsBy[id] || {}, READY.has(id) ? st.mood : null)}" alt=""></span><span class="nm">${name}</span></button>`).join("");
   $("evoHint").textContent = noParts ? "Les parties arriveront avec les animations dessinées de ce Bidule." : "Un clic ajoute la partie, un second clic la retire. Une partie du même emplacement remplace l'ancienne.";
   $("random").disabled = $("reset").disabled = noParts;
   $("slots").innerHTML = SLOTS.map(([slot, label, opts]) => `<div class="slot"><b>${label}</b><div class="chips">${opts.map(([p, name]) =>
