@@ -317,6 +317,28 @@ fn session_active() -> Option<String> {
 
 const ICONE_REPOS: &[u8] = include_bytes!("../icons/tray-repos.png");
 
+// Le panneau au milieu de l'écran (menu du clic droit sur le Bidule, menu de l'icône).
+#[tauri::command]
+fn ouvrir_panneau(app: AppHandle) {
+    if let Some(p) = app.get_webview_window("panel") {
+        let _ = p.center();
+        let _ = p.show();
+        let _ = p.set_focus();
+        let _ = app.emit("demande-etat", ());
+    }
+}
+
+// Cacher le Bidule (menu du clic droit sur lui, panneau) ou le faire revenir (panneau, menu de l'icône). Caché, l'icône se fige au repos.
+#[tauri::command]
+fn montrer_bidule(app: AppHandle, oui: bool) {
+    let Some(w) = app.get_webview_window("main") else { return };
+    if oui { let _ = w.show(); } else {
+        let _ = w.hide();
+        if let (Some(tray), Ok(im)) = (app.tray_by_id("bidule"), tauri::image::Image::from_bytes(ICONE_REPOS)) { let _ = tray.set_icon(Some(im)); }
+    }
+    let _ = app.emit("bidule-visible", oui);
+}
+
 #[tauri::command]
 fn contexte() -> Option<Jauge> {
     let home = std::env::var("HOME").unwrap_or_default();
@@ -340,7 +362,7 @@ fn contexte() -> Option<Jauge> {
 
 fn main() {
     tauri::Builder::default()
-        .invoke_handler(tauri::generate_handler![log, quit, hide_panel, prompt_times, contexte, icone, session_active, bonbon_poser, bonbon_retirer, bonbon_clic])
+        .invoke_handler(tauri::generate_handler![log, quit, hide_panel, prompt_times, contexte, icone, session_active, montrer_bidule, ouvrir_panneau, bonbon_poser, bonbon_retirer, bonbon_clic])
         .setup(|app| {
             #[cfg(target_os = "macos")]
             app.set_activation_policy(tauri::ActivationPolicy::Accessory);
@@ -360,6 +382,7 @@ fn main() {
 
             let menu = Menu::new(app)?;
             menu.append(&MenuItem::with_id(app, "open", "Ouvrir le panneau", true, None::<&str>)?)?;
+            menu.append(&MenuItem::with_id(app, "show", "Afficher le Bidule", true, None::<&str>)?)?;
             menu.append(&MenuItem::with_id(app, "quit", "Quitter", true, None::<&str>)?)?;
 
             let h3 = hidden_at.clone();
@@ -370,14 +393,8 @@ fn main() {
                 .show_menu_on_left_click(false)
                 .on_menu_event(|app, event| match event.id().as_ref() {
                     "quit" => app.exit(0),
-                    "open" => {
-                        if let Some(p) = app.get_webview_window("panel") {
-                            let _ = p.center();
-                            let _ = p.show();
-                            let _ = p.set_focus();
-                            let _ = app.emit("demande-etat", ());
-                        }
-                    }
+                    "show" => montrer_bidule(app.clone(), true),
+                    "open" => ouvrir_panneau(app.clone()),
                     _ => {}
                 })
                 .on_tray_icon_event(move |tray, event| {

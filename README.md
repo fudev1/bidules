@@ -63,7 +63,7 @@ xcode-select --install
    git config core.hooksPath .githooks
    ```
 
-Pour le fermer : clic droit sur son icône dans la barre de menus, puis "Quitter".
+Pour le fermer : clic droit sur son icône dans la barre de menus, puis "Quitter". Clic droit sur le Bidule : un petit menu (ouvrir le panneau, choisir l'humeur, le cacher, quitter). Pour le faire revenir quand il est caché : cliquer sur lui dans l'onglet Piste du panneau, ou "Afficher le Bidule" dans le menu de son icône.
 
 L'interface est embarquée dans l'app à la compilation : après une modification dans `dist/`, relancer `mise run bidule`.
 
