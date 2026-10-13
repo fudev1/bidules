@@ -1234,6 +1234,14 @@ T.event.listen("mood", e => {
   else { moodReason = "choisie à la main"; say("humeur choisie : " + moodMode); applyMood(moodMode); bubble(MOOD_LABEL[moodMode], 1200); }
 });
 setInterval(autoMood, 3000);
+// On change de session dans Claude Desktop : on relit tout de suite son état, sans attendre les 3 s.
+let lastSession;
+setInterval(async () => {
+  let id = null;
+  try { id = await T.core.invoke("session_active"); } catch (e) { return; }
+  if (lastSession !== undefined && id !== lastSession) autoMood();
+  lastSession = id;
+}, 700);
 // Icône de la barre de menu : la limace montre ce que fait Claude. Elle rampe s'il travaille (avec le visage de l'humeur),
 // elle est intriguée s'il attend (une permission, sans doute), elle dort s'il a fini. Fermée, l'app la fige au repos (main.rs).
 const TRAY = document.createElement("canvas"), TRAY_IMG = {};

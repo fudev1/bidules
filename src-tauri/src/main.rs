@@ -309,6 +309,12 @@ fn icone(app: AppHandle, png: Vec<u8>) {
     if let (Some(tray), Ok(im)) = (app.tray_by_id("bidule"), tauri::image::Image::from_bytes(&png)) { let _ = tray.set_icon(Some(im)); }
 }
 
+// La session de Claude Desktop qui a le focus : de petits fichiers, relus souvent pour réagir vite quand on change de session.
+#[tauri::command]
+fn session_active() -> Option<String> {
+    desktop_session(&std::env::var("HOME").unwrap_or_default()).map(|(id, _)| id)
+}
+
 const ICONE_REPOS: &[u8] = include_bytes!("../icons/tray-repos.png");
 
 #[tauri::command]
@@ -334,7 +340,7 @@ fn contexte() -> Option<Jauge> {
 
 fn main() {
     tauri::Builder::default()
-        .invoke_handler(tauri::generate_handler![log, quit, hide_panel, prompt_times, contexte, icone, bonbon_poser, bonbon_retirer, bonbon_clic])
+        .invoke_handler(tauri::generate_handler![log, quit, hide_panel, prompt_times, contexte, icone, session_active, bonbon_poser, bonbon_retirer, bonbon_clic])
         .setup(|app| {
             #[cfg(target_os = "macos")]
             app.set_activation_policy(tauri::ActivationPolicy::Accessory);
