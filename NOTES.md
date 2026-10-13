@@ -10,6 +10,8 @@ Mise à jour : 6 octobre 2026. Ce fichier suit l'état du projet : ce qui est d�
 - Pendant le sprint, le Bidule évolue. Le système d'évolution reste à définir.
 - Chambre à 5 emplacements fixes. Accessoires sur 3 emplacements : tête, visage, cou.
 - Direction artistique : le moodboard de Matteo, en pixel art 64 × 64, jamais de vectoriel.
+- Pour l'instant, seule la limace est jouable : les autres Bidules restent visibles mais grisés dans le panneau (« Bientôt »), le temps de refaire toutes leurs animations pour qu'elles soient fluides. Pour en rendre un jouable : l'ajouter à `READY` dans `dist/panel.html`.
+- Le menu Évolution du panneau est désactivé (grisé) : il sera revu.
 - L'humeur suit la jauge de contexte de la conversation en cours : 0-30 % joyeux (guilleret), 30-60 % normal (sans humeur), 60-100 % fatigué (vaseux). Quand Claude ne fait rien (aucune conversation en cours depuis 30 min, ou la réponse est finie, ou le journal n'a pas bougé depuis 5 min, par exemple s'il attend une permission), il s'endort, pour signaler qu'il faut retourner lancer la suite. Il s'endort au bout de 5 s de calme et ne se réveille pas seul tant que Claude ne se remet pas au travail, même si l'humeur est choisie à la main (réveillé à la main, il se rendort 5 s après) ; son visage suit alors l'humeur devinée d'après le rythme de travail (heure, durée de session, cadence, pauses). Jamais en lisant le texte des messages. On peut la corriger dans le panneau.
 - Humeur et visage : les animations sont dessinées une seule fois, avec le visage neutre (toutes celles faites jusqu'au 5 octobre 2026). Le visage de chaque humeur est dessiné une fois de profil et une fois de face, puis le code le pose sur chaque image où il reconnaît le visage neutre, recalé sur les yeux (et sur la bouche, de face). Les expressions (rire, peur, sommeil, attrapé…) gardent leur visage. Dans une humeur, c'est le code qui fait cligner, au hasard. Fatigué : les yeux fermés sont la norme, il les ouvre de temps en temps (0,6 à 1,5 s, toutes les 3 à 9 s).
 - Limace :
@@ -28,7 +30,7 @@ Mise à jour : 6 octobre 2026. Ce fichier suit l'état du projet : ce qui est d�
 ## Fait
 
 - Skills de Matt Pocock (`github.com/mattpocock/skills`, version 1.3.1) copiés dans `.claude/skills/` : les 27 du plugin officiel (grilling, tdd, diagnosing-bugs, to-spec, etc.). Pour les commits et les pull requests, nos skills `commit` et `pull-request` restent prioritaires sur `pr`. Ce qu'ils produisent est écrit en français, et quand ils parlent de `main` on lit `test`. Mise à jour : à la main, en recopiant depuis le repo. Réglés pour le projet (`docs/agents/`) : tickets et specs en issues GitHub, étiquettes de tri par défaut, glossaire et ADR à la racine.
-- App de bureau Mac : fenêtre transparente au premier plan, le Bidule vit en bas de l'écran, panneau dans la barre de menus (Piste, Évolution, Humeur).
+- App de bureau Mac : fenêtre transparente au premier plan, le Bidule vit en bas de l'écran, panneau dans la barre de menus (Piste, Évolution, Humeur), sans contours, en aplats de couleur avec le Bidule choisi en grand dans l'en-tête.
 - Interactions :
   - attraper au premier clic, lancer avec rebonds sur les bords, suivre la souris des yeux ;
   - caresses, chatouilles (rire, puis fâché), secouer (nausée) ;

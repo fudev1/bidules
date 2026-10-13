@@ -1,105 +1,125 @@
 <!doctype html>
 <html lang="fr"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Bidule, panneau de test</title>
+<title>Bidule, panneau</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Luckiest+Guy&family=Fredoka:wght@500;600;700&display=swap">
 <style>
-:root{--ink:#1e1b3a;--pink:#f0305a;--pink-deep:#a8173a;--plum:#3d1f55;--yellow:#ffd94a;--lime:#a6d23a;--cream:#fff8ec;--white:#ffffff;
-  --display:"Luckiest Guy","Arial Rounded MT Bold","Arial Black",system-ui,sans-serif;--text:"Fredoka","Arial Rounded MT Bold",system-ui,-apple-system,sans-serif}
+:root{--ink:#1e1b3a;--pink:#f0305a;--pink-deep:#b3173f;--plum:#3d1f55;--plum-deep:#2a1340;--yellow:#ffd94a;--lime:#a6d23a;--white:#ffffff;
+  --display:"Luckiest Guy","Arial Rounded MT Bold","Arial Black",system-ui,sans-serif;--text:"Fredoka","Arial Rounded MT Bold",system-ui,-apple-system,sans-serif;
+  --waves:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cg fill='none' stroke='white' stroke-opacity='.08' stroke-width='16' stroke-linecap='round'%3E%3Cpath d='M-20 30 C 10 0, 40 70, 75 35 S 130 0, 200 40'/%3E%3Cpath d='M-20 110 C 20 80, 45 150, 90 115 S 150 85, 200 120'/%3E%3Cpath d='M30 165 C 50 150, 70 185, 100 168'/%3E%3C/g%3E%3C/svg%3E")}
 *{box-sizing:border-box}
-html,body{margin:0;background:transparent;font:500 13px/1.35 var(--text);color:var(--ink);-webkit-user-select:none;user-select:none}
-.card{margin:10px;height:calc(100vh - 20px);background:var(--pink);border:3px solid var(--ink);border-radius:20px;box-shadow:0 6px 0 var(--ink);display:flex;flex-direction:column;overflow:hidden;
-  background-image:radial-gradient(circle at 18% 12%,rgba(255,255,255,.10) 0 22%,transparent 23%),radial-gradient(circle at 88% 80%,rgba(255,255,255,.08) 0 18%,transparent 19%)}
-header{display:flex;gap:10px;align-items:center;padding:12px 14px 8px}
-header img{width:56px;height:56px;image-rendering:pixelated;background:var(--white);border:3px solid var(--ink);border-radius:14px;padding:2px}
-header h1{font:400 26px/1 var(--display);margin:0;color:var(--white);letter-spacing:1px;text-shadow:0 3px 0 var(--pink-deep),0 3px 0 var(--pink-deep)}
-header p{margin:4px 0 0;color:var(--white);font-weight:600;font-size:12px}
-.tabs{display:flex;gap:6px;padding:4px 12px 10px}
-.tab{flex:1;font:400 14px/1 var(--display);letter-spacing:.8px;border:2.5px solid var(--ink);background:var(--white);color:var(--ink);padding:8px 4px 6px;border-radius:999px;cursor:pointer;box-shadow:0 3px 0 var(--ink)}
-.tab[aria-selected="true"]{background:var(--yellow)}
-.tab:active{transform:translateY(2px);box-shadow:0 1px 0 var(--ink)}
-main{flex:1;overflow:auto;padding:4px 12px 12px}
-.pane{display:grid;gap:10px;background:var(--cream);border:3px solid var(--ink);border-radius:16px;padding:12px;box-shadow:inset 0 0 0 3px var(--yellow)}
-.pane[hidden]{display:none}
-.hint{margin:0;color:var(--ink);opacity:.75;font-size:12px}
-.styles{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
-.st{font:inherit;border:2.5px solid var(--ink);background:var(--plum);border-radius:14px;padding:6px 4px 7px;display:grid;justify-items:center;gap:3px;cursor:pointer;color:var(--white);box-shadow:0 3px 0 var(--ink)}
-.st:nth-child(3n+2){background:var(--lime);color:var(--ink)}
-.st:nth-child(3n){background:var(--yellow);color:var(--ink)}
-.st img{width:64px;height:64px;image-rendering:pixelated;filter:drop-shadow(1.5px 0 0 #fff) drop-shadow(-1.5px 0 0 #fff) drop-shadow(0 1.5px 0 #fff) drop-shadow(0 -1.5px 0 #fff)}
-.st span{font:400 12px/1.1 var(--display);letter-spacing:.5px;text-align:center}
-.st.on{outline:3px solid var(--white);outline-offset:-6px;transform:translateY(-2px);box-shadow:0 5px 0 var(--ink)}
-.slot{display:grid;grid-template-columns:62px 1fr;gap:8px;align-items:center}
-.slot b{font:400 12px/1 var(--display);letter-spacing:.6px;color:var(--pink)}
-.chips{display:flex;flex-wrap:wrap;gap:6px}
-.chip{font:600 12.5px/1 var(--text);border:2px solid var(--ink);background:var(--white);border-radius:999px;padding:6px 11px;cursor:pointer;color:var(--ink)}
-.chip.on{background:var(--pink);color:var(--white)}
-.row{display:flex;gap:8px;flex-wrap:wrap}
-.btn{font:400 13px/1 var(--display);letter-spacing:.6px;border:2.5px solid var(--ink);background:var(--white);border-radius:12px;padding:9px 12px 7px;cursor:pointer;color:var(--ink);box-shadow:0 3px 0 var(--ink)}
-.btn:active{transform:translateY(2px);box-shadow:0 1px 0 var(--ink)}
-.btn.primary{background:var(--yellow)}
-.btn:disabled{opacity:.45;cursor:default}
-.moods{display:grid;grid-template-columns:repeat(2,1fr);gap:6px}
-.moods .chip{border-radius:12px;text-align:left;padding:8px 11px}
-.soon{border:2px dashed var(--ink);border-radius:12px;padding:9px 10px;font-size:12.5px;background:var(--white)}
-.soon b{color:var(--pink)}
-footer{padding:10px 14px 12px;display:flex;justify-content:space-between;align-items:center}
-footer small{color:var(--white);font-weight:600}
-footer .btn{background:var(--plum);color:var(--white)}
+html,body{margin:0;background:transparent;font:500 13px/1.35 var(--text);color:var(--white);-webkit-user-select:none;user-select:none}
+button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;padding:0}
+button:disabled{cursor:default}
+[hidden]{display:none!important}
 :focus-visible{outline:3px solid var(--yellow);outline-offset:2px}
+.panel{margin:10px;height:calc(100vh - 20px);border-radius:24px;overflow:hidden;display:flex;flex-direction:column;background:var(--pink) var(--waves);box-shadow:0 8px 22px rgba(30,27,58,.35)}
+/* les Bidules : contour blanc d'autocollant et ombre au sol, comme sur les affiches du moodboard */
+.mon{image-rendering:pixelated;filter:drop-shadow(2px 0 0 #fff) drop-shadow(-2px 0 0 #fff) drop-shadow(0 2px 0 #fff) drop-shadow(0 -2px 0 #fff)}
+.ground{position:relative;display:grid;justify-items:center;isolation:isolate}
+.ground::after{content:"";position:absolute;bottom:-3px;width:62%;height:9px;border-radius:50%;background:rgba(30,27,58,.28);z-index:-1}
+header{position:relative;background:var(--plum) var(--waves);padding:14px 16px 12px;text-align:center;display:grid;justify-items:center;gap:2px}
+.kicker{margin:0;font:400 11px/1 var(--display);letter-spacing:1.5px;color:var(--yellow)}
+h1{margin:0;font:400 32px/.95 var(--display);letter-spacing:1px;color:var(--yellow);text-shadow:3px 4px 0 var(--plum-deep)}
+.stage{margin:-18px 0 6px}
+.stage img{width:96px;height:96px}
+.stage::after{height:12px}
+#sub{margin:0;font:400 11px/1 var(--display);letter-spacing:1.2px}
+#quit{position:absolute;top:12px;right:12px;width:34px;height:34px;border-radius:50%;background:var(--pink);display:grid;place-items:center;box-shadow:0 3px 0 var(--plum-deep)}
+#quit:hover{background:#ff4570}
+#quit:active{transform:translateY(2px);box-shadow:0 1px 0 var(--plum-deep)}
+#quit svg{width:18px;height:18px}
+.tabs{display:flex;gap:4px;margin:12px 14px;padding:4px;border-radius:999px;background:rgba(30,27,58,.22)}
+.tab{flex:1;font:400 14px/1 var(--display);letter-spacing:.8px;padding:9px 4px 7px;border-radius:999px}
+.tab[aria-selected="true"]{background:var(--yellow);color:var(--ink)}
+.tab:disabled{opacity:.4}
+main{flex:1;overflow:auto;padding:0 14px 14px}
+.pane{display:grid;gap:12px}
+.hint{margin:0;font-size:12px;opacity:.9}
+/* tuiles en aplats qui alternent, motif ondulé, aucun bord ; le Bidule choisi a son nom sur une pastille blanche et une étoile */
+.styles{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.st{position:relative;display:grid;justify-items:center;align-content:center;gap:4px;border-radius:18px;padding:12px 4px 10px;background:var(--plum) var(--waves);background-size:120px}
+.st.c1{background-color:var(--lime);color:var(--ink)}.st.c2{background-color:var(--yellow);color:var(--ink)}.st.c3{background-color:var(--pink-deep)}
+.st img{width:64px;height:64px}
+.nm{font:400 12px/1.1 var(--display);letter-spacing:.5px;text-align:center;padding:3px 8px 2px;border-radius:999px}
+.st.on .nm{background:var(--white);color:var(--ink)}
+.spark{position:absolute;top:8px;right:8px;width:14px;height:14px;background:var(--white);clip-path:polygon(50% 0,62% 38%,100% 50%,62% 62%,50% 100%,38% 62%,0 50%,38% 38%)}
+.st:not(.on) .spark{display:none}
+.st:disabled{background-color:rgba(30,27,58,.28);color:rgba(255,255,255,.55);padding-top:24px}
+.st:disabled .mon{filter:grayscale(1);opacity:.4}
+.soon{position:absolute;top:8px;left:8px;font:600 10px/1 var(--text);background:rgba(30,27,58,.55);color:var(--white);border-radius:999px;padding:4px 7px 3px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font:600 12.5px/1 var(--text);background:rgba(255,255,255,.18);border-radius:999px;padding:7px 12px}
+.chip.on{background:var(--yellow);color:var(--ink)}
+.chip:disabled,.btn:disabled{background:rgba(255,255,255,.12);color:rgba(255,255,255,.5)}
+.slots{display:grid;gap:10px}
+.slot{display:grid;grid-template-columns:64px 1fr;gap:8px;align-items:center}
+.slot b{font:400 12px/1 var(--display);letter-spacing:.6px;color:var(--yellow)}
+.row{display:flex;gap:8px;flex-wrap:wrap}
+.btn{font:400 13px/1 var(--display);letter-spacing:.6px;border-radius:14px;padding:10px 14px 8px;background:rgba(255,255,255,.18)}
+.btn.primary{background:var(--yellow);color:var(--ink)}
+.moods{display:grid;grid-template-columns:repeat(2,1fr);gap:6px}
+.moods .chip{border-radius:14px;text-align:left;padding:9px 12px}
+.now{background:rgba(30,27,58,.22);border-radius:14px;padding:10px 12px;font-size:12.5px}
+.now b{color:var(--yellow)}
 </style></head>
 <body>
-<div class="card">
-  <header><img id="thumb" alt=""><div><h1 id="title">Bidule</h1><p id="sub"></p></div></header>
+<div class="panel">
+  <header><button id="quit" aria-label="Éteindre le Bidule" title="Éteindre le Bidule"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round"><path d="M12 3v8"/><path d="M6.3 7.3a8 8 0 1 0 11.4 0"/></svg></button><p class="kicker">Ton Bidule</p><h1 id="title">Bidule</h1><div class="ground stage"><img id="thumb" class="mon" alt=""></div><p id="sub"></p></header>
   <nav class="tabs" role="tablist">
     <button class="tab" role="tab" data-tab="piste" aria-selected="true">Piste</button>
-    <button class="tab" role="tab" data-tab="evo" aria-selected="false">Évolution</button>
+    <button class="tab" role="tab" data-tab="evo" aria-selected="false" disabled title="Bientôt">Évolution</button>
     <button class="tab" role="tab" data-tab="humeur" aria-selected="false">Humeur</button>
   </nav>
   <main>
     <section class="pane" id="p-piste">
-      <p class="hint">Choisis une direction artistique : le Bidule change tout de suite, sans perdre ce qu'il fait.</p>
+      <p class="hint">Pour l'instant, seule la limace est prête. Les autres Bidules arriveront avec leurs animations redessinées.</p>
       <div class="styles" id="styles"></div>
     </section>
     <section class="pane" id="p-evo" hidden>
+      <p class="hint" id="evoHint"></p>
       <div class="row"><button class="btn primary" id="random">Gagner une partie au hasard</button><button class="btn" id="reset">Revenir au départ</button></div>
-      <p class="hint">Un clic ajoute la partie, un second clic la retire. Une partie du même emplacement remplace l'ancienne.</p>
-      <div id="slots" class="pane"></div>
+      <div id="slots" class="slots"></div>
     </section>
     <section class="pane" id="p-humeur" hidden>
       <p class="hint">L'humeur suit la jauge de contexte de ta conversation Claude en cours : joyeuse jusqu'à 30 %, normale jusqu'à 60 %, fatiguée au-delà. Quand Claude ne fait rien (réponse finie, ou pas de conversation), il dort : c'est le signal pour y retourner. Jamais en lisant tes messages. Tu peux la forcer ici.</p>
-      <div class="soon" id="moodNow"></div>
+      <div class="now" id="moodNow"></div>
       <div class="moods" id="moods"></div>
     </section>
   </main>
-  <footer><small id="foot">Panneau de test</small><button class="btn" id="quit">Quitter le Bidule</button></footer>
 </div>
 <script src="bidule64.js"></script>
 <script src="monstre64.js"></script>
 <script>
 const T = window.__TAURI__;
-const STYLES = [...Object.keys(MONSTRES).map(id => [id, MONSTRES[id].name]), ["limace", "Limace (essai)"], ["candy", "Candy"], ["classique", "Classique"], ["louche", "Il louche"], ["depareille", "Yeux dépareillés"], ["paupieres", "Paupières lourdes"], ["dessus", "Yeux dessus"]];
+// les Bidules prêts (animations dessinées) ; les autres restent visibles mais grisés, pour garder la mise en page
+const READY = new Set(["limace"]);
+const ALL = [...Object.keys(MONSTRES).map(id => [id, MONSTRES[id].name]), ["limace", "Limace"], ["candy", "Candy"], ["classique", "Classique"], ["louche", "Il louche"], ["depareille", "Yeux dépareillés"], ["paupieres", "Paupières lourdes"], ["dessus", "Yeux dessus"]];
+const STYLES = [...ALL.filter(s => READY.has(s[0])), ...ALL.filter(s => !READY.has(s[0]))];
+const SHEETS = new Set(["limace", "candy"]);
 const SLOTS = [["tete", "Tête", [["antennes", "Antennes"], ["cornes", "Cornes"]]], ["bouche", "Bouche", [["crocs", "Crocs"], ["langue", "Langue"]]],
   ["bras", "Bras", [["bras", "Petits bras"], ["pinces", "Pinces"]]], ["pattes", "Pattes", [["longues", "Longues"], ["palmees", "Palmées"]]],
   ["dos", "Dos", [["ailes", "Ailes"], ["fourrure", "Fourrure"]]], ["queue", "Queue", [["touffue", "Touffue"], ["lezard", "Lézard"]]]];
 const $ = id => document.getElementById(id);
-let st = {mood:null, moodMode:"auto", moodReason:"", style:"goutte", partsBy:{classique:{tete:"antennes", pattes:"longues", bras:"bras", queue:"touffue"}, louche:{}, depareille:{}, paupieres:{}, dessus:{}, ...Object.fromEntries(Object.keys(MONSTRES).map(id => [id, {}])), limace:{}, candy:{}}, thumb:""};
+let st = {mood:null, moodMode:"auto", moodReason:"", style:"limace", partsBy:{classique:{tete:"antennes", pattes:"longues", bras:"bras", queue:"touffue"}, louche:{}, depareille:{}, paupieres:{}, dessus:{}, ...Object.fromEntries(Object.keys(MONSTRES).map(id => [id, {}])), limace:{}, candy:{}}, thumb:""};
 const send = (ev, payload) => { if (T) T.event.emit(ev, payload); else console.log(ev, payload); };
 const MOODS = [["auto", "Automatique"], ["guilleret", "Guilleret"], ["ronchon", "Ronchon"], ["vaseux", "Vaseux"], ["stresse", "Stressé"], ["lune", "Dans la lune"]];
-const render64 = (s, parts) => s === "limace" || s === "candy" ? "persos/" + s + "/thumb.png" : MONSTRES[s] ? monstreURL(s, "forme", [0, 0], parts, st.mood) : s === "classique" ? bidule64({pal:"menthe", parts, mood:st.mood}, "forme", {tete:"bonnet"}) : blobFace64(s, "forme", [0, 0], "menthe", parts, st.mood);
+const render64 = (s, parts, mood = st.mood) => SHEETS.has(s) ? "persos/" + s + "/thumb.png" : MONSTRES[s] ? monstreURL(s, "forme", [0, 0], parts, mood) : s === "classique" ? bidule64({pal:"menthe", parts, mood}, "forme", {tete:"bonnet"}) : blobFace64(s, "forme", [0, 0], "menthe", parts, mood);
 function render() {
-  const parts = st.partsBy[st.style] || {}, n = Object.keys(parts).length;
+  const parts = st.partsBy[st.style] || {}, noParts = SHEETS.has(st.style);
   $("thumb").src = st.thumb || render64(st.style, parts);
-  $("title").textContent = "Bidule · " + STYLES.find(s => s[0] === st.style)[1];
+  $("title").textContent = STYLES.find(s => s[0] === st.style)[1];
   const ml = st.mood ? MOODS.find(m => m[0] === st.mood)[1] : "Normale";
-  $("sub").textContent = (n ? `${n} partie${n > 1 ? "s" : ""} sur 6` : "Forme de départ") + " · " + ml;
+  $("sub").textContent = "Humeur : " + ml;
   $("moodNow").innerHTML = `Humeur actuelle : <b>${ml}</b>` + (st.moodReason ? ` (${st.moodMode === "auto" ? "devinée : " : ""}${st.moodReason})` : "");
   $("moods").innerHTML = MOODS.map(([id, name]) => `<button class="chip ${st.moodMode === id ? "on" : ""}" data-mood="${id}">${name}</button>`).join("");
-  $("styles").innerHTML = STYLES.map(([id, name]) => `<button class="st ${id === st.style ? "on" : ""}" data-style="${id}"><img src="${render64(id, st.partsBy[id] || {})}" alt=""><span>${name}</span></button>`).join("");
+  $("styles").innerHTML = STYLES.map(([id, name], i) => `<button class="st c${i % 4} ${id === st.style ? "on" : ""}" data-style="${id}" ${READY.has(id) ? "" : "disabled"}>${READY.has(id) ? "" : '<i class="soon">Bientôt</i>'}<i class="spark"></i><span class="ground"><img class="mon" src="${render64(id, st.partsBy[id] || {}, READY.has(id) ? st.mood : null)}" alt=""></span><span class="nm">${name}</span></button>`).join("");
+  $("evoHint").textContent = noParts ? "Les parties arriveront avec les animations dessinées de ce Bidule." : "Un clic ajoute la partie, un second clic la retire. Une partie du même emplacement remplace l'ancienne.";
+  $("random").disabled = $("reset").disabled = noParts;
   $("slots").innerHTML = SLOTS.map(([slot, label, opts]) => `<div class="slot"><b>${label}</b><div class="chips">${opts.map(([p, name]) =>
-    `<button class="chip ${parts[slot] === p ? "on" : ""}" data-part="${slot}:${p}">${name}</button>`).join("")}</div></div>`).join("");
+    `<button class="chip ${parts[slot] === p ? "on" : ""}" data-part="${slot}:${p}" ${noParts ? "disabled" : ""}>${name}</button>`).join("")}</div></div>`).join("");
 }
 document.addEventListener("click", e => {
   const b = e.target.closest("button"); if (!b || b.disabled) return;
