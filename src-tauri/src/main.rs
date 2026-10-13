@@ -332,6 +332,21 @@ fn session_active() -> Option<String> {
 
 const ICONE_REPOS: &[u8] = include_bytes!("../icons/tray-repos.png");
 
+// Le Bidule choisi, gardé d'un lancement à l'autre dans un petit fichier du dossier de l'app. Rien au premier lancement.
+fn choix_path(app: &AppHandle) -> Option<PathBuf> {
+    app.path().app_data_dir().ok().map(|d| d.join("bidule.txt"))
+}
+#[tauri::command]
+fn lire_choix(app: AppHandle) -> Option<String> {
+    std::fs::read_to_string(choix_path(&app)?).ok().map(|s| s.trim().to_string()).filter(|s| !s.is_empty())
+}
+#[tauri::command]
+fn garder_choix(app: AppHandle, style: String) {
+    let Some(p) = choix_path(&app) else { return };
+    if let Some(d) = p.parent() { let _ = std::fs::create_dir_all(d); }
+    let _ = std::fs::write(p, style);
+}
+
 // Le panneau au milieu de l'écran (menu du clic droit sur le Bidule, menu de l'icône).
 #[tauri::command]
 fn ouvrir_panneau(app: AppHandle) {
@@ -377,7 +392,7 @@ fn contexte() -> Option<Jauge> {
 
 fn main() {
     tauri::Builder::default()
-        .invoke_handler(tauri::generate_handler![log, quit, hide_panel, prompt_times, contexte, icone, session_active, montrer_bidule, ouvrir_panneau, bonbon_poser, bonbon_retirer, bonbon_clic])
+        .invoke_handler(tauri::generate_handler![log, quit, hide_panel, prompt_times, contexte, icone, session_active, montrer_bidule, ouvrir_panneau, lire_choix, garder_choix, bonbon_poser, bonbon_retirer, bonbon_clic])
         .setup(|app| {
             #[cfg(target_os = "macos")]
             app.set_activation_policy(tauri::ActivationPolicy::Accessory);

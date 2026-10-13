@@ -108,12 +108,13 @@ const send = (ev, payload) => { if (T) T.event.emit(ev, payload); else console.l
 const MOODS = [["auto", "Automatique"], ["guilleret", "Guilleret"], ["ronchon", "Ronchon"], ["vaseux", "Vaseux"], ["stresse", "Stressé"], ["lune", "Dans la lune"]];
 const render64 = (s, parts, mood = st.mood) => SHEETS.has(s) ? "persos/" + s + "/thumb.png" : MONSTRES[s] ? monstreURL(s, "forme", [0, 0], parts, mood) : s === "classique" ? bidule64({pal:"menthe", parts, mood}, "forme", {tete:"bonnet"}) : blobFace64(s, "forme", [0, 0], "menthe", parts, mood);
 function render() {
-  $("pisteHint").textContent = st.cache ? "Ton Bidule est caché : clique dessus pour le faire revenir." : "Pour l'instant, seule la limace est prête. Les autres Bidules arriveront avec leurs animations redessinées.";
+  $("pisteHint").textContent = !st.style ? "Choisis ton premier Bidule : il apparaîtra sur ton bureau." : st.cache ? "Ton Bidule est caché : clique dessus pour le faire revenir." : "Pour l'instant, seule la limace est prête. Les autres Bidules arriveront avec leurs animations redessinées.";
   const parts = st.partsBy[st.style] || {}, noParts = SHEETS.has(st.style);
-  $("thumb").src = st.thumb || render64(st.style, parts);
-  $("title").textContent = STYLES.find(s => s[0] === st.style)[1];
+  $("thumb").hidden = !st.style;          // premier lancement : pas encore de Bidule choisi
+  if (st.style) $("thumb").src = st.thumb || render64(st.style, parts);
+  $("title").textContent = st.style ? STYLES.find(s => s[0] === st.style)[1] : "Choisis-le !";
   const ml = st.mood ? MOODS.find(m => m[0] === st.mood)[1] : "Normale";
-  $("sub").textContent = "Humeur : " + ml;
+  $("sub").textContent = st.style ? "Humeur : " + ml : "";
   $("moodNow").innerHTML = `Humeur actuelle : <b>${ml}</b>` + (st.moodReason ? ` (${st.moodMode === "auto" ? "devinée : " : ""}${st.moodReason})` : "");
   $("moods").innerHTML = MOODS.map(([id, name]) => `<button class="chip ${st.moodMode === id ? "on" : ""}" data-mood="${id}">${name}</button>`).join("");
   $("styles").innerHTML = STYLES.map(([id, name], i) => `<button class="st c${i % 4} ${id === st.style ? "on" : ""}" data-style="${id}" ${READY.has(id) ? "" : "disabled"}>${READY.has(id) ? (id === st.style && st.cache ? '<i class="soon">Caché</i>' : "") : '<i class="soon">Bientôt</i>'}<i class="spark"></i><span class="ground"><img class="mon" src="${render64(id, st.partsBy[id] || {}, READY.has(id) ? st.mood : null)}" alt=""></span><span class="nm">${name}</span></button>`).join("");
@@ -125,7 +126,7 @@ function render() {
 document.addEventListener("click", e => {
   const b = e.target.closest("button"); if (!b || b.disabled) return;
   if (b.dataset.tab) { document.querySelectorAll(".tab").forEach(t => t.setAttribute("aria-selected", t === b)); ["piste", "evo", "humeur"].forEach(k => $("p-" + k).hidden = k !== b.dataset.tab); }
-  else if (b.dataset.style) { send("style", b.dataset.style); if (st.cache && T) T.core.invoke("montrer_bidule", {oui:true}); }      // caché : cliquer dessus le fait revenir
+  else if (b.dataset.style) { send("style", b.dataset.style); if (st.cache && T) T.core.invoke("montrer_bidule", {oui:true}); if (!st.style && T) T.core.invoke("hide_panel"); }      // premier choix : le panneau se ferme, le Bidule tombe sur le bureau      // caché : cliquer dessus le fait revenir
   else if (b.dataset.part) send("evo", "part:" + b.dataset.part);
   else if (b.dataset.mood) send("mood", b.dataset.mood);
   else if (b.id === "random") send("evo", "evo:random");

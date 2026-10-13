@@ -2,6 +2,7 @@
 <html><head><meta charset="utf-8">
 <style>
 html,body{margin:0;background:transparent;overflow:hidden;width:176px;height:176px;user-select:none;-webkit-user-select:none}
+body:not(.pret){visibility:hidden}          /* rien ne s'affiche avant que le Bidule choisi soit chargé */
 img{position:absolute;left:24px;bottom:0;width:128px;height:128px;image-rendering:pixelated;display:block;cursor:grab;-webkit-user-drag:none;transform-origin:50% 60%}
 img.walk{animation:bob .5s steps(2) infinite}
 img.hop{animation:hop .45s ease-out}
@@ -630,7 +631,11 @@ function land() {
 }
 let lastT = performance.now();
 // le clignement passe après tout le reste : une image posée pendant ce pas est remplacée tout de suite, sans flash du visage habituel
-function tick() { tickBody(); if (isSheet()) blinkStep(Date.now()); }
+function tick() {
+  // premier lancement, pas encore de Bidule choisi : il attend, immobile, à sa place de départ (en haut), comme au lancement suivant
+  if (!chosen) { lastT = performance.now(); return; }
+  tickBody(); if (isSheet()) blinkStep(Date.now());
+}
 function tickBody() {
   ticks++;
   const t2 = performance.now(), dtMs = Math.min(200, t2 - lastT), k = Math.min(4, (t2 - lastT) / 33); lastT = t2;
@@ -1116,7 +1121,8 @@ try {
   });
 } catch (e) { say("drag-drop: " + e); }
 let bidHidden = false;          // caché par un clic droit (main.rs : montrer_bidule)
-function sendState() { T.event.emit("etat", {style, partsBy, thumb:FR.normal, mood, moodMode, moodReason, cache:bidHidden}); }
+let chosen = false;          // un Bidule a été choisi (au premier lancement, pas encore)
+function sendState() { T.event.emit("etat", {style:chosen ? style : null, partsBy, thumb:FR.normal, mood, moodMode, moodReason, cache:bidHidden}); }
 function refreshSprite() {
   const cur = {sleep:"dort", carried:"dort", dizzy:"d1", nausea:"n1", pet:"content", laugh:"rire", angry:"fache",
     sulk:"fache", eat:"rire", ooh:"ooh", drowsy:"baille", waking:"baille", fly:"p1", held:"p1"}[mode];
@@ -1283,11 +1289,16 @@ T.event.listen("bonbon-clic", e => {
   wanted.push(s); disturb(); say("clic sur un bonbon");
 });
 T.event.listen("demande-etat", sendState);
-T.event.listen("style", async e => {
-  if (SHEETS[e.payload] && !SHEET_DATA[e.payload]) { try { await loadSheet(e.payload); } catch (err) { say("perso : " + err); return; } }
+// Le Bidule choisi : chargé, affiché, et gardé pour le prochain lancement (main.rs : garder_choix).
+async function chooseStyle(s) {
+  if (SHEETS[s] && !SHEET_DATA[s]) { try { await loadSheet(s); } catch (err) { say("perso : " + err); return; } }
   if (mode === "turning") { mode = "walk"; dir = pendingDir; face(); }
-  buildFrames(e.payload); lookKey = ""; say("piste : " + e.payload); refreshSprite(); sendState();
-});
+  buildFrames(s); lookKey = ""; say("piste : " + s); refreshSprite();
+  if (!chosen) { chosen = true; document.body.classList.add("pret"); }
+  T.core.invoke("garder_choix", {style:s}).catch(e => say("choix : " + e));
+  sendState();
+}
+T.event.listen("style", e => chooseStyle(e.payload));
 // Demi-tour : avec un perso dessiné, on joue son animation "turn" au lieu de retourner l'image.
 function turnTo(nd, ready) {
   if (nd === dir) return;
@@ -1354,7 +1365,10 @@ img.addEventListener("contextmenu", async e => {
     x = p.x / s; y = p.y / s; await bounds(); face();
     setInterval(() => { try { tick(); } catch (e) { say("tick: " + e); } }, 16);
     say("demarre");
-    try { await loadSheet("limace"); buildFrames("limace"); refreshSprite(); } catch (err) { say("perso : " + err); }
+    // le Bidule choisi la dernière fois ; au premier lancement, rien ne s'affiche : le panneau s'ouvre pour en choisir un
+    let saved = null;
+    try { saved = await T.core.invoke("lire_choix"); } catch (e) { say("choix : " + e); }
+    if (saved) await chooseStyle(saved); else T.core.invoke("ouvrir_panneau");
     autoMood();
   } catch (e) { say("init: " + e); }
 })();
