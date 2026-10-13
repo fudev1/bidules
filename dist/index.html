@@ -598,9 +598,13 @@ function headroom() {
   return WH - 128 + 2 * t;
 }
 function push() { want = [x, y]; if (!sending) flush(); }
+// macOS ne laisse pas une fenêtre monter au-dessus de la barre de menus : au-delà, la fenêtre reste dessous et c'est le dessin
+// qui monte dans sa fenêtre (la marge transparente au-dessus de lui), pour qu'il aille jusqu'en haut de l'écran.
 async function flush() {
   while (want) { const [a, b] = want; want = null; sending = true;
-    try { await win.setPosition(new LogicalPosition(Math.round(a), Math.round(b))); } catch (e) { say("setPosition: " + e); }
+    const up = Math.max(0, Math.round(minY - b));
+    try { await win.setPosition(new LogicalPosition(Math.round(a), Math.round(b) + up)); } catch (e) { say("setPosition: " + e); }
+    document.body.style.translate = up ? `0 ${-up}px` : "";
     sending = false; }
 }
 // Lancé contre le bord de l'écran, un perso dessiné s'écrase contre lui (choc-bord) puis coule le long du mur (coule) jusqu'au sol.
@@ -1043,7 +1047,7 @@ img.addEventListener("pointerup", async () => {
   if (pull.on && pull.phase === "ground") { pull.phase = "back"; pull.vd = [0, 0]; mode = "springback"; return; }
   const now = performance.now(), last = samples[samples.length - 1];
   const old = samples.find(s => now - s.t < 90) || last, dt = Math.max(16, last.t - old.t);
-  const tvx = Math.max(-28, Math.min(28, (last.x - old.x) / dt * 33 * 0.55)), tvy = Math.max(-28, Math.min(28, (last.y - old.y) / dt * 33 * 0.55));
+  const tvx = Math.max(-28, Math.min(28, (last.x - old.x) / dt * 33 * 0.55)), tvy = Math.max(-Math.sqrt(2.6 * (floorY - minY + WH)), Math.min(28, (last.y - old.y) / dt * 33 * 0.55));          // vers le haut : assez d'élan pour atteindre le haut de l'écran
   const fromPull = pull.on && pull.phase === "hang";
   if (fromPull) await pullFinish();
   if (!moved) { clicked(); return; }
