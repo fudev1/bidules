@@ -18,3 +18,4 @@ ma-branche  --PR-->  test  --PR test -> main-->  main
 - **Ne jamais merger une pull request sans accord explicite** de la personne qui la demande, même si elle est approuvée.
 - Ne pas commiter sur `main` ni sur `test` : si on y est, créer d'abord une branche.
 - Si le dossier local est sur la branche de quelqu'un d'autre, ne pas y toucher : travailler dans un `git worktree` à part.
+- Quand un skill parle de `main` comme branche de départ ou de destination (par exemple `implement-spec` ou `prototype`), lire `test` : on part de `test` et les pull requests visent `test`.

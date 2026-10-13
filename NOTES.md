@@ -27,7 +27,7 @@ Mise à jour : 6 octobre 2026. Ce fichier suit l'état du projet : ce qui est d�
 
 ## Fait
 
-- Skills de Matt Pocock (`github.com/mattpocock/skills`, version 1.3.1) copiés dans `.claude/skills/` : les 27 du plugin officiel (grilling, tdd, diagnosing-bugs, to-spec, etc.). Pour les commits et les pull requests, nos skills `commit` et `pull-request` restent prioritaires sur `pr`. Mise à jour : à la main, en recopiant depuis le repo.
+- Skills de Matt Pocock (`github.com/mattpocock/skills`, version 1.3.1) copiés dans `.claude/skills/` : les 27 du plugin officiel (grilling, tdd, diagnosing-bugs, to-spec, etc.). Pour les commits et les pull requests, nos skills `commit` et `pull-request` restent prioritaires sur `pr`. Ce qu'ils produisent est écrit en français, et quand ils parlent de `main` on lit `test`. Mise à jour : à la main, en recopiant depuis le repo.
 - App de bureau Mac : fenêtre transparente au premier plan, le Bidule vit en bas de l'écran, panneau dans la barre de menus (Piste, Évolution, Humeur).
 - Interactions :
   - attraper au premier clic, lancer avec rebonds sur les bords, suivre la souris des yeux ;
