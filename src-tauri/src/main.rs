@@ -441,7 +441,7 @@ fn main() {
                         let scale = panel.scale_factor().unwrap_or(1.0);
                         let pos = rect.position.to_physical::<f64>(scale);
                         let size = rect.size.to_physical::<f64>(scale);
-                        let width = panel.outer_size().map(|s| s.width as f64).unwrap_or(520.0 * scale);
+                        let width = panel.outer_size().map(|s| s.width as f64).unwrap_or(640.0 * scale);
                         let x = (pos.x + size.width / 2.0 - width / 2.0).max(0.0);
                         let _ = panel.set_position(PhysicalPosition::new(x, pos.y + size.height + 4.0));
                         let _ = panel.show();
