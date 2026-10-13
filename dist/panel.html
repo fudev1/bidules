@@ -58,6 +58,31 @@ main{flex:1;overflow:auto;padding:0 12px 12px}
 .slot{display:grid;grid-template-columns:64px 1fr;gap:8px;align-items:center}
 .slot b{font:400 12px/1 var(--display);letter-spacing:.6px;color:var(--yellow)}
 .row{display:flex;gap:8px;flex-wrap:wrap}
+/* Onglet Tests : un bouton rond en pointillés au bout des onglets, pour des essais d'apparence */
+.tab.lab{flex:none;width:30px;padding:0;display:grid;place-items:center;border:2px dashed rgba(255,255,255,.6)}
+.tab.lab svg{width:15px;height:15px}
+.tab.lab[aria-selected="true"]{border-color:transparent}
+.essais{display:grid;grid-template-columns:repeat(2,1fr);gap:6px}
+.essais .chip{border-radius:14px;text-align:left;padding:9px 12px;font-size:12px}
+.essais .chip small{display:block;font-weight:500;font-size:11px;opacity:.85;margin-top:4px;line-height:1.3}
+.essais h3{grid-column:1/-1;margin:4px 0 0;font:400 13px/1 var(--display);letter-spacing:.6px;color:var(--yellow)}
+
+/* Essais « verre » : plaques translucides et floutées, reflet de lumière en haut, liseré clair (pas de contour sombre) */
+.verre-a .panel,.verre-c .panel{margin:0;height:100vh;background-color:rgba(240,48,90,.4);-webkit-backdrop-filter:blur(24px) saturate(1.5);backdrop-filter:blur(24px) saturate(1.5);box-shadow:inset 0 0 0 1px rgba(255,255,255,.28)}
+.verre-a header{background-color:rgba(61,31,85,.5)}
+.verre-a .st,.verre-a .tabs,.verre-a .now,.verre-a .chip:not(.on),.verre-a #quit,
+.verre-b .st,.verre-b .tabs,.verre-b .now,.verre-b .chip:not(.on),
+.verre-c .st,.verre-c .tabs,.verre-c .now,.verre-c .chip:not(.on){
+  -webkit-backdrop-filter:blur(12px) saturate(1.6);backdrop-filter:blur(12px) saturate(1.6);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.6),inset 0 -1px 0 rgba(255,255,255,.15),inset 0 0 0 1px rgba(255,255,255,.18),0 4px 14px rgba(30,27,58,.18)}
+.verre-a .st,.verre-b .st,.verre-c .st{background-image:linear-gradient(180deg,rgba(255,255,255,.3),rgba(255,255,255,0) 45%),var(--waves)}
+.verre-a .st{background-color:rgba(61,31,85,.45)}.verre-a .st.c1{background-color:rgba(166,210,58,.5)}.verre-a .st.c2{background-color:rgba(255,217,74,.5)}.verre-a .st.c3{background-color:rgba(179,23,63,.45)}
+.verre-b .st,.verre-c .st{background-color:rgba(255,255,255,.16);color:var(--white)}
+.verre-b .st.c1,.verre-c .st.c1{background-color:rgba(166,210,58,.35)}.verre-b .st.c2,.verre-c .st.c2{background-color:rgba(255,217,74,.35)}
+.verre-a .st:disabled,.verre-b .st:disabled,.verre-c .st:disabled{background-color:rgba(255,255,255,.08);color:rgba(255,255,255,.6)}
+.verre-a .tabs,.verre-b .tabs,.verre-c .tabs{background-color:rgba(255,255,255,.12)}
+.verre-a .tab[aria-selected="true"],.verre-b .tab[aria-selected="true"],.verre-c .tab[aria-selected="true"]{box-shadow:inset 0 1px 0 rgba(255,255,255,.8),0 2px 8px rgba(30,27,58,.2)}
+
 .btn{font:400 13px/1 var(--display);letter-spacing:.6px;border-radius:14px;padding:10px 14px 8px;background:rgba(255,255,255,.18)}
 .btn.primary{background:var(--yellow);color:var(--ink)}
 .moods{display:grid;grid-template-columns:repeat(2,1fr);gap:6px}
@@ -72,6 +97,7 @@ main{flex:1;overflow:auto;padding:0 12px 12px}
     <button class="tab" role="tab" data-tab="piste" aria-selected="true">Piste</button>
     <button class="tab" role="tab" data-tab="evo" aria-selected="false" disabled title="Bientôt">Évolution</button>
     <button class="tab" role="tab" data-tab="humeur" aria-selected="false">Humeur</button>
+    <button class="tab lab" role="tab" data-tab="tests" aria-selected="false" title="Tests : des essais d'apparence" aria-label="Tests"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6M10 3v6l-5 9a2 2 0 0 0 1.8 3h10.4a2 2 0 0 0 1.8-3l-5-9V3"/><path d="M7.5 15h9"/></svg></button>
   </nav>
   <main>
     <section class="pane" id="p-piste">
@@ -82,6 +108,10 @@ main{flex:1;overflow:auto;padding:0 12px 12px}
       <p class="hint" id="evoHint"></p>
       <div class="row"><button class="btn primary" id="random">Gagner une partie au hasard</button><button class="btn" id="reset">Revenir au départ</button></div>
       <div id="slots" class="slots"></div>
+    </section>
+    <section class="pane" id="p-tests" hidden>
+      <p class="hint">Des essais à comparer avant de choisir. Ils ne changent que l'apparence, et restent sur ce Mac.</p>
+      <div class="essais" id="essais"></div>
     </section>
     <section class="pane" id="p-humeur" hidden>
       <p class="hint">L'humeur suit la jauge de contexte de ta conversation Claude en cours : joyeuse jusqu'à 30 %, normale jusqu'à 60 %, fatiguée au-delà. Quand Claude ne fait rien (réponse finie, ou pas de conversation), il dort : c'est le signal pour y retourner. Jamais en lisant tes messages. Tu peux la forcer ici.</p>
@@ -123,9 +153,25 @@ function render() {
   $("slots").innerHTML = SLOTS.map(([slot, label, opts]) => `<div class="slot"><b>${label}</b><div class="chips">${opts.map(([p, name]) =>
     `<button class="chip ${parts[slot] === p ? "on" : ""}" data-part="${slot}:${p}" ${noParts ? "disabled" : ""}>${name}</button>`).join("")}</div></div>`).join("");
 }
+// Onglet Tests : des essais d'apparence, gardés dans ce navigateur (ce Mac) seulement.
+const ESSAIS = [["", "Aucun", "Le panneau habituel, en aplats."],
+  ["verre-a", "A - Verre total", "Tout le panneau en verre teinté : le bureau se devine, flouté, derrière."],
+  ["verre-b", "B - Tuiles en verre", "Le fond reste plein ; tuiles, onglets et boutons deviennent des plaques de verre."],
+  ["verre-c", "C - Mélange", "Le panneau en verre sur le bureau flouté, et des tuiles en verre clair."]];
+let essai = "";
+try { essai = localStorage.getItem("bidule.essai") || ""; } catch (e) {}
+function applyEssai() {
+  document.body.className = essai;
+  // A et C : le flou natif de macOS sous la fenêtre, pour voir le bureau à travers le panneau
+  const flou = essai === "verre-a" || essai === "verre-c";
+  if (T) { const w = T.window.getCurrentWindow(); (flou ? w.setEffects({effects:["popover"], state:"active", radius:24}) : w.clearEffects()).catch(e => console.log("effets : " + e)); }
+  $("essais").innerHTML = "<h3>Effet verre</h3>" + ESSAIS.map(([id, name, desc]) => `<button class="chip ${essai === id ? "on" : ""}" data-essai="${id}">${name}<small>${desc}</small></button>`).join("");
+}
+applyEssai();
 document.addEventListener("click", e => {
   const b = e.target.closest("button"); if (!b || b.disabled) return;
-  if (b.dataset.tab) { document.querySelectorAll(".tab").forEach(t => t.setAttribute("aria-selected", t === b)); ["piste", "evo", "humeur"].forEach(k => $("p-" + k).hidden = k !== b.dataset.tab); }
+  if (b.dataset.tab) { document.querySelectorAll(".tab").forEach(t => t.setAttribute("aria-selected", t === b)); ["piste", "evo", "humeur", "tests"].forEach(k => $("p-" + k).hidden = k !== b.dataset.tab); }
+  else if (b.dataset.essai !== undefined) { essai = b.dataset.essai; try { localStorage.setItem("bidule.essai", essai); } catch (e) {} applyEssai(); }
   else if (b.dataset.style) { send("style", b.dataset.style); if (st.cache && T) T.core.invoke("montrer_bidule", {oui:true}); if (!st.style && T) T.core.invoke("hide_panel"); }      // premier choix : le panneau se ferme, le Bidule tombe sur le bureau      // caché : cliquer dessus le fait revenir
   else if (b.dataset.part) send("evo", "part:" + b.dataset.part);
   else if (b.dataset.mood) send("mood", b.dataset.mood);
