@@ -189,6 +189,41 @@ Les chemins de `.mcp.json` partent de `~/mcp/` : cloner ailleurs demande d'y ada
 
 Le serveur `aseprite-live` est lancé par Claude Code et ne vit que pendant une session ouverte dans le projet : à chaque nouvelle session, recliquer sur **Connect** dans File › MCP Bridge d'Aseprite. En cas de doute, `python3 tools/aseprite_mcp.py` diagnostique l'installation, les processus et la connexion ; avec Claude Code, le skill `aseprite-mcp` déroule la mise en place et les réparations.
 
+## Travailler avec les skills de Matt Pocock
+
+Les skills de [mattpocock/skills](https://github.com/mattpocock/skills) sont dans `.claude/skills/`. Certains se lancent seulement à la main, en tapant `/nom` dans Claude Code. Les autres, Claude les prend aussi tout seul quand la demande s'y prête (marqués « auto » plus bas). En cas de doute, `/ask-matt` dit lequel prendre.
+
+**Une fois, avant le premier usage** : `/setup-matt-pocock-skills`. Il demande où ranger les tickets (issues GitHub ou fichiers locaux), les étiquettes de tri et l'emplacement du glossaire.
+
+**Le flux principal, de l'idée à la pull request :**
+
+1. `/grill-with-docs` : Claude pose des questions jusqu'à ce que l'idée soit claire, et note le vocabulaire dans `GLOSSARY.md` et les décisions dans des ADR.
+2. Une question qui ne se tranche pas à l'oral (un comportement à voir, un enchaînement d'états) : `/prototype` (auto), un essai jetable sur sa propre branche. `/handoff` sert à passer le relais si le prototype se fait dans une autre session.
+3. Petit travail : `/implement` dans la même session. Gros travail (plusieurs sessions) : `/to-spec` (la spec), puis `/to-tickets` (des tickets avec leurs dépendances), puis `/implement` ticket par ticket en vidant la session (`/clear`) entre deux, ou `/implement-spec` pour tout enchaîner d'un coup.
+4. Le code se construit par `/tdd` (auto) : un test qui échoue, le code qui le fait passer, puis on recommence. Il se termine par `/code-review` (auto) : respect des règles du projet d'un côté, respect de la spec de l'autre.
+5. Commit avec le skill `commit`, pull request vers `test` avec le skill `pull-request` (pas `pr`).
+6. `/retro` : après coup, ce qu'il faudrait changer dans les consignes ou les outils pour que la prochaine fois se passe mieux.
+
+Garder les étapes 1 à 3 dans la même session jusqu'à `/to-tickets` : la spec et les tickets s'appuient sur les réponses données pendant les questions.
+
+**Autres points d'entrée :**
+
+- Un bug qui résiste : `/diagnosing-bugs` (auto). Il commence par trouver une commande qui reproduit le bug, puis corrige et ajoute un test.
+- Des demandes et des bugs qui s'accumulent dans les issues : `/triage`.
+- Un très gros chantier encore flou : `/wayfinder`, puis retour au flux principal par `/to-spec`.
+- Entretien du code : `/improve-codebase-architecture` propose des endroits à simplifier ; `/codebase-design` (auto) donne le vocabulaire pour en parler.
+
+**À part :**
+
+- `/grill-me` : les mêmes questions sans rien écrire dans le projet. `/grilling` (auto) : les questions seules.
+- `/research` (auto) : une recherche dans des sources sûres, rangée dans un fichier du projet.
+- `/to-questionnaire` : un questionnaire pour la personne qui détient la réponse.
+- `/wizard` (auto) : un script qui guide pas à pas une étape que seul un humain peut faire (comptes, clés, réglages en ligne).
+- `/wait-what` : Claude reformule son dernier message, plus simplement.
+- `/teach` : apprendre un sujet sur plusieurs séances. `/domain-modeling` (auto) : le glossaire et les ADR. `/writing-for-agents` (auto) : écrire des consignes ou des skills.
+
+Ce qu'ils produisent est écrit en français, et quand ils parlent de `main` on lit `test` (voir `CLAUDE.md` et `.claude/rules/git-flux.md`). Mise à jour : recopier leurs dossiers depuis le dépôt de Matt Pocock, sans les modifier.
+
 ## Tester sans l'app
 
 ```bash
