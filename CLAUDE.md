@@ -12,6 +12,7 @@ Compagnon de bureau pour les utilisateurs de Claude Code. La vision et l'install
 - `tools/sim.py` : page de test du Bidule dans un navigateur, sans l'app.
 - `moodboard/` : direction artistique, spec des animations (`animations-des-bidules.html`), animations à dessiner (`planches-limace.html`), et `style-bidules.md` : le style des Bidules, à lire avant de dessiner, générer ou retoucher une image.
 - `.mcp.json` : les serveurs MCP `aseprite` (fichiers `.aseprite`, sans ouvrir l'app), `aseprite-live` (dessin en direct dans l'Aseprite ouvert) et `pixellab` (anime une pose, calcule les images entre deux poses ; jeton dans `PIXELLAB_SECRET`). Installation : README, « Faire éditer Aseprite par Claude Code ». Après une retouche d'un `.aseprite`, `mise run publier` pour que l'app la voie. Pour travailler dans Aseprite avec Claude (connexion, réparation, règles) : skill `aseprite-mcp`.
+- `.claude/skills/` : nos skills et ceux de Matt Pocock. Le flux d'utilisation de ces derniers : README, « Travailler avec les skills de Matt Pocock ».
 
 ## Lancer et vérifier
 
@@ -25,5 +26,5 @@ Compagnon de bureau pour les utilisateurs de Claude Code. La vision et l'install
 - **Ne pas pousser à consommer** : rien ne doit récompenser le volume brut de tokens (voir "À trancher" dans `NOTES.md`).
 - **Pixel art 64 × 64**, jamais de vectoriel. Le format des animations est dans la spec (`moodboard/animations-des-bidules.html`).
 - **NOTES.md** : quand une décision ou l'état du projet change, le mettre à jour dans la même pull request.
-- **Git** : suivre `.claude/rules/git-flux.md` (branche, puis `test`, puis `main`) et `.claude/rules/pas-de-mention-claude.md`. Pour les commits : le skill `commit`. Pour les pull requests : le skill `pull-request`.
-- **Langue** : écrire en français (commentaires, messages, documents), comme l'existant.
+- **Git** : suivre `.claude/rules/git-flux.md` (branche, puis `test`, puis `main`) et `.claude/rules/pas-de-mention-claude.md`. Pour les commits : le skill `commit`. Pour les pull requests : le skill `pull-request` (pas `pr`, qui vient des skills de Matt Pocock).
+- **Langue** : écrire en français (commentaires, messages, documents), comme l'existant. Cela vaut aussi pour ce que produisent les skills de Matt Pocock (glossaire, ADR, specs, tickets, passages de relais, questionnaires, rapports) et pour `/wait-what` (en français simple). Garder tels quels les noms de fichiers (`GLOSSARY.md`...), les titres de section et les étiquettes que ces skills recherchent (`## Agent skills`, `## Comments`, `## Answer`, `Status:`, `wayfinder:<type>`...).
