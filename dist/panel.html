@@ -27,11 +27,14 @@ h1{margin:0;font:400 32px/.95 var(--display);letter-spacing:1px;color:var(--yell
 .stage img{width:96px;height:96px}
 .stage::after{height:12px}
 #sub{margin:0;font:400 11px/1 var(--display);letter-spacing:1.2px}
-#quit{position:absolute;top:12px;right:14px;font:600 11px/1 var(--text);opacity:.7}
-#quit:hover{opacity:1}
+#quit{position:absolute;top:12px;right:12px;width:34px;height:34px;border-radius:50%;background:var(--pink);display:grid;place-items:center;box-shadow:0 3px 0 var(--plum-deep)}
+#quit:hover{background:#ff4570}
+#quit:active{transform:translateY(2px);box-shadow:0 1px 0 var(--plum-deep)}
+#quit svg{width:18px;height:18px}
 .tabs{display:flex;gap:4px;margin:12px 14px;padding:4px;border-radius:999px;background:rgba(30,27,58,.22)}
 .tab{flex:1;font:400 14px/1 var(--display);letter-spacing:.8px;padding:9px 4px 7px;border-radius:999px}
 .tab[aria-selected="true"]{background:var(--yellow);color:var(--ink)}
+.tab:disabled{opacity:.4}
 main{flex:1;overflow:auto;padding:0 14px 14px}
 .pane{display:grid;gap:12px}
 .hint{margin:0;font-size:12px;opacity:.9}
@@ -64,10 +67,10 @@ main{flex:1;overflow:auto;padding:0 14px 14px}
 </style></head>
 <body>
 <div class="panel">
-  <header><button id="quit">Quitter</button><p class="kicker">Ton Bidule</p><h1 id="title">Bidule</h1><div class="ground stage"><img id="thumb" class="mon" alt=""></div><p id="sub"></p></header>
+  <header><button id="quit" aria-label="Éteindre le Bidule" title="Éteindre le Bidule"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round"><path d="M12 3v8"/><path d="M6.3 7.3a8 8 0 1 0 11.4 0"/></svg></button><p class="kicker">Ton Bidule</p><h1 id="title">Bidule</h1><div class="ground stage"><img id="thumb" class="mon" alt=""></div><p id="sub"></p></header>
   <nav class="tabs" role="tablist">
     <button class="tab" role="tab" data-tab="piste" aria-selected="true">Piste</button>
-    <button class="tab" role="tab" data-tab="evo" aria-selected="false">Évolution</button>
+    <button class="tab" role="tab" data-tab="evo" aria-selected="false" disabled title="Bientôt">Évolution</button>
     <button class="tab" role="tab" data-tab="humeur" aria-selected="false">Humeur</button>
   </nav>
   <main>
@@ -103,16 +106,16 @@ const $ = id => document.getElementById(id);
 let st = {mood:null, moodMode:"auto", moodReason:"", style:"limace", partsBy:{classique:{tete:"antennes", pattes:"longues", bras:"bras", queue:"touffue"}, louche:{}, depareille:{}, paupieres:{}, dessus:{}, ...Object.fromEntries(Object.keys(MONSTRES).map(id => [id, {}])), limace:{}, candy:{}}, thumb:""};
 const send = (ev, payload) => { if (T) T.event.emit(ev, payload); else console.log(ev, payload); };
 const MOODS = [["auto", "Automatique"], ["guilleret", "Guilleret"], ["ronchon", "Ronchon"], ["vaseux", "Vaseux"], ["stresse", "Stressé"], ["lune", "Dans la lune"]];
-const render64 = (s, parts) => SHEETS.has(s) ? "persos/" + s + "/thumb.png" : MONSTRES[s] ? monstreURL(s, "forme", [0, 0], parts, st.mood) : s === "classique" ? bidule64({pal:"menthe", parts, mood:st.mood}, "forme", {tete:"bonnet"}) : blobFace64(s, "forme", [0, 0], "menthe", parts, st.mood);
+const render64 = (s, parts, mood = st.mood) => SHEETS.has(s) ? "persos/" + s + "/thumb.png" : MONSTRES[s] ? monstreURL(s, "forme", [0, 0], parts, mood) : s === "classique" ? bidule64({pal:"menthe", parts, mood}, "forme", {tete:"bonnet"}) : blobFace64(s, "forme", [0, 0], "menthe", parts, mood);
 function render() {
-  const parts = st.partsBy[st.style] || {}, n = Object.keys(parts).length, noParts = SHEETS.has(st.style);
+  const parts = st.partsBy[st.style] || {}, noParts = SHEETS.has(st.style);
   $("thumb").src = st.thumb || render64(st.style, parts);
   $("title").textContent = STYLES.find(s => s[0] === st.style)[1];
   const ml = st.mood ? MOODS.find(m => m[0] === st.mood)[1] : "Normale";
-  $("sub").textContent = (n ? `${n} partie${n > 1 ? "s" : ""} sur 6` : "Forme de départ") + " · " + ml;
+  $("sub").textContent = "Humeur : " + ml;
   $("moodNow").innerHTML = `Humeur actuelle : <b>${ml}</b>` + (st.moodReason ? ` (${st.moodMode === "auto" ? "devinée : " : ""}${st.moodReason})` : "");
   $("moods").innerHTML = MOODS.map(([id, name]) => `<button class="chip ${st.moodMode === id ? "on" : ""}" data-mood="${id}">${name}</button>`).join("");
-  $("styles").innerHTML = STYLES.map(([id, name], i) => `<button class="st c${i % 4} ${id === st.style ? "on" : ""}" data-style="${id}" ${READY.has(id) ? "" : "disabled"}>${READY.has(id) ? "" : '<i class="soon">Bientôt</i>'}<i class="spark"></i><span class="ground"><img class="mon" src="${render64(id, st.partsBy[id] || {})}" alt=""></span><span class="nm">${name}</span></button>`).join("");
+  $("styles").innerHTML = STYLES.map(([id, name], i) => `<button class="st c${i % 4} ${id === st.style ? "on" : ""}" data-style="${id}" ${READY.has(id) ? "" : "disabled"}>${READY.has(id) ? "" : '<i class="soon">Bientôt</i>'}<i class="spark"></i><span class="ground"><img class="mon" src="${render64(id, st.partsBy[id] || {}, READY.has(id) ? st.mood : null)}" alt=""></span><span class="nm">${name}</span></button>`).join("");
   $("evoHint").textContent = noParts ? "Les parties arriveront avec les animations dessinées de ce Bidule." : "Un clic ajoute la partie, un second clic la retire. Une partie du même emplacement remplace l'ancienne.";
   $("random").disabled = $("reset").disabled = noParts;
   $("slots").innerHTML = SLOTS.map(([slot, label, opts]) => `<div class="slot"><b>${label}</b><div class="chips">${opts.map(([p, name]) =>
