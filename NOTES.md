@@ -36,6 +36,7 @@ Mise à jour : 6 octobre 2026. Ce fichier suit l'état du projet : ce qui est d�
 - Icône de la barre de menus : la limace, animée selon Claude. Elle rampe sur place quand il travaille (avec le visage de l'humeur), elle est intriguée quand il attend (un outil demandé sans résultat depuis 20 s : une permission, sans doute, ou une longue commande), elle dort quand il a fini. Bidule fermé, elle se fige au repos. Dessinée par la fenêtre du Bidule (`index.html`), envoyée à la commande `icone` (`main.rs`) ; image de repos : `src-tauri/icons/tray-repos.png`.
 - Interactions :
   - attraper au premier clic, lancer avec rebonds sur les bords (jusqu'en haut de l'écran : le plafond se règle sur le haut du dessin, pas de sa fenêtre), suivre la souris des yeux ;
+  - lancé assez fort vers le haut (limace), il s'accroche au haut de l'écran par la tête (« Hop ! »), gigote avec la pose « attrapé », puis lâche au bout de 1 à 3 s (« Oups ! ») et retombe ; trop lentement, il rate (« Raté ! ») et rebondit ; un clic le fait lâcher. Accroché, c'est le dessin qui monte dans sa fenêtre si macOS bloque la fenêtre sous la barre de menus ;
   - caresses, chatouilles (rire, puis fâché), secouer (nausée) ;
   - fichier glissé dessus : il le "mange", sans y toucher ;
   - clic droit : un petit menu du Mac sur le Bidule (ouvrir le panneau, humeur, cacher le Bidule, quitter), à compléter avec d'autres actions ; caché, l'icône se fige au repos, et il revient d'un clic sur lui dans l'onglet Piste du panneau (marqué « Caché ») ou avec « Afficher le Bidule » dans le menu de l'icône ;

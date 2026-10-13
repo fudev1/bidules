@@ -345,7 +345,7 @@ function pullFinish() {
 }// Un perso dessiné joue l'animation qui correspond à ce qu'il fait ; sheetOnce joue une animation une fois (saut, atterrissage, choc).
 // tenu par la souris : la boule avec une pointe (attrape-boule) si elle existe, sinon attrape
 const heldTag = T2 => T2["attrape-boule"] ? "attrape-boule" : "attrape";
-const SHEET_MODE_TAG = {held:"attrape", fly:"vol", dizzy:"etourdi", nausea:"nausee", recover:"remis", pet:"caresse", laugh:"rire", angry:"fache",
+const SHEET_MODE_TAG = {held:"attrape", ceiling:"attrape", fly:"vol", dizzy:"etourdi", nausea:"nausee", recover:"remis", pet:"caresse", laugh:"rire", angry:"fache",
   sulk:"boude", wall:"coule", ooh:"intrigue", sleep:"dort", carried:"attrape", waking:"baille", evolving:"fier"};
 // Candy rebondit comme une balle quand on la lance ; crashed : la première chute était grosse, l'écrasement viendra à la fin des rebonds ; sing : elle chante pendant cette pause
 const BOUNCY = new Set(["candy"]);
@@ -599,10 +599,20 @@ function headroom() {
   if (t === undefined) { t = spriteTop().y; if (img.complete) TOPS.set(img.src, t); }
   return WH - 128 + 2 * t;
 }
+// Lancé assez fort vers le haut, il s'accroche au haut de l'écran par la tête (la pose « attrapé »), 1 à 3 s.
+let ceilingUntil = 0;
+function cling() {
+  mode = "ceiling"; vx = vy = 0; angle = 0; img.style.rotate = "0deg"; img.style.translate = "";
+  img.src = FR.p1; pose("struggle"); ceilingUntil = Date.now() + 1000 + Math.random() * 2000;
+  y = minY - headroom(); bubble("Hop !", 900); say("accroche au haut de l'ecran");
+}
 function push() { want = [x, y]; if (!sending) flush(); }
 async function flush() {
   while (want) { const [a, b] = want; want = null; sending = true;
-    try { await win.setPosition(new LogicalPosition(Math.round(a), Math.round(b))); } catch (e) { say("setPosition: " + e); }
+    // accroché en haut : macOS ne laisse pas la fenêtre passer au-dessus de la barre de menus, alors c'est le dessin qui monte dans sa fenêtre
+    const up = mode === "ceiling" ? Math.max(0, Math.round(minY - b)) : 0;
+    try { await win.setPosition(new LogicalPosition(Math.round(a), Math.round(b) + up)); } catch (e) { say("setPosition: " + e); }
+    document.body.style.translate = up ? `0 ${-up}px` : "";
     sending = false; }
 }
 // Lancé contre le bord de l'écran, un perso dessiné s'écrase contre lui (choc-bord) puis coule le long du mur (coule) jusqu'au sol.
@@ -671,7 +681,11 @@ function tickBody() {
     } else angle += vx * 1.2 * k;
     if (x < minX) { if (hitWall(-1)) { push(); return; } x = minX; vx = -vx * (BOUNCY.has(style) ? .7 : .25); squash("wall"); }
     if (x > maxX) { if (hitWall(1)) { push(); return; } x = maxX; vx = -vx * (BOUNCY.has(style) ? .7 : .25); squash("wall"); }
-    if (y < minY - headroom()) { y = minY - headroom(); vy = -vy * 0.4; }          // plafond : le haut du dessin touche le haut de l'écran, pas celui de la fenêtre
+    if (y < minY - headroom()) {          // plafond : le haut du dessin touche le haut de l'écran, pas celui de la fenêtre
+      if (isSheet() && style !== "candy" && !nausea && vy < -10) { cling(); push(); return; }          // assez d'élan : il s'y accroche
+      if (isSheet() && style !== "candy" && vy < -4) bubble("Raté !", 800);
+      y = minY - headroom(); vy = -vy * 0.4;
+    }
     if (y >= floorY) {
       y = floorY; const impact = Math.abs(vy); maxImpact = Math.max(maxImpact, impact);
       if (impact > (isSheet() ? 10 : 7) && bounces < (isSheet() ? 3 : 4) && (!isSheet() || BOUNCY.has(style))) {
@@ -689,6 +703,11 @@ function tickBody() {
     push(); return;
   }
   const now = Date.now();
+  if (mode === "ceiling") {          // accroché au haut de l'écran par la tête : il gigote, puis lâche et retombe
+    y = minY - headroom(); push();
+    if (now > ceilingUntil) { mode = "fly"; vx = 0; vy = 1; peakY = y; fall = null; pose(""); bubble("Oups !", 900); say("lache le haut de l'ecran"); }
+    return;
+  }
   if (mode === "wall") {      // collé au bord de l'écran : il coule, de plus en plus vite, jusqu'au sol
     const impact = sheetOnce && /^choc-bord/.test(sheetOnce.tag);          // pendant l'écrasement il reste en place, ensuite il coule
     if (!impact) { wallV = Math.min(1, wallV + .01 * k); y += wallV * k; }
@@ -977,6 +996,7 @@ function struggle(on) {
 }
 function clicked() {
   const now = Date.now();
+  if (mode === "ceiling") { ceilingUntil = 0; return; }          // accroché en haut : un clic le fait lâcher
   if (mode === "sleep") {
     wake += 40;
     if (wake >= 100) wakeUp("clics");
