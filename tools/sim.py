@@ -12,7 +12,7 @@ import os, sys
 DIST = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "dist")
 out = sys.argv[1] if len(sys.argv) > 1 else "/tmp/bidule-sim"
 os.makedirs(out, exist_ok=True)
-for name in ("bidule64.js", "monstre64.js", "persos"):
+for name in ("bidule64.js", "monstre64.js", "pense.js", "persos"):
     link = os.path.join(out, name)
     if not os.path.lexists(link): os.symlink(os.path.join(DIST, name), link)
 STUB = """<script>
