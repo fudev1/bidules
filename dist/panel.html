@@ -5,80 +5,181 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Luckiest+Guy&family=Fredoka:wght@500;600;700&display=swap">
+<!-- PROTOTYPE, à ne pas merger : trois variantes du panneau sans contours, dans la DA du moodboard (aplats, motif ondulé, gros titres à ombre portée).
+     On passe de l'une à l'autre avec la barre en bas ou les flèches du clavier ; ?variant=A, B ou C dans l'adresse. -->
 <style>
-:root{--ink:#1e1b3a;--pink:#f0305a;--pink-deep:#a8173a;--plum:#3d1f55;--yellow:#ffd94a;--lime:#a6d23a;--cream:#fff8ec;--white:#ffffff;
-  --display:"Luckiest Guy","Arial Rounded MT Bold","Arial Black",system-ui,sans-serif;--text:"Fredoka","Arial Rounded MT Bold",system-ui,-apple-system,sans-serif}
+:root{--ink:#1e1b3a;--pink:#f0305a;--pink-deep:#b3173f;--plum:#3d1f55;--plum-deep:#2a1340;--yellow:#ffd94a;--lime:#a6d23a;--cream:#fff8ec;--white:#ffffff;
+  --display:"Luckiest Guy","Arial Rounded MT Bold","Arial Black",system-ui,sans-serif;--text:"Fredoka","Arial Rounded MT Bold",system-ui,-apple-system,sans-serif;
+  --waves:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cg fill='none' stroke='white' stroke-opacity='.08' stroke-width='16' stroke-linecap='round'%3E%3Cpath d='M-20 30 C 10 0, 40 70, 75 35 S 130 0, 200 40'/%3E%3Cpath d='M-20 110 C 20 80, 45 150, 90 115 S 150 85, 200 120'/%3E%3Cpath d='M30 165 C 50 150, 70 185, 100 168'/%3E%3C/g%3E%3C/svg%3E")}
 *{box-sizing:border-box}
-html,body{margin:0;background:transparent;font:500 13px/1.35 var(--text);color:var(--ink);-webkit-user-select:none;user-select:none}
-.card{margin:10px;height:calc(100vh - 20px);background:var(--pink);border:3px solid var(--ink);border-radius:20px;box-shadow:0 6px 0 var(--ink);display:flex;flex-direction:column;overflow:hidden;
-  background-image:radial-gradient(circle at 18% 12%,rgba(255,255,255,.10) 0 22%,transparent 23%),radial-gradient(circle at 88% 80%,rgba(255,255,255,.08) 0 18%,transparent 19%)}
-header{display:flex;gap:10px;align-items:center;padding:12px 14px 8px}
-header img{width:56px;height:56px;image-rendering:pixelated;background:var(--white);border:3px solid var(--ink);border-radius:14px;padding:2px}
-header h1{font:400 26px/1 var(--display);margin:0;color:var(--white);letter-spacing:1px;text-shadow:0 3px 0 var(--pink-deep),0 3px 0 var(--pink-deep)}
-header p{margin:4px 0 0;color:var(--white);font-weight:600;font-size:12px}
-.tabs{display:flex;gap:6px;padding:4px 12px 10px}
-.tab{flex:1;font:400 14px/1 var(--display);letter-spacing:.8px;border:2.5px solid var(--ink);background:var(--white);color:var(--ink);padding:8px 4px 6px;border-radius:999px;cursor:pointer;box-shadow:0 3px 0 var(--ink)}
-.tab[aria-selected="true"]{background:var(--yellow)}
-.tab:active{transform:translateY(2px);box-shadow:0 1px 0 var(--ink)}
-main{flex:1;overflow:auto;padding:4px 12px 12px}
-.pane{display:grid;gap:10px;background:var(--cream);border:3px solid var(--ink);border-radius:16px;padding:12px;box-shadow:inset 0 0 0 3px var(--yellow)}
-.pane[hidden]{display:none}
-.hint{margin:0;color:var(--ink);opacity:.75;font-size:12px}
-.styles{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
-.st{font:inherit;border:2.5px solid var(--ink);background:var(--plum);border-radius:14px;padding:6px 4px 7px;display:grid;justify-items:center;gap:3px;cursor:pointer;color:var(--white);box-shadow:0 3px 0 var(--ink)}
-.st:nth-child(3n+2){background:var(--lime);color:var(--ink)}
-.st:nth-child(3n){background:var(--yellow);color:var(--ink)}
-.st img{width:64px;height:64px;image-rendering:pixelated;filter:drop-shadow(1.5px 0 0 #fff) drop-shadow(-1.5px 0 0 #fff) drop-shadow(0 1.5px 0 #fff) drop-shadow(0 -1.5px 0 #fff)}
-.st span{font:400 12px/1.1 var(--display);letter-spacing:.5px;text-align:center}
-.st.on{outline:3px solid var(--white);outline-offset:-6px;transform:translateY(-2px);box-shadow:0 5px 0 var(--ink)}
-.slot{display:grid;grid-template-columns:62px 1fr;gap:8px;align-items:center}
-.slot b{font:400 12px/1 var(--display);letter-spacing:.6px;color:var(--pink)}
+html,body{margin:0;background:transparent;font:500 13px/1.35 var(--text);color:var(--white);-webkit-user-select:none;user-select:none}
+button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;padding:0}
+.panel{margin:10px;height:calc(100vh - 56px);border-radius:24px;overflow:hidden;display:flex;flex-direction:column;background:var(--pink) var(--waves);box-shadow:0 10px 28px rgba(30,27,58,.35)}
+h1,h2{margin:0;font-weight:400;font-family:var(--display);letter-spacing:1px;color:var(--white)}
+.kicker{margin:0;font:400 11px/1 var(--display);letter-spacing:1.5px;color:var(--yellow)}
+.hint{margin:0;font-size:12px;opacity:.9}
+[hidden]{display:none!important}
+/* les monstres : contour blanc d'autocollant et ombre au sol, comme sur les affiches */
+.mon{image-rendering:pixelated;filter:drop-shadow(2px 0 0 #fff) drop-shadow(-2px 0 0 #fff) drop-shadow(0 2px 0 #fff) drop-shadow(0 -2px 0 #fff)}
+.ground{position:relative;display:grid;justify-items:center;isolation:isolate}
+.ground::after{content:"";position:absolute;bottom:-3px;width:62%;height:9px;border-radius:50%;background:rgba(30,27,58,.28);z-index:-1}
+.spark{position:absolute;width:14px;height:14px;background:var(--white);clip-path:polygon(50% 0,62% 38%,100% 50%,62% 62%,50% 100%,38% 62%,0 50%,38% 38%)}
+/* tuiles : aplats qui alternent, motif ondulé, aucun bord */
+.st{position:relative;display:grid;justify-items:center;align-content:center;gap:4px;background:var(--plum) var(--waves);background-size:120px}
+.st.c1{background-color:var(--lime);color:var(--ink)}.st.c2{background-color:var(--yellow);color:var(--ink)}.st.c3{background-color:var(--pink-deep)}
+.st .nm{font:400 12px/1.1 var(--display);letter-spacing:.5px;text-align:center;padding:3px 8px 2px;border-radius:999px}
+.st.on .nm{background:var(--white);color:var(--ink)}
+.st.on .spark{top:8px;right:8px}
+.st:not(.on) .spark{display:none}
 .chips{display:flex;flex-wrap:wrap;gap:6px}
-.chip{font:600 12.5px/1 var(--text);border:2px solid var(--ink);background:var(--white);border-radius:999px;padding:6px 11px;cursor:pointer;color:var(--ink)}
-.chip.on{background:var(--pink);color:var(--white)}
-.row{display:flex;gap:8px;flex-wrap:wrap}
-.btn{font:400 13px/1 var(--display);letter-spacing:.6px;border:2.5px solid var(--ink);background:var(--white);border-radius:12px;padding:9px 12px 7px;cursor:pointer;color:var(--ink);box-shadow:0 3px 0 var(--ink)}
-.btn:active{transform:translateY(2px);box-shadow:0 1px 0 var(--ink)}
-.btn.primary{background:var(--yellow)}
-.btn:disabled{opacity:.45;cursor:default}
+.chip{font:600 12.5px/1 var(--text);background:rgba(255,255,255,.18);border-radius:999px;padding:7px 12px}
+.chip.on{background:var(--yellow);color:var(--ink)}
+.slot{display:grid;grid-template-columns:64px 1fr;gap:8px;align-items:center}
+.slot b{font:400 12px/1 var(--display);letter-spacing:.6px;color:var(--yellow)}
 .moods{display:grid;grid-template-columns:repeat(2,1fr);gap:6px}
-.moods .chip{border-radius:12px;text-align:left;padding:8px 11px}
-.soon{border:2px dashed var(--ink);border-radius:12px;padding:9px 10px;font-size:12.5px;background:var(--white)}
-.soon b{color:var(--pink)}
-footer{padding:10px 14px 12px;display:flex;justify-content:space-between;align-items:center}
-footer small{color:var(--white);font-weight:600}
-footer .btn{background:var(--plum);color:var(--white)}
+.moods .chip{border-radius:14px;text-align:left;padding:9px 12px}
+.now{background:rgba(30,27,58,.22);border-radius:14px;padding:10px 12px;font-size:12.5px}
+.now b{color:var(--yellow)}
+.btn{font:400 13px/1 var(--display);letter-spacing:.6px;border-radius:14px;padding:10px 14px 8px;background:rgba(255,255,255,.18)}
+.btn.primary{background:var(--yellow);color:var(--ink)}
+.row{display:flex;gap:8px;flex-wrap:wrap}
+.slotlist{display:grid;gap:10px}
 :focus-visible{outline:3px solid var(--yellow);outline-offset:2px}
+
+/* A : la même organisation, sans aucun contour */
+.vA header{display:flex;gap:12px;align-items:center;padding:16px 16px 10px}
+.vA .thumb{width:64px;height:64px;border-radius:18px;background:var(--plum) var(--waves);background-size:90px;display:grid;place-items:center;flex:none}
+.vA .thumb img{width:52px;height:52px}
+.vA h1{font-size:28px;line-height:.95;text-shadow:3px 3px 0 var(--pink-deep)}
+.vA #sub{margin:5px 0 0;font-weight:600;font-size:12px}
+.vA .tabs{display:flex;gap:4px;margin:2px 14px 12px;padding:4px;border-radius:999px;background:rgba(30,27,58,.22)}
+.vA .tab{flex:1;font:400 14px/1 var(--display);letter-spacing:.8px;padding:9px 4px 7px;border-radius:999px;color:var(--white)}
+.vA .tab[aria-selected="true"]{background:var(--yellow);color:var(--ink)}
+.vA main{flex:1;overflow:auto;padding:0 14px 14px}
+.vA .pane{display:grid;gap:12px}
+.vA .styles{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.vA .st{border-radius:18px;padding:12px 4px 10px}
+.vA .st img{width:64px;height:64px}
+.vA footer{padding:10px 16px 14px;display:flex;justify-content:space-between;align-items:center}
+.vA footer small{font-weight:600;opacity:.85}
+.vA footer .btn{background:var(--plum);color:var(--white)}
+
+/* B : une affiche pour le Bidule, le choix dessous, les onglets en bas */
+.vB header{position:relative;background:var(--plum) var(--waves);padding:16px 16px 14px;text-align:center;display:grid;justify-items:center;gap:4px}
+.vB h1{font-size:36px;line-height:.9;color:var(--yellow);text-shadow:3px 4px 0 var(--plum-deep)}
+.vB .stage{margin:8px 0 4px}
+.vB .stage img{width:112px;height:112px}
+.vB .stage::after{height:14px}
+.vB #sub{margin:2px 0 0;font:400 11px/1 var(--display);letter-spacing:1.2px;color:var(--white)}
+.vB .quit{position:absolute;top:12px;right:14px;font:600 11px/1 var(--text);opacity:.7}
+.vB main{flex:1;overflow:auto;padding:14px 0 12px}
+.vB .pane{display:grid;gap:12px;padding:0 14px}
+.vB #p-piste{padding:0}
+.vB #p-piste .hint{padding:0 14px}
+.vB .styles{display:grid;grid-auto-flow:column;grid-template-rows:repeat(2,124px);grid-auto-columns:112px;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none}
+.vB .styles::-webkit-scrollbar{display:none}
+.vB .st{scroll-snap-align:start}
+.vB .st img{width:64px;height:64px}
+.vB .tabs{display:flex;background:var(--ink)}
+.vB .tab{flex:1;font:400 13px/1 var(--display);letter-spacing:.8px;padding:14px 4px 12px;color:rgba(255,255,255,.55);position:relative}
+.vB .tab[aria-selected="true"]{color:var(--yellow)}
+.vB .tab[aria-selected="true"]::before{content:"";position:absolute;top:0;left:30%;right:30%;height:4px;border-radius:0 0 4px 4px;background:var(--yellow)}
+.vB footer{display:none}
+
+/* C : une seule page qui défile, en mosaïque de couleurs bord à bord */
+.vC header{display:flex;gap:12px;align-items:center;padding:14px 16px 12px}
+.vC header img{width:56px;height:56px}
+.vC h1{font-size:26px;line-height:.95;text-shadow:3px 3px 0 var(--pink-deep)}
+.vC #sub{margin:5px 0 0;font-weight:600;font-size:12px}
+.vC main{flex:1;overflow:auto}
+.vC .pane{display:grid;gap:12px;padding:0 0 16px}
+.vC .pane > :not(.styles):not(h2){margin:0 16px}
+.vC h2{font-size:22px;padding:14px 16px 10px;text-shadow:2px 3px 0 var(--pink-deep)}
+.vC #p-evo{background:var(--plum) var(--waves)}
+.vC #p-evo h2{color:var(--yellow);text-shadow:2px 3px 0 var(--plum-deep)}
+.vC .styles{display:grid;grid-template-columns:repeat(3,1fr)}
+.vC .st{aspect-ratio:1;padding:6px}
+.vC .st img{width:64px;height:64px}
+.vC .tabs{display:none}
+.vC #p-piste{padding:0;gap:0}
+.vC footer{padding:12px 16px 14px;display:flex;justify-content:space-between;align-items:center;background:var(--ink)}
+.vC footer small{font-weight:600;opacity:.7}
+.vC footer .btn{background:var(--pink);color:var(--white)}
+
+/* barre du prototype, hors du panneau */
+#proto{position:fixed;left:50%;bottom:6px;transform:translateX(-50%);display:flex;align-items:center;gap:6px;background:#111;color:#fff;border-radius:999px;padding:5px 6px;font:600 12px/1 system-ui,sans-serif;box-shadow:0 4px 14px rgba(0,0,0,.35);z-index:9}
+#proto button{width:26px;height:26px;border-radius:50%;background:#333;font-size:14px}
+#proto span{min-width:150px;text-align:center}
 </style></head>
 <body>
-<div class="card">
-  <header><img id="thumb" alt=""><div><h1 id="title">Bidule</h1><p id="sub"></p></div></header>
+<template id="tpl-A">
+<div class="panel vA">
+  <header><div class="thumb"><img id="thumb" class="mon" alt=""></div><div><p class="kicker">Ton Bidule</p><h1 id="title">Bidule</h1><p id="sub"></p></div></header>
   <nav class="tabs" role="tablist">
     <button class="tab" role="tab" data-tab="piste" aria-selected="true">Piste</button>
     <button class="tab" role="tab" data-tab="evo" aria-selected="false">Évolution</button>
     <button class="tab" role="tab" data-tab="humeur" aria-selected="false">Humeur</button>
   </nav>
   <main>
-    <section class="pane" id="p-piste">
-      <p class="hint">Choisis une direction artistique : le Bidule change tout de suite, sans perdre ce qu'il fait.</p>
-      <div class="styles" id="styles"></div>
-    </section>
+    <section class="pane" id="p-piste"><p class="hint">Choisis une direction artistique : le Bidule change tout de suite, sans perdre ce qu'il fait.</p><div class="styles" id="styles"></div></section>
     <section class="pane" id="p-evo" hidden>
       <div class="row"><button class="btn primary" id="random">Gagner une partie au hasard</button><button class="btn" id="reset">Revenir au départ</button></div>
       <p class="hint">Un clic ajoute la partie, un second clic la retire. Une partie du même emplacement remplace l'ancienne.</p>
-      <div id="slots" class="pane"></div>
+      <div id="slots" class="slotlist"></div>
     </section>
-    <section class="pane" id="p-humeur" hidden>
-      <p class="hint">L'humeur suit la jauge de contexte de ta conversation Claude en cours : joyeuse jusqu'à 30 %, normale jusqu'à 60 %, fatiguée au-delà. Quand Claude ne fait rien (réponse finie, ou pas de conversation), il dort : c'est le signal pour y retourner. Jamais en lisant tes messages. Tu peux la forcer ici.</p>
-      <div class="soon" id="moodNow"></div>
-      <div class="moods" id="moods"></div>
-    </section>
+    <section class="pane" id="p-humeur" hidden><p class="hint" id="moodHint"></p><div class="now" id="moodNow"></div><div class="moods" id="moods"></div></section>
   </main>
   <footer><small id="foot">Panneau de test</small><button class="btn" id="quit">Quitter le Bidule</button></footer>
 </div>
+</template>
+<template id="tpl-B">
+<div class="panel vB">
+  <header><button class="quit" id="quit">Quitter</button><p class="kicker">Ton Bidule</p><h1 id="title">Bidule</h1><div class="ground stage"><img id="thumb" class="mon" alt=""></div><p id="sub"></p></header>
+  <main>
+    <section class="pane" id="p-piste"><p class="hint">Fais défiler et choisis : le Bidule change tout de suite, sans perdre ce qu'il fait.</p><div class="styles" id="styles"></div></section>
+    <section class="pane" id="p-evo" hidden>
+      <div class="row"><button class="btn primary" id="random">Gagner une partie au hasard</button><button class="btn" id="reset">Revenir au départ</button></div>
+      <p class="hint">Un clic ajoute la partie, un second clic la retire. Une partie du même emplacement remplace l'ancienne.</p>
+      <div id="slots" class="slotlist"></div>
+    </section>
+    <section class="pane" id="p-humeur" hidden><p class="hint" id="moodHint"></p><div class="now" id="moodNow"></div><div class="moods" id="moods"></div></section>
+  </main>
+  <nav class="tabs" role="tablist">
+    <button class="tab" role="tab" data-tab="piste" aria-selected="true">Piste</button>
+    <button class="tab" role="tab" data-tab="evo" aria-selected="false">Évolution</button>
+    <button class="tab" role="tab" data-tab="humeur" aria-selected="false">Humeur</button>
+  </nav>
+  <footer><small id="foot"></small></footer>
+</div>
+</template>
+<template id="tpl-C">
+<div class="panel vC">
+  <header><div class="ground"><img id="thumb" class="mon" alt=""></div><div><p class="kicker">Ton Bidule</p><h1 id="title">Bidule</h1><p id="sub"></p></div></header>
+  <main>
+    <section class="pane" id="p-piste"><div class="styles" id="styles"></div></section>
+    <section class="pane" id="p-evo">
+      <h2>Évolution</h2>
+      <div class="row"><button class="btn primary" id="random">Gagner une partie au hasard</button><button class="btn" id="reset">Revenir au départ</button></div>
+      <div id="slots" class="slotlist"></div>
+    </section>
+    <section class="pane" id="p-humeur"><h2>Humeur</h2><div class="now" id="moodNow"></div><div class="moods" id="moods"></div><p class="hint" id="moodHint"></p></section>
+  </main>
+  <footer><small id="foot">Panneau de test</small><button class="btn" id="quit">Quitter le Bidule</button></footer>
+</div>
+</template>
+<div id="proto"><button id="prev" aria-label="Variante précédente">&lsaquo;</button><span id="vname"></span><button id="next" aria-label="Variante suivante">&rsaquo;</button></div>
 <script src="bidule64.js"></script>
 <script src="monstre64.js"></script>
 <script>
+const VARIANTS = [["A", "Aplats"], ["B", "Affiche"], ["C", "Mosaïque"]];
+const V = new URLSearchParams(location.search).get("variant") || "A";
+document.body.prepend(document.getElementById("tpl-" + V).content.cloneNode(true));
+document.getElementById("vname").textContent = V + " - " + VARIANTS.find(v => v[0] === V)[1];
+const goVariant = d => { const i = VARIANTS.findIndex(v => v[0] === V); location.search = "?variant=" + VARIANTS[(i + d + VARIANTS.length) % VARIANTS.length][0]; };
+document.getElementById("prev").onclick = () => goVariant(-1);
+document.getElementById("next").onclick = () => goVariant(1);
+document.addEventListener("keydown", e => { if (e.key === "ArrowLeft") goVariant(-1); if (e.key === "ArrowRight") goVariant(1); });
+
 const T = window.__TAURI__;
 const STYLES = [...Object.keys(MONSTRES).map(id => [id, MONSTRES[id].name]), ["limace", "Limace (essai)"], ["candy", "Candy"], ["classique", "Classique"], ["louche", "Il louche"], ["depareille", "Yeux dépareillés"], ["paupieres", "Paupières lourdes"], ["dessus", "Yeux dessus"]];
 const SLOTS = [["tete", "Tête", [["antennes", "Antennes"], ["cornes", "Cornes"]]], ["bouche", "Bouche", [["crocs", "Crocs"], ["langue", "Langue"]]],
@@ -86,18 +187,27 @@ const SLOTS = [["tete", "Tête", [["antennes", "Antennes"], ["cornes", "Cornes"]
   ["dos", "Dos", [["ailes", "Ailes"], ["fourrure", "Fourrure"]]], ["queue", "Queue", [["touffue", "Touffue"], ["lezard", "Lézard"]]]];
 const $ = id => document.getElementById(id);
 let st = {mood:null, moodMode:"auto", moodReason:"", style:"goutte", partsBy:{classique:{tete:"antennes", pattes:"longues", bras:"bras", queue:"touffue"}, louche:{}, depareille:{}, paupieres:{}, dessus:{}, ...Object.fromEntries(Object.keys(MONSTRES).map(id => [id, {}])), limace:{}, candy:{}}, thumb:""};
-const send = (ev, payload) => { if (T) T.event.emit(ev, payload); else console.log(ev, payload); };
 const MOODS = [["auto", "Automatique"], ["guilleret", "Guilleret"], ["ronchon", "Ronchon"], ["vaseux", "Vaseux"], ["stresse", "Stressé"], ["lune", "Dans la lune"]];
+// hors de l'app (navigateur), le prototype applique les choix lui-même pour qu'on puisse cliquer partout
+const send = (ev, payload) => {
+  if (T) return T.event.emit(ev, payload);
+  if (ev === "style") st.style = payload;
+  else if (ev === "mood") { st.moodMode = payload; st.mood = payload === "auto" ? null : payload; }
+  else if (ev === "evo" && payload.startsWith("part:")) { const [slot, p] = payload.slice(5).split(":"), parts = st.partsBy[st.style] ||= {}; parts[slot] === p ? delete parts[slot] : parts[slot] = p; }
+  else if (payload === "evo:reset") st.partsBy[st.style] = {};
+  render();
+};
 const render64 = (s, parts) => s === "limace" || s === "candy" ? "persos/" + s + "/thumb.png" : MONSTRES[s] ? monstreURL(s, "forme", [0, 0], parts, st.mood) : s === "classique" ? bidule64({pal:"menthe", parts, mood:st.mood}, "forme", {tete:"bonnet"}) : blobFace64(s, "forme", [0, 0], "menthe", parts, st.mood);
 function render() {
   const parts = st.partsBy[st.style] || {}, n = Object.keys(parts).length;
   $("thumb").src = st.thumb || render64(st.style, parts);
-  $("title").textContent = "Bidule · " + STYLES.find(s => s[0] === st.style)[1];
+  $("title").textContent = STYLES.find(s => s[0] === st.style)[1];
   const ml = st.mood ? MOODS.find(m => m[0] === st.mood)[1] : "Normale";
   $("sub").textContent = (n ? `${n} partie${n > 1 ? "s" : ""} sur 6` : "Forme de départ") + " · " + ml;
+  $("moodHint").textContent = "L'humeur suit la jauge de contexte de ta conversation Claude en cours : joyeuse jusqu'à 30 %, normale jusqu'à 60 %, fatiguée au-delà. Quand Claude ne fait rien, il dort : c'est le signal pour y retourner. Jamais en lisant tes messages. Tu peux la forcer ici.";
   $("moodNow").innerHTML = `Humeur actuelle : <b>${ml}</b>` + (st.moodReason ? ` (${st.moodMode === "auto" ? "devinée : " : ""}${st.moodReason})` : "");
   $("moods").innerHTML = MOODS.map(([id, name]) => `<button class="chip ${st.moodMode === id ? "on" : ""}" data-mood="${id}">${name}</button>`).join("");
-  $("styles").innerHTML = STYLES.map(([id, name]) => `<button class="st ${id === st.style ? "on" : ""}" data-style="${id}"><img src="${render64(id, st.partsBy[id] || {})}" alt=""><span>${name}</span></button>`).join("");
+  $("styles").innerHTML = STYLES.map(([id, name], i) => `<button class="st c${i % 4} ${id === st.style ? "on" : ""}" data-style="${id}"><i class="spark"></i><span class="ground"><img class="mon" src="${render64(id, st.partsBy[id] || {})}" alt=""></span><span class="nm">${name}</span></button>`).join("");
   $("slots").innerHTML = SLOTS.map(([slot, label, opts]) => `<div class="slot"><b>${label}</b><div class="chips">${opts.map(([p, name]) =>
     `<button class="chip ${parts[slot] === p ? "on" : ""}" data-part="${slot}:${p}">${name}</button>`).join("")}</div></div>`).join("");
 }
