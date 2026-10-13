@@ -83,8 +83,12 @@ main{flex:1;overflow:auto;padding:0 12px 12px}
 .verre-a .tabs,.verre-b .tabs,.verre-c .tabs{background-color:rgba(255,255,255,.12)}
 .verre-a .tab[aria-selected="true"],.verre-b .tab[aria-selected="true"],.verre-c .tab[aria-selected="true"]{box-shadow:inset 0 1px 0 rgba(255,255,255,.8),0 2px 8px rgba(30,27,58,.2)}
 /* D : le panneau habituel, seul le reflet blanc des plaques de verre sur les onglets (sans transparence ni flou) */
-.verre-d .tabs{box-shadow:inset 0 1px 0 rgba(255,255,255,.22)}
-.verre-d .tab[aria-selected="true"]{background-image:linear-gradient(180deg,rgba(255,255,255,.55),rgba(255,255,255,0) 60%);box-shadow:inset 0 1.5px 0 rgba(255,255,255,.9),inset 0 -1px 0 rgba(255,255,255,.25),0 2px 8px rgba(30,27,58,.25)}
+.verre-d .tabs,.verre-e .tabs{box-shadow:inset 0 1px 0 rgba(255,255,255,.22)}
+.verre-d .tab[aria-selected="true"],.verre-e .tab[aria-selected="true"]{background-image:linear-gradient(180deg,rgba(255,255,255,.55),rgba(255,255,255,0) 60%);box-shadow:inset 0 1.5px 0 rgba(255,255,255,.9),inset 0 -1px 0 rgba(255,255,255,.25),0 2px 8px rgba(30,27,58,.25)}
+/* E : comme D, et le même reflet sur les autres boutons (pleins : un reflet marqué ; translucides : un liseré plus discret) */
+.verre-e .chip.on,.verre-e .btn.primary,.verre-e .st.on .nm,.verre-e #quit{background-image:linear-gradient(180deg,rgba(255,255,255,.55),rgba(255,255,255,0) 60%);box-shadow:inset 0 1.5px 0 rgba(255,255,255,.9),inset 0 -1px 0 rgba(255,255,255,.25),0 2px 8px rgba(30,27,58,.25)}
+.verre-e .chip:not(.on),.verre-e .btn:not(.primary),.verre-e .now{box-shadow:inset 0 1px 0 rgba(255,255,255,.35)}
+.verre-e .st:not(:disabled){box-shadow:inset 0 1px 0 rgba(255,255,255,.3),0 2px 8px rgba(30,27,58,.15)}
 
 .btn{font:400 13px/1 var(--display);letter-spacing:.6px;border-radius:14px;padding:10px 14px 8px;background:rgba(255,255,255,.18)}
 .btn.primary{background:var(--yellow);color:var(--ink)}
@@ -161,7 +165,8 @@ const ESSAIS = [["", "Aucun", "Le panneau habituel, en aplats."],
   ["verre-a", "A - Verre total", "Tout le panneau en verre teinté : le bureau se devine, flouté, derrière."],
   ["verre-b", "B - Tuiles en verre", "Le fond reste plein ; tuiles, onglets et boutons deviennent des plaques de verre."],
   ["verre-c", "C - Mélange", "Le panneau en verre sur le bureau flouté, et des tuiles en verre clair."],
-  ["verre-d", "D - Reflet sur les onglets", "Le panneau habituel ; seuls les onglets prennent un reflet blanc qui les fait ressortir."]];
+  ["verre-d", "D - Reflet sur les onglets", "Le panneau habituel ; seuls les onglets prennent un reflet blanc qui les fait ressortir."],
+  ["verre-e", "E - Reflet sur tous les boutons", "Comme D, et le même reflet sur les autres boutons : humeurs, arrêt, nom du Bidule choisi."]];
 let essai = "";
 try { essai = localStorage.getItem("bidule.essai") || ""; } catch (e) {}
 function applyEssai() {
