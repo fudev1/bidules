@@ -589,6 +589,14 @@ async function bounds() {
   minX = a.position.x / s; maxX = (a.position.x + a.size.width) / s - WW;
   minY = a.position.y / s; floorY = (a.position.y + a.size.height) / s - WH;
 }
+// Marge transparente au-dessus du Bidule dans sa fenêtre : l'image (128 px) est en bas de la fenêtre (176 px), et son dessin
+// commence à sa première ligne visible. Gardée par image, pour ne pas relire les pixels à chaque instant.
+const TOPS = new Map();
+function headroom() {
+  let t = TOPS.get(img.src);
+  if (t === undefined) { t = spriteTop().y; if (img.complete) TOPS.set(img.src, t); }
+  return WH - 128 + 2 * t;
+}
 function push() { want = [x, y]; if (!sending) flush(); }
 async function flush() {
   while (want) { const [a, b] = want; want = null; sending = true;
@@ -657,7 +665,7 @@ function tickBody() {
     } else angle += vx * 1.2 * k;
     if (x < minX) { if (hitWall(-1)) { push(); return; } x = minX; vx = -vx * (BOUNCY.has(style) ? .7 : .25); squash("wall"); }
     if (x > maxX) { if (hitWall(1)) { push(); return; } x = maxX; vx = -vx * (BOUNCY.has(style) ? .7 : .25); squash("wall"); }
-    if (y < minY) { y = minY; vy = -vy * 0.4; }
+    if (y < minY - headroom()) { y = minY - headroom(); vy = -vy * 0.4; }          // plafond : le haut du dessin touche le haut de l'écran, pas celui de la fenêtre
     if (y >= floorY) {
       y = floorY; const impact = Math.abs(vy); maxImpact = Math.max(maxImpact, impact);
       if (impact > (isSheet() ? 10 : 7) && bounces < (isSheet() ? 3 : 4) && (!isSheet() || BOUNCY.has(style))) {
