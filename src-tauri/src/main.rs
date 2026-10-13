@@ -62,6 +62,21 @@ fn hide_panel(app: AppHandle) {
     if let Some(p) = app.get_webview_window("panel") {
         let _ = p.hide();
     }
+    surligner(&app, false);
+}
+
+// L'icône de la barre de menus reste en surbrillance tant que le panneau est ouvert, comme pour les autres apps (macOS).
+fn surligner(app: &AppHandle, on: bool) {
+    #[cfg(target_os = "macos")]
+    if let Some(tray) = app.tray_by_id("bidule") {
+        let _ = tray.with_inner_tray_icon(move |t| {
+            if let (Some(item), Some(mtm)) = (t.ns_status_item(), objc2::MainThreadMarker::new()) {
+                if let Some(b) = item.button(mtm) { b.highlight(on); }
+            }
+        });
+    }
+    #[cfg(not(target_os = "macos"))]
+    let _ = (app, on);
 }
 
 // Pour deviner l'humeur, on ne retient que le type, l'heure et la forme du contenu de chaque ligne.
@@ -355,6 +370,7 @@ fn ouvrir_panneau(app: AppHandle) {
         let _ = p.show();
         let _ = p.set_focus();
         let _ = app.emit("demande-etat", ());
+        surligner(&app, true);
     }
 }
 
@@ -402,10 +418,12 @@ fn main() {
             if let Some(panel) = app.get_webview_window("panel") {
                 let p2 = panel.clone();
                 let h2 = hidden_at.clone();
+                let a2 = app.handle().clone();
                 panel.on_window_event(move |e| {
                     if let WindowEvent::Focused(false) = e {
                         let _ = p2.hide();
                         *h2.lock().unwrap() = Instant::now();
+                        surligner(&a2, false);
                     }
                 });
             }
@@ -433,6 +451,7 @@ fn main() {
                         let Some(panel) = app.get_webview_window("panel") else { return };
                         if panel.is_visible().unwrap_or(false) {
                             let _ = panel.hide();
+                            surligner(app, false);
                             return;
                         }
                         if h3.lock().unwrap().elapsed() < Duration::from_millis(300) {
@@ -441,12 +460,13 @@ fn main() {
                         let scale = panel.scale_factor().unwrap_or(1.0);
                         let pos = rect.position.to_physical::<f64>(scale);
                         let size = rect.size.to_physical::<f64>(scale);
-                        let width = panel.outer_size().map(|s| s.width as f64).unwrap_or(380.0 * scale);
+                        let width = panel.outer_size().map(|s| s.width as f64).unwrap_or(640.0 * scale);
                         let x = (pos.x + size.width / 2.0 - width / 2.0).max(0.0);
                         let _ = panel.set_position(PhysicalPosition::new(x, pos.y + size.height + 4.0));
                         let _ = panel.show();
                         let _ = panel.set_focus();
                         let _ = app.emit("demande-etat", ());
+                        surligner(app, true);
                     }
                 })
                 .build(app)?;

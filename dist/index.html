@@ -58,7 +58,7 @@ window.onerror = m => say("erreur: " + m);
 const bid = {pal:"menthe", parts:{tete:"antennes", pattes:"longues", bras:"bras", queue:"touffue"}}, ACCS = {tete:"bonnet"};
 const FRAME_STATES = {normal:"forme", p1:"panique", p2:"panique2", d1:"etourdi", d2:"etourdi2", content:"content", rire:"rire",
   fache:"fache", ooh:"ooh", n1:"nausee", n2:"nausee2", dort:"dort", remue:"remue", baille:"baille"};
-const EYE_Y = {classique:123, louche:135, depareille:135, paupieres:136, dessus:115};
+const EYE_Y = {classique:123};
 for (const id in MONSTRES) EYE_Y[id] = 48 + MONSTRES[id].eyeY * 2;
 EYE_Y.limace = 138;
 EYE_Y.candy = 134;
@@ -497,7 +497,7 @@ const MOOD_LABEL = {guilleret:"Guilleret", ronchon:"Ronchon", vaseux:"Vaseux", s
 const MOOD_MOVE = {normal:{speed:1.6, idle:.008, flip:.004}, guilleret:{speed:2.4, idle:.004, flip:.006}, ronchon:{speed:.9, idle:.016, flip:.003},
   vaseux:{speed:.7, idle:.012, flip:.003, sleepAfter:15000}, stresse:{speed:3.2, idle:.002, flip:.03}, lune:{speed:1, idle:.01, flip:.004}};
 const MV = () => MOOD_MOVE[mood] || MOOD_MOVE.normal;
-const partsBy = {classique:{tete:"antennes", pattes:"longues", bras:"bras", queue:"touffue"}, louche:{}, depareille:{}, paupieres:{}, dessus:{}};
+const partsBy = {classique:{tete:"antennes", pattes:"longues", bras:"bras", queue:"touffue"}};
 for (const id in MONSTRES) partsBy[id] = {};
 partsBy.limace = {}; partsBy.candy = {};
 const PART_NAME = {"tete:antennes":"antennes", "tete:cornes":"cornes", "bouche:crocs":"crocs", "bouche:langue":"langue gourmande", "bras:bras":"petits bras",
@@ -531,7 +531,7 @@ function buildFrames(s) {
     FR = nf; LOOK = nl; style = s; return;
   }
   const G = MONSTRES[s] ? (st, look) => monstreURL(s, st, look, partsBy[s], mood)
-    : s === "classique" ? (st, look) => bidule64({...bid, parts:partsBy.classique, look, mood}, st, ACCS) : (st, look) => blobFace64(s, st, look, "menthe", partsBy[s], mood);
+    : (st, look) => bidule64({...bid, parts:partsBy.classique, look, mood}, st, ACCS);
   const nf = {}, nl = {};
   for (const [k, st] of Object.entries(FRAME_STATES)) nf[k] = G(st);
   for (const lx of [0, 1]) for (const ly of [-1, 0, 1]) nl[lx + "," + ly] = G("forme", [lx, ly]);
