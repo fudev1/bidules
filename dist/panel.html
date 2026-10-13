@@ -126,7 +126,7 @@ function render() {
 document.addEventListener("click", e => {
   const b = e.target.closest("button"); if (!b || b.disabled) return;
   if (b.dataset.tab) { document.querySelectorAll(".tab").forEach(t => t.setAttribute("aria-selected", t === b)); ["piste", "evo", "humeur"].forEach(k => $("p-" + k).hidden = k !== b.dataset.tab); }
-  else if (b.dataset.style) { send("style", b.dataset.style); if (st.cache && T) T.core.invoke("montrer_bidule", {oui:true}); }      // caché : cliquer dessus le fait revenir
+  else if (b.dataset.style) { send("style", b.dataset.style); if (st.cache && T) T.core.invoke("montrer_bidule", {oui:true}); if (!st.style && T) T.core.invoke("hide_panel"); }      // premier choix : le panneau se ferme, le Bidule tombe sur le bureau      // caché : cliquer dessus le fait revenir
   else if (b.dataset.part) send("evo", "part:" + b.dataset.part);
   else if (b.dataset.mood) send("mood", b.dataset.mood);
   else if (b.id === "random") send("evo", "evo:random");
