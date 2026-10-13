@@ -1186,14 +1186,14 @@ setInterval(() => {
   paint(body, 0, 0); paint(f, 9, 2);
   pense.title = PENSE_LABEL[icon];
 }, 450);
-let noConversation = false, claudeIdle = false;
+let noConversation = false, claudeIdle = false, claudeWaits = false;
 const NO_CONV_SLEEP = 5000;          // ms de calme avant de se rendormir, le temps de jouer s'il est réveillé à la main
 const sleepyNow = () => claudeIdle;          // Claude ne fait rien (pas de conversation, ou réponse finie) : il dort et ne se réveille pas seul, pour te dire d'y retourner
 const CONTEXT_MOODS = [[30, "guilleret"], [60, null], [Infinity, "vaseux"]];
 async function contextMood() {
   let j = null;
   try { j = await T.core.invoke("contexte"); } catch (e) { say("contexte: " + e); }
-  noConversation = !j; activity = j ? j.activite : null; claudeIdle = !activity;
+  noConversation = !j; activity = j ? j.activite : null; claudeIdle = !activity; claudeWaits = !!(j && j.attend);
   if (!j) return null;
   const pc = Math.round(j.pourcent);
   return [CONTEXT_MOODS.find(([max]) => j.pourcent < max)[1], `contexte à ${pc} %${j.source === "terminal" ? " (terminal)" : ""}`];
@@ -1234,6 +1234,26 @@ T.event.listen("mood", e => {
   else { moodReason = "choisie à la main"; say("humeur choisie : " + moodMode); applyMood(moodMode); bubble(MOOD_LABEL[moodMode], 1200); }
 });
 setInterval(autoMood, 3000);
+// Icône de la barre de menu : la limace montre ce que fait Claude. Elle rampe s'il travaille (avec le visage de l'humeur),
+// elle est intriguée s'il attend (une permission, sans doute), elle dort s'il a fini. Fermée, l'app la fige au repos (main.rs).
+const TRAY = document.createElement("canvas"), TRAY_IMG = {};
+TRAY.width = 64; TRAY.height = 36;
+let trayTag = "", trayI = 0, trayNext = 0, traySrc = "";
+setInterval(() => {
+  const D = SHEET_DATA.limace, now = Date.now(); if (!D) return;
+  const tag = claudeWaits ? "intrigue" : claudeIdle ? "dort" : "crawl";          // D.tags a déjà le visage de l'humeur (moodTags)
+  if (tag !== trayTag) { trayTag = tag; trayI = 0; trayNext = 0; }
+  if (now < trayNext) return;
+  const fr = D.tags[tag], f = fr[trayI % fr.length];
+  if (f.src !== traySrc) {
+    const im = TRAY_IMG[f.src] || (TRAY_IMG[f.src] = Object.assign(new Image(), {src:f.src}));
+    if (!im.complete) return;          // pas encore décodée : on réessaie au tour suivant
+    traySrc = f.src;
+    const g = TRAY.getContext("2d"); g.clearRect(0, 0, 64, 36); g.drawImage(im, 0, 29, 64, 32, 0, 2, 64, 32);   // la bande du bas de l'image, où vit la limace
+    TRAY.toBlob(async b => { try { await T.core.invoke("icone", {png:[...new Uint8Array(await b.arrayBuffer())]}); } catch (e) { say("icone : " + e); } }, "image/png");
+  }
+  trayI++; trayNext = now + f.dur;
+}, 30);
 T.event.listen("bonbon-clic", e => {
   say("bonbon-clic reçu : " + e.payload);
   const s = sweets.find(c => c.id === e.payload);

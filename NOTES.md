@@ -31,6 +31,7 @@ Mise à jour : 6 octobre 2026. Ce fichier suit l'état du projet : ce qui est d�
 
 - Skills de Matt Pocock (`github.com/mattpocock/skills`, version 1.3.1) copiés dans `.claude/skills/` : les 27 du plugin officiel (grilling, tdd, diagnosing-bugs, to-spec, etc.). Pour les commits et les pull requests, nos skills `commit` et `pull-request` restent prioritaires sur `pr`. Ce qu'ils produisent est écrit en français, et quand ils parlent de `main` on lit `test`. Mise à jour : à la main, en recopiant depuis le repo. Réglés pour le projet (`docs/agents/`) : tickets et specs en issues GitHub, étiquettes de tri par défaut, glossaire et ADR à la racine.
 - App de bureau Mac : fenêtre transparente au premier plan, le Bidule vit en bas de l'écran, panneau dans la barre de menus (Piste, Évolution, Humeur), sans contours, en aplats de couleur avec le Bidule choisi en grand dans l'en-tête.
+- Icône de la barre de menus : la limace, animée selon Claude. Elle rampe sur place quand il travaille (avec le visage de l'humeur), elle est intriguée quand il attend (un outil demandé sans résultat depuis 20 s : une permission, sans doute, ou une longue commande), elle dort quand il a fini. Bidule fermé, elle se fige au repos. Dessinée par la fenêtre du Bidule (`index.html`), envoyée à la commande `icone` (`main.rs`) ; image de repos : `src-tauri/icons/tray-repos.png`.
 - Interactions :
   - attraper au premier clic, lancer avec rebonds sur les bords, suivre la souris des yeux ;
   - caresses, chatouilles (rire, puis fâché), secouer (nausée) ;

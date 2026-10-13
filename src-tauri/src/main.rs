@@ -212,6 +212,8 @@ struct Jauge {
     source: &'static str,
     // Ce que fait Claude : "pense", le nom de l'outil en cours, ou rien quand il a fini de répondre.
     activite: Option<String>,
+    // Un outil demandé sans résultat depuis 20 s : il attend sans doute une permission (ou une longue commande).
+    attend: bool,
 }
 
 fn walk(dir: &Path, f: &mut dyn FnMut(&Path)) {
@@ -301,6 +303,14 @@ fn window_for(model: &str) -> u64 {
     if model.contains("[1m]") || !old { 1_000_000 } else { 200_000 }
 }
 
+// L'icône de la barre de menu, dessinée par la fenêtre du Bidule (une image PNG de 64 × 36).
+#[tauri::command]
+fn icone(app: AppHandle, png: Vec<u8>) {
+    if let (Some(tray), Ok(im)) = (app.tray_by_id("bidule"), tauri::image::Image::from_bytes(&png)) { let _ = tray.set_icon(Some(im)); }
+}
+
+const ICONE_REPOS: &[u8] = include_bytes!("../icons/tray-repos.png");
+
 #[tauri::command]
 fn contexte() -> Option<Jauge> {
     let home = std::env::var("HOME").unwrap_or_default();
@@ -313,16 +323,18 @@ fn contexte() -> Option<Jauge> {
     if !recent { return None }
     let (tokens, seen, act) = last_context(&path)?;
     // Plus rien d'écrit depuis 5 min : il attend sans doute une permission, ou s'est arrêté. Pas de bulle.
-    let fresh = std::fs::metadata(&path).and_then(|m| m.modified()).ok()? > SystemTime::now() - Duration::from_secs(300);
+    let idle = std::fs::metadata(&path).and_then(|m| m.modified()).ok()?.elapsed().unwrap_or_default();
+    let fresh = idle < Duration::from_secs(300);
+    let attend = act.as_deref().is_some_and(|a| a != "pense") && idle >= Duration::from_secs(20);
     let activite = act.filter(|_| fresh);
     let model = model.or(seen).unwrap_or_default();
     let fenetre = window_for(&model).max(tokens);
-    Some(Jauge { tokens, fenetre, pourcent: tokens as f64 * 100.0 / fenetre as f64, source, activite })
+    Some(Jauge { tokens, fenetre, pourcent: tokens as f64 * 100.0 / fenetre as f64, source, activite, attend })
 }
 
 fn main() {
     tauri::Builder::default()
-        .invoke_handler(tauri::generate_handler![log, quit, hide_panel, prompt_times, contexte, bonbon_poser, bonbon_retirer, bonbon_clic])
+        .invoke_handler(tauri::generate_handler![log, quit, hide_panel, prompt_times, contexte, icone, bonbon_poser, bonbon_retirer, bonbon_clic])
         .setup(|app| {
             #[cfg(target_os = "macos")]
             app.set_activation_policy(tauri::ActivationPolicy::Accessory);
@@ -346,7 +358,7 @@ fn main() {
 
             let h3 = hidden_at.clone();
             TrayIconBuilder::with_id("bidule")
-                .icon(app.default_window_icon().unwrap().clone())
+                .icon(tauri::image::Image::from_bytes(ICONE_REPOS)?)
                 .tooltip("Bidule")
                 .menu(&menu)
                 .show_menu_on_left_click(false)
@@ -385,6 +397,16 @@ fn main() {
                     }
                 })
                 .build(app)?;
+
+            // Bidule fermé : l'icône se fige sur la limace au repos.
+            if let Some(main) = app.get_webview_window("main") {
+                let h = app.handle().clone();
+                main.on_window_event(move |e| {
+                    if let WindowEvent::Destroyed = e {
+                        if let (Some(tray), Ok(im)) = (h.tray_by_id("bidule"), tauri::image::Image::from_bytes(ICONE_REPOS)) { let _ = tray.set_icon(Some(im)); }
+                    }
+                });
+            }
             Ok(())
         })
         .run(tauri::generate_context!())
