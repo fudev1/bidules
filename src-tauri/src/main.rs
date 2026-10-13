@@ -139,7 +139,8 @@ fn collect(dir: &Path, cutoff: SystemTime, out: &mut Vec<f64>) {
     }
 }
 
-#[tauri::command]
+// Les commandes qui lisent des fichiers tournent hors du fil principal (async) : sinon elles bloquent la fenêtre et le Bidule saccade.
+#[tauri::command(async)]
 fn prompt_times() -> Vec<f64> {
     let home = std::env::var("HOME").unwrap_or_default();
     let cutoff = SystemTime::now() - Duration::from_secs(5 * 3600);
@@ -257,10 +258,24 @@ fn latest_journal(home: &str) -> Option<PathBuf> {
     best.map(|b| b.1)
 }
 
+type Ctx = Option<(u64, Option<String>, Option<String>)>;
+// Le dernier journal lu : tant qu'il n'a pas changé (même taille, même date), on ne le relit pas.
+static LAST_CTX: Mutex<Option<(PathBuf, u64, SystemTime, Ctx)>> = Mutex::new(None);
+
 // Tokens dans le contexte d'après la dernière réponse (ou le dernier résumé), en lisant la fin du journal seulement.
-fn last_context(path: &Path) -> Option<(u64, Option<String>, Option<String>)> {
+fn last_context(path: &Path) -> Ctx {
+    let meta = std::fs::metadata(path).ok()?;
+    let (len, mtime) = (meta.len(), meta.modified().ok()?);
+    if let Some((p, l, m, c)) = LAST_CTX.lock().unwrap().as_ref() {
+        if p == path && *l == len && *m == mtime { return c.clone() }
+    }
+    let c = read_context(path, len);
+    *LAST_CTX.lock().unwrap() = Some((path.to_path_buf(), len, mtime, c.clone()));
+    c
+}
+
+fn read_context(path: &Path, len: u64) -> Ctx {
     let mut f = std::fs::File::open(path).ok()?;
-    let len = f.metadata().ok()?.len();
     for tail in [2u64 << 20, 16 << 20, len] {
         let start = len.saturating_sub(tail);
         f.seek(SeekFrom::Start(start)).ok()?;
@@ -310,7 +325,7 @@ fn icone(app: AppHandle, png: Vec<u8>) {
 }
 
 // La session de Claude Desktop qui a le focus : de petits fichiers, relus souvent pour réagir vite quand on change de session.
-#[tauri::command]
+#[tauri::command(async)]
 fn session_active() -> Option<String> {
     desktop_session(&std::env::var("HOME").unwrap_or_default()).map(|(id, _)| id)
 }
@@ -339,7 +354,7 @@ fn montrer_bidule(app: AppHandle, oui: bool) {
     let _ = app.emit("bidule-visible", oui);
 }
 
-#[tauri::command]
+#[tauri::command(async)]
 fn contexte() -> Option<Jauge> {
     let home = std::env::var("HOME").unwrap_or_default();
     let (path, model, source) = match desktop_session(&home).and_then(|(id, m)| Some((find_journal(&home, &id)?, m))) {

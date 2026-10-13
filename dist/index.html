@@ -1172,7 +1172,8 @@ function spriteTop() {          // première ligne non transparente de l'image a
   return {x:40, y:20};
 }
 setInterval(() => {
-  const icon = penseIcon(activity), show = !!icon && (mode === "walk" || mode === "pet") && !drag;
+  // pas pendant qu'on le tire (la fenêtre est agrandie, la bulle serait ailleurs), ni par-dessus une autre bulle (« *bâille* »…)
+  const icon = penseIcon(activity), show = !!icon && (mode === "walk" || mode === "pet") && !drag && !pull.on && !fx.querySelector(".bub");
   pense.classList.toggle("off", !show);
   if (!show) return;
   const g = pense.getContext("2d"), frames = PENSE_ICONS[icon], f = frames[penseFrame++ % frames.length];
