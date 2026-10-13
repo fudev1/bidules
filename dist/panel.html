@@ -31,9 +31,13 @@ h1{margin:0;font:400 28px/.95 var(--display);letter-spacing:1px;color:var(--yell
 #quit:hover{background:#ff4570}
 #quit:active{transform:translateY(2px);box-shadow:0 1px 0 var(--plum-deep)}
 #quit svg{width:16px;height:16px}
-.tabs{display:flex;gap:4px;margin:10px 12px;padding:3px;border-radius:999px;background:rgba(30,27,58,.22)}
+.tabs{position:relative;display:flex;gap:4px;margin:10px 12px;padding:3px;border-radius:999px;background:rgba(30,27,58,.22)}
+/* le bouton jaune de l'onglet choisi : une seule pastille qui glisse sous les onglets */
+.tabs .pill{position:absolute;top:3px;bottom:3px;left:3px;width:0;border-radius:999px;background:var(--yellow);transition:left .32s cubic-bezier(.3,1.3,.5,1),width .32s cubic-bezier(.3,1.3,.5,1)}
+.tabs .pill.instant{transition:none}
+.tab{position:relative;transition:color .2s}
 .tab{flex:1;font:400 13px/1 var(--display);letter-spacing:.8px;padding:7px 4px 5px;border-radius:999px}
-.tab[aria-selected="true"]{background:var(--yellow);color:var(--ink)}
+.tab[aria-selected="true"]{color:var(--ink)}
 .tab:disabled{opacity:.4}
 main{flex:1;overflow:auto;padding:0 12px 12px}
 .pane{display:grid;gap:10px}
@@ -81,10 +85,10 @@ main{flex:1;overflow:auto;padding:0 12px 12px}
 .verre-b .st.c1,.verre-c .st.c1{background-color:rgba(166,210,58,.35)}.verre-b .st.c2,.verre-c .st.c2{background-color:rgba(255,217,74,.35)}
 .verre-a .st:disabled,.verre-b .st:disabled,.verre-c .st:disabled{background-color:rgba(255,255,255,.08);color:rgba(255,255,255,.6)}
 .verre-a .tabs,.verre-b .tabs,.verre-c .tabs{background-color:rgba(255,255,255,.12)}
-.verre-a .tab[aria-selected="true"],.verre-b .tab[aria-selected="true"],.verre-c .tab[aria-selected="true"]{box-shadow:inset 0 1px 0 rgba(255,255,255,.8),0 2px 8px rgba(30,27,58,.2)}
+.verre-a .pill,.verre-b .pill,.verre-c .pill{box-shadow:inset 0 1px 0 rgba(255,255,255,.8),0 2px 8px rgba(30,27,58,.2)}
 /* D : le panneau habituel, seul le reflet blanc des plaques de verre sur les onglets (sans transparence ni flou) */
 .verre-d .tabs,.verre-e .tabs{box-shadow:inset 0 1px 0 rgba(255,255,255,.22)}
-.verre-d .tab[aria-selected="true"],.verre-e .tab[aria-selected="true"]{background-image:linear-gradient(180deg,rgba(255,255,255,.55),rgba(255,255,255,0) 60%);box-shadow:inset 0 1.5px 0 rgba(255,255,255,.9),inset 0 -1px 0 rgba(255,255,255,.25),0 2px 8px rgba(30,27,58,.25)}
+.verre-d .pill,.verre-e .pill{background-image:linear-gradient(180deg,rgba(255,255,255,.55),rgba(255,255,255,0) 60%);box-shadow:inset 0 1.5px 0 rgba(255,255,255,.9),inset 0 -1px 0 rgba(255,255,255,.25),0 2px 8px rgba(30,27,58,.25)}
 /* E : comme D, et le même reflet sur les autres boutons (pleins : un reflet marqué ; translucides : un liseré plus discret) */
 .verre-e .chip.on,.verre-e .btn.primary,.verre-e .st.on .nm,.verre-e #quit{background-image:linear-gradient(180deg,rgba(255,255,255,.55),rgba(255,255,255,0) 60%);box-shadow:inset 0 1.5px 0 rgba(255,255,255,.9),inset 0 -1px 0 rgba(255,255,255,.25),0 2px 8px rgba(30,27,58,.25)}
 .verre-e .chip:not(.on),.verre-e .btn:not(.primary),.verre-e .now{box-shadow:inset 0 1px 0 rgba(255,255,255,.35)}
@@ -101,6 +105,7 @@ main{flex:1;overflow:auto;padding:0 12px 12px}
 <div class="panel">
   <header><button id="quit" aria-label="Éteindre le Bidule" title="Éteindre le Bidule"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round"><path d="M12 3v8"/><path d="M6.3 7.3a8 8 0 1 0 11.4 0"/></svg></button><p class="kicker">Ton Bidule</p><h1 id="title">Bidule</h1><div class="ground stage"><img id="thumb" class="mon" alt=""></div><p id="sub"></p></header>
   <nav class="tabs" role="tablist">
+    <span class="pill instant" id="pill"></span>
     <button class="tab" role="tab" data-tab="piste" aria-selected="true">Piste</button>
     <button class="tab" role="tab" data-tab="evo" aria-selected="false" disabled title="Bientôt">Évolution</button>
     <button class="tab" role="tab" data-tab="humeur" aria-selected="false">Humeur</button>
@@ -159,7 +164,17 @@ function render() {
   $("random").disabled = $("reset").disabled = noParts;
   $("slots").innerHTML = SLOTS.map(([slot, label, opts]) => `<div class="slot"><b>${label}</b><div class="chips">${opts.map(([p, name]) =>
     `<button class="chip ${parts[slot] === p ? "on" : ""}" data-part="${slot}:${p}" ${noParts ? "disabled" : ""}>${name}</button>`).join("")}</div></div>`).join("");
+  placePill();          // au cas où le panneau était caché au chargement (onglets pas encore mesurés)
 }
+// La pastille jaune se pose sous l'onglet choisi, et glisse de l'un à l'autre (sans glisser à l'ouverture du panneau).
+function placePill() {
+  const t = document.querySelector('.tab[aria-selected="true"]'), p = $("pill");
+  if (!t || !t.offsetWidth) return;
+  p.style.left = t.offsetLeft + "px"; p.style.width = t.offsetWidth + "px";
+  requestAnimationFrame(() => p.classList.remove("instant"));
+}
+addEventListener("resize", () => { $("pill").classList.add("instant"); placePill(); });
+document.fonts && document.fonts.ready.then(() => { $("pill").classList.add("instant"); placePill(); });
 // Onglet Tests : des essais d'apparence, gardés dans ce navigateur (ce Mac) seulement.
 const ESSAIS = [["", "Aucun", "Le panneau habituel, en aplats."],
   ["verre-a", "A - Verre total", "Tout le panneau en verre teinté : le bureau se devine, flouté, derrière."],
@@ -177,9 +192,10 @@ function applyEssai() {
   $("essais").innerHTML = "<h3>Effet verre</h3>" + ESSAIS.map(([id, name, desc]) => `<button class="chip ${essai === id ? "on" : ""}" data-essai="${id}">${name}<small>${desc}</small></button>`).join("");
 }
 applyEssai();
+placePill();
 document.addEventListener("click", e => {
   const b = e.target.closest("button"); if (!b || b.disabled) return;
-  if (b.dataset.tab) { document.querySelectorAll(".tab").forEach(t => t.setAttribute("aria-selected", t === b)); ["piste", "evo", "humeur", "tests"].forEach(k => $("p-" + k).hidden = k !== b.dataset.tab); }
+  if (b.dataset.tab) { document.querySelectorAll(".tab").forEach(t => t.setAttribute("aria-selected", t === b)); ["piste", "evo", "humeur", "tests"].forEach(k => $("p-" + k).hidden = k !== b.dataset.tab); placePill(); }
   else if (b.dataset.essai !== undefined) { essai = b.dataset.essai; try { localStorage.setItem("bidule.essai", essai); } catch (e) {} applyEssai(); }
   else if (b.dataset.style) { send("style", b.dataset.style); if (st.cache && T) T.core.invoke("montrer_bidule", {oui:true}); if (!st.style && T) T.core.invoke("hide_panel"); }      // premier choix : le panneau se ferme, le Bidule tombe sur le bureau      // caché : cliquer dessus le fait revenir
   else if (b.dataset.part) send("evo", "part:" + b.dataset.part);
