@@ -172,6 +172,8 @@ function pullStart(e) {
   const S0 = captureFrame();
   const gu = Math.max(S0.cx - 12, Math.min(S0.cx + 12, (drag.gx - 24) / 2)), gv = Math.max(S0.top, Math.min(S0.bot - 3, (drag.gy - 48) / 2));
   Object.assign(pull, {on:true, ready:false, phase:"ground", src:S0, srcImg:img.src, g:[gu, gv], d:[0, 0], vd:[0, 0]});
+  // la bulle de pensée disparaît tout de suite, sans fondu : la fenêtre va s'agrandir vers le haut et la gauche, elle se retrouverait dans le coin
+  pense.style.transition = "none"; pense.classList.add("off"); pense.offsetWidth; pense.style.transition = "";
   pullDraw(); setBigWindow(true).then(() => { pull.ready = true; });
 }
 // Position de la base (B) et du point tenu (G) dans le grand canevas, selon la phase.
@@ -1172,7 +1174,8 @@ function spriteTop() {          // première ligne non transparente de l'image a
   return {x:40, y:20};
 }
 setInterval(() => {
-  const icon = penseIcon(activity), show = !!icon && (mode === "walk" || mode === "pet") && !drag;
+  // pas pendant qu'on le tire (la fenêtre est agrandie, la bulle serait ailleurs), ni par-dessus une autre bulle (« *bâille* »…)
+  const icon = penseIcon(activity), show = !!icon && (mode === "walk" || mode === "pet") && !drag && !pull.on && !fx.querySelector(".bub");
   pense.classList.toggle("off", !show);
   if (!show) return;
   const g = pense.getContext("2d"), frames = PENSE_ICONS[icon], f = frames[penseFrame++ % frames.length];
