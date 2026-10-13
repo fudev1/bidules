@@ -19,7 +19,7 @@ STUB = """<script>
 window.LOG = []; window.CALLS = []; window.LISTEN = {};
 const noop = async () => {};
 window.__TAURI__ = {
-  core: {invoke: async (c, a) => { if (c === "log") LOG.push([Date.now(), a.msg]); else CALLS.push([Date.now(), c, a]); return c === "prompt_times" ? [] : null; }},
+  core: {invoke: async (c, a) => { if (c === "log") LOG.push([Date.now(), a.msg]); else CALLS.push([Date.now(), c, a]); return c === "prompt_times" ? [] : c === "lire_choix" ? "limace" : null; }},
   event: {emit: noop, listen: async (n, f) => { (LISTEN[n] = LISTEN[n] || []).push(f); return () => {}; }},
   dpi: {LogicalPosition: function (x, y) { this.x = x; this.y = y; }, LogicalSize: function (w, h) { this.w = w; this.h = h; }},
   window: {cursorPosition: async () => ({x: -5000, y: -5000}),
