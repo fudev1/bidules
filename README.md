@@ -193,7 +193,7 @@ Le serveur `aseprite-live` est lancé par Claude Code et ne vit que pendant une 
 
 Les skills de [mattpocock/skills](https://github.com/mattpocock/skills) sont dans `.claude/skills/`. Certains se lancent seulement à la main, en tapant `/nom` dans Claude Code. Les autres, Claude les prend aussi tout seul quand la demande s'y prête (marqués « auto » plus bas). En cas de doute, `/ask-matt` dit lequel prendre.
 
-**Une fois, avant le premier usage** : `/setup-matt-pocock-skills`. Il demande où ranger les tickets (issues GitHub ou fichiers locaux), les étiquettes de tri et l'emplacement du glossaire.
+**Réglages du projet** : déjà faits avec `/setup-matt-pocock-skills`, dans `docs/agents/` et la partie « Agent skills » de `CLAUDE.md`. Les tickets et les specs sont des issues GitHub, avec les étiquettes de tri `needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human` et `wontfix`. Le glossaire (`GLOSSARY.md`) et les décisions (`docs/adr/`) sont à la racine, créés au fur et à mesure. Ces skills utilisent `gh`, connecté au compte GitHub (`gh auth login`). Pour changer un réglage : modifier `docs/agents/` ; relancer le skill seulement pour changer d'endroit où ranger les tickets.
 
 **Le flux principal, de l'idée à la pull request :**
 

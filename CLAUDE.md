@@ -28,3 +28,17 @@ Compagnon de bureau pour les utilisateurs de Claude Code. La vision et l'install
 - **NOTES.md** : quand une décision ou l'état du projet change, le mettre à jour dans la même pull request.
 - **Git** : suivre `.claude/rules/git-flux.md` (branche, puis `test`, puis `main`) et `.claude/rules/pas-de-mention-claude.md`. Pour les commits : le skill `commit`. Pour les pull requests : le skill `pull-request` (pas `pr`, qui vient des skills de Matt Pocock).
 - **Langue** : écrire en français (commentaires, messages, documents), comme l'existant. Cela vaut aussi pour ce que produisent les skills de Matt Pocock (glossaire, ADR, specs, tickets, passages de relais, questionnaires, rapports) et pour `/wait-what` (en français simple). Garder tels quels les noms de fichiers (`GLOSSARY.md`...), les titres de section et les étiquettes que ces skills recherchent (`## Agent skills`, `## Comments`, `## Answer`, `Status:`, `wayfinder:<type>`...).
+
+## Agent skills
+
+### Issue tracker
+
+Les tickets et les specs sont des issues GitHub de `fudev1/bidules`, via `gh`. Voir `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Les cinq étiquettes par défaut : `needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`. Voir `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Un seul contexte : `GLOSSARY.md` et `docs/adr/` à la racine, créés au fur et à mesure. Voir `docs/agents/domain.md`.
