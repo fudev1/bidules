@@ -126,7 +126,7 @@ Après `gh pr checkout`, `git switch test` ramène sur `test`.
 | `sprites/`, `prototype/` | Fichiers Aseprite des blobs, prototype de la chambre |
 | `tools/` | `publier.py` : du fichier Aseprite à l'app ; `sim.py` : page de test du Bidule dans un navigateur, sans l'app ; `boule.py` : la forme de la goutte du Bidule tenu par la tête ; `pixellab.py`, `planche.py`, `importer.py`, `verifier.py`, `bilan.py` : générer avec PixelLab (voir plus bas) ; les autres scripts créent ou alignent des animations (voir leur en-tête) |
 | `.mcp.json` | Serveurs MCP pour faire éditer Aseprite par Claude Code (voir « Faire éditer Aseprite par Claude Code ») |
-| `.claude/`, `CLAUDE.md` | Consignes pour Claude Code : skills de commit, `pull-request`, `animer-bidule`, `creer-bidule` et `aseprite-mcp`, règles git, garde-fou contre les push sur `main`, pas de mention de Claude dans les commits et les PR |
+| `.claude/`, `CLAUDE.md` | Consignes pour Claude Code : skills de commit, `pull-request`, `animer-bidule`, `creer-bidule` et `aseprite-mcp`, skills de Matt Pocock (`mattpocock/skills`, licence MIT), règles git, garde-fou contre les push sur `main`, pas de mention de Claude dans les commits et les PR |
 | `.githooks/`, `.github/` | Garde-fou git pour les humains, modèle de pull request |
 
 ## Ajouter une animation à la limace
