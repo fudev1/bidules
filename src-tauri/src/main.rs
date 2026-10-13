@@ -317,7 +317,18 @@ fn session_active() -> Option<String> {
 
 const ICONE_REPOS: &[u8] = include_bytes!("../icons/tray-repos.png");
 
-// Cacher le Bidule (clic droit sur lui, panneau) ou le faire revenir (panneau, menu de l'icône). Caché, l'icône se fige au repos.
+// Le panneau au milieu de l'écran (menu du clic droit sur le Bidule, menu de l'icône).
+#[tauri::command]
+fn ouvrir_panneau(app: AppHandle) {
+    if let Some(p) = app.get_webview_window("panel") {
+        let _ = p.center();
+        let _ = p.show();
+        let _ = p.set_focus();
+        let _ = app.emit("demande-etat", ());
+    }
+}
+
+// Cacher le Bidule (menu du clic droit sur lui, panneau) ou le faire revenir (panneau, menu de l'icône). Caché, l'icône se fige au repos.
 #[tauri::command]
 fn montrer_bidule(app: AppHandle, oui: bool) {
     let Some(w) = app.get_webview_window("main") else { return };
@@ -351,7 +362,7 @@ fn contexte() -> Option<Jauge> {
 
 fn main() {
     tauri::Builder::default()
-        .invoke_handler(tauri::generate_handler![log, quit, hide_panel, prompt_times, contexte, icone, session_active, montrer_bidule, bonbon_poser, bonbon_retirer, bonbon_clic])
+        .invoke_handler(tauri::generate_handler![log, quit, hide_panel, prompt_times, contexte, icone, session_active, montrer_bidule, ouvrir_panneau, bonbon_poser, bonbon_retirer, bonbon_clic])
         .setup(|app| {
             #[cfg(target_os = "macos")]
             app.set_activation_policy(tauri::ActivationPolicy::Accessory);
@@ -383,14 +394,7 @@ fn main() {
                 .on_menu_event(|app, event| match event.id().as_ref() {
                     "quit" => app.exit(0),
                     "show" => montrer_bidule(app.clone(), true),
-                    "open" => {
-                        if let Some(p) = app.get_webview_window("panel") {
-                            let _ = p.center();
-                            let _ = p.show();
-                            let _ = p.set_focus();
-                            let _ = app.emit("demande-etat", ());
-                        }
-                    }
+                    "open" => ouvrir_panneau(app.clone()),
                     _ => {}
                 })
                 .on_tray_icon_event(move |tray, event| {

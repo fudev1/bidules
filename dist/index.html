@@ -1229,11 +1229,12 @@ async function autoMood() {
   }
   if (!claudeIdle && mode === "sleep" && Date.now() - sleepSince > 3000) wakeUp("seul");   // Claude se remet au travail : il se réveille
 }
-T.event.listen("mood", e => {
-  moodMode = e.payload;
+function chooseMood(m) {
+  moodMode = m;
   if (moodMode === "auto") { mood = null; autoMood(); }
   else { moodReason = "choisie à la main"; say("humeur choisie : " + moodMode); applyMood(moodMode); bubble(MOOD_LABEL[moodMode], 1200); }
-});
+}
+T.event.listen("mood", e => chooseMood(e.payload));
 setInterval(autoMood, 3000);
 // On change de session dans Claude Desktop : on relit tout de suite son état, sans attendre les 3 s.
 let lastSession;
@@ -1319,7 +1320,23 @@ T.event.listen("evo", e => {
   if (P[slot] === part) { delete P[slot]; say("partie retiree : " + key); evolve(`Adieu ${PART_NAME[key]}`); }
   else { const replaced = P[slot]; P[slot] = part; say("nouvelle partie : " + key); evolve(replaced ? `${PART_NAME[key]} à la place !` : `Nouvelle partie : ${PART_NAME[key]} !`); }
 });
-img.addEventListener("contextmenu", e => { e.preventDefault(); say("cache"); T.core.invoke("montrer_bidule", {oui:false}); });
+// Clic droit : un petit menu sur le Bidule (le menu du Mac, qui n'est pas coupé par la petite fenêtre). On y ajoutera des actions.
+img.addEventListener("contextmenu", async e => {
+  e.preventDefault();
+  try {
+    const {Menu, MenuItem, Submenu, CheckMenuItem, PredefinedMenuItem} = T.menu;
+    const moods = await Promise.all([["auto", "Automatique"], ...Object.entries(MOOD_LABEL)].map(([id, text]) =>
+      CheckMenuItem.new({text, checked:moodMode === id, action:() => { chooseMood(id); sendState(); }})));
+    const menu = await Menu.new({items:[
+      await MenuItem.new({text:"Ouvrir le panneau", action:() => T.core.invoke("ouvrir_panneau")}),
+      await Submenu.new({text:"Humeur", items:moods}),
+      await PredefinedMenuItem.new({item:"Separator"}),
+      await MenuItem.new({text:"Cacher le Bidule", action:() => T.core.invoke("montrer_bidule", {oui:false})}),
+      await MenuItem.new({text:"Quitter", action:() => T.core.invoke("quit")}),
+    ]});
+    await menu.popup();
+  } catch (err) { say("menu : " + err); }
+});
 (async () => {
   try {
     const s = await win.scaleFactor(), p = await win.outerPosition();
