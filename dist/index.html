@@ -631,7 +631,11 @@ function land() {
 }
 let lastT = performance.now();
 // le clignement passe après tout le reste : une image posée pendant ce pas est remplacée tout de suite, sans flash du visage habituel
-function tick() { tickBody(); if (isSheet()) blinkStep(Date.now()); }
+function tick() {
+  // premier lancement, pas encore de Bidule choisi : il attend, immobile, à sa place de départ (en haut), comme au lancement suivant
+  if (!chosen) { lastT = performance.now(); return; }
+  tickBody(); if (isSheet()) blinkStep(Date.now());
+}
 function tickBody() {
   ticks++;
   const t2 = performance.now(), dtMs = Math.min(200, t2 - lastT), k = Math.min(4, (t2 - lastT) / 33); lastT = t2;
