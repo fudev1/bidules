@@ -2,8 +2,8 @@
 
 use serde::de::IgnoredAny;
 use serde::Deserialize;
-use std::io::{BufRead, BufReader};
-use std::path::Path;
+use std::io::{BufRead, BufReader, Read, Seek, SeekFrom};
+use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant, SystemTime};
 use tauri::menu::{Menu, MenuItem};
@@ -150,9 +150,179 @@ fn prompt_times() -> Vec<f64> {
     out
 }
 
+// Jauge de contexte de la conversation en cours dans Claude Desktop (onglet Code). Desktop range chaque session dans
+// claude-code-sessions/…/local_*.json (id du journal, modèle, dernier focus) ; le journal est le même que celui de Claude Code,
+// dans ~/.claude/projects. On n'y lit que les quantités de tokens de la dernière réponse, jamais le texte ni le titre.
+#[derive(Deserialize)]
+struct DesktopSession {
+    #[serde(rename = "cliSessionId")]
+    cli_session_id: Option<String>,
+    #[serde(rename = "lastFocusedAt")]
+    last_focused_at: Option<f64>,
+    #[serde(rename = "isArchived")]
+    is_archived: Option<bool>,
+    model: Option<String>,
+}
+#[derive(Deserialize)]
+struct UsageLine {
+    #[serde(rename = "type")]
+    kind: Option<String>,
+    subtype: Option<String>,
+    #[serde(rename = "isSidechain")]
+    is_sidechain: Option<bool>,
+    message: Option<UsageMsg>,
+    #[serde(rename = "compactMetadata")]
+    compact: Option<Compact>,
+}
+#[derive(Deserialize)]
+struct UsageMsg {
+    model: Option<String>,
+    usage: Option<Usage>,
+    content: Option<ActContent>,
+}
+// Pour la bulle de pensée : le type de chaque bloc et le nom de l'outil appelé. Le texte des blocs n'est pas désérialisé.
+#[derive(Deserialize)]
+#[serde(untagged)]
+enum ActContent {
+    Blocks(Vec<ActBlock>),
+    Other(IgnoredAny),
+}
+#[derive(Deserialize)]
+struct ActBlock {
+    #[serde(rename = "type")]
+    kind: Option<String>,
+    name: Option<String>,
+}
+#[derive(Deserialize)]
+struct Usage {
+    input_tokens: Option<u64>,
+    cache_creation_input_tokens: Option<u64>,
+    cache_read_input_tokens: Option<u64>,
+}
+#[derive(Deserialize)]
+struct Compact {
+    #[serde(rename = "postTokens")]
+    post_tokens: Option<u64>,
+}
+#[derive(serde::Serialize)]
+struct Jauge {
+    tokens: u64,
+    fenetre: u64,
+    pourcent: f64,
+    source: &'static str,
+    // Ce que fait Claude : "pense", le nom de l'outil en cours, ou rien quand il a fini de répondre.
+    activite: Option<String>,
+}
+
+fn walk(dir: &Path, f: &mut dyn FnMut(&Path)) {
+    let Ok(rd) = std::fs::read_dir(dir) else { return };
+    for e in rd.flatten() {
+        let p = e.path();
+        if p.is_dir() { walk(&p, f) } else { f(&p) }
+    }
+}
+
+// Session Desktop qui a eu le focus en dernier : (id du journal, modèle).
+fn desktop_session(home: &str) -> Option<(String, Option<String>)> {
+    let mut best: Option<(f64, String, Option<String>)> = None;
+    walk(Path::new(&format!("{home}/Library/Application Support/Claude/claude-code-sessions")), &mut |p| {
+        let name = p.file_name().and_then(|n| n.to_str()).unwrap_or("");
+        if !name.starts_with("local_") || !name.ends_with(".json") { return }
+        let Ok(txt) = std::fs::read_to_string(p) else { return };
+        let Ok(s) = serde_json::from_str::<DesktopSession>(&txt) else { return };
+        let (Some(id), Some(t)) = (s.cli_session_id, s.last_focused_at) else { return };
+        if s.is_archived == Some(true) || best.as_ref().is_some_and(|b| b.0 >= t) { return }
+        best = Some((t, id, s.model));
+    });
+    best.map(|(_, id, m)| (id, m))
+}
+
+fn find_journal(home: &str, id: &str) -> Option<PathBuf> {
+    let want = format!("{id}.jsonl");
+    let rd = std::fs::read_dir(format!("{home}/.claude/projects")).ok()?;
+    rd.flatten().map(|e| e.path().join(&want)).find(|p| p.is_file())
+}
+
+// Journal Claude Code le plus récent (terminal), s'il a bougé dans la dernière demi-heure.
+fn latest_journal(home: &str) -> Option<PathBuf> {
+    let cutoff = SystemTime::now() - Duration::from_secs(1800);
+    let mut best: Option<(SystemTime, PathBuf)> = None;
+    walk(Path::new(&format!("{home}/.claude/projects")), &mut |p| {
+        if p.extension().and_then(|x| x.to_str()) != Some("jsonl") || p.components().any(|c| c.as_os_str() == "subagents") { return }
+        let Some(m) = std::fs::metadata(p).and_then(|m| m.modified()).ok() else { return };
+        if m > cutoff && best.as_ref().map_or(true, |b| m > b.0) { best = Some((m, p.to_path_buf())) }
+    });
+    best.map(|b| b.1)
+}
+
+// Tokens dans le contexte d'après la dernière réponse (ou le dernier résumé), en lisant la fin du journal seulement.
+fn last_context(path: &Path) -> Option<(u64, Option<String>, Option<String>)> {
+    let mut f = std::fs::File::open(path).ok()?;
+    let len = f.metadata().ok()?.len();
+    for tail in [2u64 << 20, 16 << 20, len] {
+        let start = len.saturating_sub(tail);
+        f.seek(SeekFrom::Start(start)).ok()?;
+        let mut buf = Vec::new();
+        f.by_ref().take(tail).read_to_end(&mut buf).ok()?;
+        let mut found = None;
+        let mut act: Option<String> = None;
+        for line in buf.split(|&b| b == b'\n') {
+            let Ok(l) = serde_json::from_slice::<UsageLine>(line) else { continue };
+            if l.is_sidechain == Some(true) { continue }
+            if l.kind.as_deref() == Some("system") && l.subtype.as_deref() == Some("compact_boundary") {
+                if let Some(t) = l.compact.and_then(|c| c.post_tokens) { found = Some((t, None)) }
+            } else if l.kind.as_deref() == Some("user") {
+                act = Some("pense".into());      // un prompt ou le résultat d'un outil : Claude reprend la main
+            } else if l.kind.as_deref() == Some("assistant") {
+                let Some(m) = l.message else { continue };
+                if let Some(ActContent::Blocks(b)) = &m.content {
+                    for x in b {
+                        match x.kind.as_deref() {
+                            Some("tool_use") => act = x.name.clone().or(Some("outil".into())),
+                            Some("thinking") => act = Some("pense".into()),
+                            Some("text") => act = None,
+                            _ => {}
+                        }
+                    }
+                }
+                let Some(u) = m.usage else { continue };
+                let t = u.input_tokens.unwrap_or(0) + u.cache_creation_input_tokens.unwrap_or(0) + u.cache_read_input_tokens.unwrap_or(0);
+                if t > 0 { found = Some((t, m.model)) }
+            }
+        }
+        if found.is_some() || start == 0 { return found.map(|(t, m)| (t, m, act)) }
+    }
+    None
+}
+
+// Taille de la fenêtre : 1 M pour les modèles récents (Opus et Sonnet compactent vers 930 k), 200 k pour Haiku et les anciens.
+fn window_for(model: &str) -> u64 {
+    let old = ["claude-3", "haiku", "sonnet-4-", "opus-4-"].iter().any(|k| model.contains(k));
+    if model.contains("[1m]") || !old { 1_000_000 } else { 200_000 }
+}
+
+#[tauri::command]
+fn contexte() -> Option<Jauge> {
+    let home = std::env::var("HOME").unwrap_or_default();
+    let (path, model, source) = match desktop_session(&home).and_then(|(id, m)| Some((find_journal(&home, &id)?, m))) {
+        Some((p, m)) => (p, m, "desktop"),
+        None => (latest_journal(&home)?, None, "terminal"),
+    };
+    // Une conversation sans réponse depuis une demi-heure n'est plus « en cours » : le Bidule dort.
+    let recent = std::fs::metadata(&path).and_then(|m| m.modified()).ok()? > SystemTime::now() - Duration::from_secs(1800);
+    if !recent { return None }
+    let (tokens, seen, act) = last_context(&path)?;
+    // Plus rien d'écrit depuis 5 min : il attend sans doute une permission, ou s'est arrêté. Pas de bulle.
+    let fresh = std::fs::metadata(&path).and_then(|m| m.modified()).ok()? > SystemTime::now() - Duration::from_secs(300);
+    let activite = act.filter(|_| fresh);
+    let model = model.or(seen).unwrap_or_default();
+    let fenetre = window_for(&model).max(tokens);
+    Some(Jauge { tokens, fenetre, pourcent: tokens as f64 * 100.0 / fenetre as f64, source, activite })
+}
+
 fn main() {
     tauri::Builder::default()
-        .invoke_handler(tauri::generate_handler![log, quit, hide_panel, prompt_times, bonbon_poser, bonbon_retirer, bonbon_clic])
+        .invoke_handler(tauri::generate_handler![log, quit, hide_panel, prompt_times, contexte, bonbon_poser, bonbon_retirer, bonbon_clic])
         .setup(|app| {
             #[cfg(target_os = "macos")]
             app.set_activation_policy(tauri::ActivationPolicy::Accessory);

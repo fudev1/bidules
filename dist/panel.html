@@ -69,7 +69,7 @@ footer .btn{background:var(--plum);color:var(--white)}
       <div id="slots" class="pane"></div>
     </section>
     <section class="pane" id="p-humeur" hidden>
-      <p class="hint">L'humeur est devinée d'après ton rythme de travail (heure, pauses, cadence), sans lire tes messages. Tu peux la forcer ici.</p>
+      <p class="hint">L'humeur suit la jauge de contexte de ta conversation Claude en cours : joyeuse jusqu'à 30 %, normale jusqu'à 60 %, fatiguée au-delà. Quand Claude ne fait rien (réponse finie, ou pas de conversation), il dort : c'est le signal pour y retourner. Jamais en lisant tes messages. Tu peux la forcer ici.</p>
       <div class="soon" id="moodNow"></div>
       <div class="moods" id="moods"></div>
     </section>
@@ -93,7 +93,7 @@ function render() {
   const parts = st.partsBy[st.style] || {}, n = Object.keys(parts).length;
   $("thumb").src = st.thumb || render64(st.style, parts);
   $("title").textContent = "Bidule · " + STYLES.find(s => s[0] === st.style)[1];
-  const ml = st.mood ? MOODS.find(m => m[0] === st.mood)[1] : "sans humeur";
+  const ml = st.mood ? MOODS.find(m => m[0] === st.mood)[1] : "Normale";
   $("sub").textContent = (n ? `${n} partie${n > 1 ? "s" : ""} sur 6` : "Forme de départ") + " · " + ml;
   $("moodNow").innerHTML = `Humeur actuelle : <b>${ml}</b>` + (st.moodReason ? ` (${st.moodMode === "auto" ? "devinée : " : ""}${st.moodReason})` : "");
   $("moods").innerHTML = MOODS.map(([id, name]) => `<button class="chip ${st.moodMode === id ? "on" : ""}" data-mood="${id}">${name}</button>`).join("");

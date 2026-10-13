@@ -25,6 +25,7 @@
         "skipTaskbar": true,
         "visibleOnAllWorkspaces": true,
         "acceptFirstMouse": true,
+        "backgroundThrottling": "disabled",
         "focus": false
       },
       {

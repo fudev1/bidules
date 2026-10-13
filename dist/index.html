@@ -41,6 +41,8 @@ img.dangle{transform-origin:50% 8%;animation:dangle 2s ease-in-out infinite}
 .zz{position:absolute;left:112px;top:84px;font:800 16px -apple-system,system-ui,sans-serif;color:#2a2238;text-shadow:0 0 2px #fff,0 0 3px #fff}
 .drop{position:absolute;width:6px;height:6px;background:#4aa8e0;border:1px solid #2a2238}
 .heart{position:absolute;top:86px;width:21px;height:18px;image-rendering:pixelated}
+.pense{position:absolute;left:66px;top:50px;width:56px;height:36px;image-rendering:pixelated;transform-origin:90% 100%;transition:opacity .25s,scale .25s}
+.pense.off{opacity:0;scale:.6}
 .bub{position:absolute;left:50%;top:8px;transform:translateX(-50%);background:#fff;color:#2a2238;border:2px solid #2a2238;border-radius:8px;padding:2px 7px;font:700 13px -apple-system,system-ui,sans-serif;white-space:nowrap}
 </style></head>
 <body><img id="b" alt=""><canvas id="el" width="176" height="210" hidden></canvas><div id="fx"></div>
@@ -638,7 +640,7 @@ function tickBody() {
   if (mode === "walk") calm += dtMs;
   if (mode === "walk" && style === "candy" && mood === "guilleret" && sweets.length < 3 && !feeding) sweetTimer -= dtMs;
   if (mode === "pet") calm += dtMs * PET_BOOST;
-  if ((mode === "walk" || mode === "pet") && calm > (MV().sleepAfter || SLEEP_AFTER)) {
+  if ((mode === "walk" || mode === "pet") && calm > (sleepyNow() ? NO_CONV_SLEEP : MV().sleepAfter || SLEEP_AFTER)) {
     drowsyEnd = false; mode = "drowsy"; reactUntil = Date.now() + (tagDur("baille") ? tagDur("baille") + 300 : 2600); img.src = FR.baille; pose(""); watching = false; lookKey = ""; playOnce("baille");
     bubble("*bâille*", 1300); say("il a sommeil");
   }
@@ -719,7 +721,7 @@ function tickBody() {
   if (mode === "sleep") {
     wake = Math.max(0, wake - 30 * dtMs / 1000);
     if (now > nextZ) { zz(); nextZ = now + 1100; }
-    if (now - sleepSince > AUTO_WAKE) wakeUp("seul");
+    if (now - sleepSince > AUTO_WAKE && !sleepyNow()) wakeUp("seul");
     return;
   }
   if (mode === "waking") { if (now > reactUntil) toWalk(); return; }
@@ -1128,10 +1130,82 @@ function moodExtra() {
 function applyMood(m) {
   mood = m; document.body.dataset.mood = m || ""; for (const id in SHEET_DATA) moodTags(id); buildFrames(style); lookKey = ""; refreshSprite(); sendState();
 }
+// Humeur d'après la jauge de contexte de la conversation en cours (Claude Desktop, sinon le terminal) : 0-30 % joyeux, 30-60 % normal, 60-100 % fatigué.
+// L'app ne reçoit que des quantités de tokens. Sans conversation en cours, l'humeur est devinée d'après le rythme.
+// --- Bulle de pensée : il rumine ce que fait Claude, d'après le nom de l'outil en cours (jamais le texte). Pixel art, 28 × 18, affichée × 2.
+// Chaque icône a 2 images de 9 × 7, alternées. Les pastilles du bas montent vers sa tête.
+const PENSE_BODY = ["...kkkkkkkkkkkkkkkkkkkkk...", "..kwwwwwwwwwwwwwwwwwwwwwk..", ".kwwwwwwwwwwwwwwwwwwwwwwwk.", "kwwwwwwwwwwwwwwwwwwwwwwwwwk",
+  "kwwwwwwwwwwwwwwwwwwwwwwwwwk", "kwwwwwwwwwwwwwwwwwwwwwwwwwk", "kwwwwwwwwwwwwwwwwwwwwwwwwwk", "kwwwwwwwwwwwwwwwwwwwwwwwwwk", "kwwwwwwwwwwwwwwwwwwwwwwwwwk",
+  ".kwwwwwwwwwwwwwwwwwwwwwwwk.", "..kwwwwwwwwwwwwwwwwwwwwwk..", "...kkkkkkkkkkkkkkkkkkkkk...", "...........................", "....kkk....................",
+  "...kwwwk...................", "....kkk....................", "..kk.......................", "..kk......................."];
+const PENSE_ICONS = {
+  pense:   [[".........", ".........", ".kk......", ".kk......", ".........", ".........", "........."], [".........", ".........", ".kk.kk...", ".kk.kk...", ".........", ".........", "........."],
+            [".........", ".........", ".kk.kk.kk", ".kk.kk.kk", ".........", ".........", "........."]],
+  lit:     [["kkkk.kkkk", "kwwkkkwwk", "kbbkkkbbk", "kwwkkkwwk", "kbbkkkbbk", "kwwkkkwwk", "kkkkkkkkk"], ["kkkk.kkkk", "kbbkkkwwk", "kwwkkkbbk", "kbbkkkwwk", "kwwkkkbbk", "kbbkkkwwk", "kkkkkkkkk"]],
+  ecrit:   [[".......kk", "......kpk", ".....kyk.", "....kyk..", "...kyk...", "..kk.....", "bbbbb...."], ["......kk.", ".....kpk.", "....kyk..", "...kyk...", "..kyk....", ".kk......", "bbbbbbbb."]],
+  commande:[["kkkkkkkkk", "kgk.....k", "k.gk....k", "kgk.ggg.k", "k.......k", "kkkkkkkkk", "........."], ["kkkkkkkkk", "kgk.....k", "k.gk....k", "kgk.....k", "k.......k", "kkkkkkkkk", "........."]],
+  cherche: [["..kkk....", ".kbbbk...", "kbwbbbk..", "kbbbbbk..", ".kbbbk...", "..kkkkk..", "......kk."], ["...kkk...", "..kbbbk..", ".kbwbbbk.", ".kbbbbbk.", "..kbbbk..", "...kkkkk.", ".......kk"]],
+  web:     [["..kkkkk..", ".kbgbbgk.", "kggbbgggk", "kbbbggbbk", "kbggbbbgk", ".kbbbggk.", "..kkkkk.."], ["..kkkkk..", ".kgbbgbk.", "kbbgggbgk", "kggbbbggk", "kbbbggbbk", ".kggbbbk.", "..kkkkk.."]],
+  agent:   [[".kk...kk.", "kppk.kbbk", "kppk.kbbk", ".kk...kk.", ".........", "..k...k..", "........."], [".kk...kk.", "kbbk.kppk", "kbbk.kppk", ".kk...kk.", ".........", "...k.k...", "........."]],
+  outil:   [["......kk.", ".....k..k", "....kk.k.", "...kyk...", "..kyk....", ".kyk.....", "kk......."], [".....kk..", "....k..k.", "...kk.k..", "..kyk....", ".kyk.....", "kyk......", "kk......."]],
+};
+const PENSE_COL = {k:COL.k, w:"#ffffff", b:"#8ec5ff", g:"#5fd38a", p:"#ff7fa0", y:"#ffd25a"};
+const PENSE_LABEL = {pense:"il réfléchit", lit:"il lit", ecrit:"il écrit", commande:"il lance une commande", cherche:"il cherche", web:"il va sur le web", agent:"il délègue", outil:"il bricole"};
+function penseIcon(tool) {
+  if (!tool || tool === "pense") return tool && "pense";
+  if (/^(Read|NotebookRead)$/.test(tool)) return "lit";
+  if (/^(Edit|Write|MultiEdit|NotebookEdit)$/.test(tool)) return "ecrit";
+  if (/^(Bash|BashOutput|Monitor|KillShell|TaskStop)$/.test(tool)) return "commande";
+  if (/^(Grep|Glob|LS|ToolSearch)$/.test(tool)) return "cherche";
+  if (/^Web/.test(tool)) return "web";
+  if (/^(Agent|Task|SendMessage)$/.test(tool)) return "agent";
+  return "outil";
+}
+const pense = document.createElement("canvas"); pense.width = 28; pense.height = 18; pense.className = "pense off"; fx.appendChild(pense);
+let activity = null, penseFrame = 0;
+const topCv = document.createElement("canvas"); topCv.width = topCv.height = 64; const topG = topCv.getContext("2d", {willReadFrequently:true});
+function spriteTop() {          // première ligne non transparente de l'image affichée (et sa colonne du milieu), en pixels 64 × 64
+  topG.clearRect(0, 0, 64, 64); try { topG.drawImage(img, 0, 0, 64, 64); } catch (e) { return {x:40, y:20}; }
+  const d = topG.getImageData(0, 0, 64, 64).data;
+  for (let y = 0; y < 64; y++) { let a = -1, b = -1; for (let x = 0; x < 64; x++) if (d[(y * 64 + x) * 4 + 3] > 0) { if (a < 0) a = x; b = x; } if (a >= 0) return {x:(a + b) / 2, y}; }
+  return {x:40, y:20};
+}
+setInterval(() => {
+  const icon = penseIcon(activity), show = !!icon && (mode === "walk" || mode === "pet") && !drag;
+  pense.classList.toggle("off", !show);
+  if (!show) return;
+  const g = pense.getContext("2d"), frames = PENSE_ICONS[icon], f = frames[penseFrame++ % frames.length];
+  g.clearRect(0, 0, 28, 18);
+  const paint = (rows, ox, oy) => rows.forEach((r, j) => [...r].forEach((ch, i) => { if (ch !== ".") { g.fillStyle = PENSE_COL[ch]; g.fillRect(ox + i, oy + j, 1, 1); } }));
+  // les pastilles partent de sa tête : à droite de la bulle quand il regarde à droite, à gauche sinon
+  const right = dir > 0, body = right ? PENSE_BODY.map((r, j) => j < 12 ? r : [...r].reverse().join("")) : PENSE_BODY;
+  // le haut de sa tête dans l'image du moment : la bulle se pose juste au-dessus, les pastilles au-dessus de la tête
+  const top = spriteTop(), hx = 24 + (right ? top.x : 63 - top.x) * 2;
+  pense.style.top = Math.max(0, 128 - 36 + 48 - (64 - top.y) * 2 - 6) + "px";
+  pense.style.left = Math.max(0, Math.min(176 - 56, right ? hx - 50 : hx - 6)) + "px"; pense.style.transformOrigin = right ? "90% 100%" : "10% 100%";
+  paint(body, 0, 0); paint(f, 9, 2);
+  pense.title = PENSE_LABEL[icon];
+}, 450);
+let noConversation = false, claudeIdle = false;
+const NO_CONV_SLEEP = 5000;          // ms de calme avant de se rendormir, le temps de jouer s'il est réveillé à la main
+const sleepyNow = () => claudeIdle;          // Claude ne fait rien (pas de conversation, ou réponse finie) : il dort et ne se réveille pas seul, pour te dire d'y retourner
+const CONTEXT_MOODS = [[30, "guilleret"], [60, null], [Infinity, "vaseux"]];
+async function contextMood() {
+  let j = null;
+  try { j = await T.core.invoke("contexte"); } catch (e) { say("contexte: " + e); }
+  noConversation = !j; activity = j ? j.activite : null; claudeIdle = !activity;
+  if (!j) return null;
+  const pc = Math.round(j.pourcent);
+  return [CONTEXT_MOODS.find(([max]) => j.pourcent < max)[1], `contexte à ${pc} %${j.source === "terminal" ? " (terminal)" : ""}`];
+}
 // Humeur devinée d'après le rythme : l'app ne reçoit que les heures des prompts, jamais leur texte.
+let promptsCache = [], promptsAt = 0;          // les heures des prompts : relues au plus une fois par minute
 async function guessMood() {
+  const c = await contextMood();
+  if (c) return c;
   let times = [];
-  try { times = await T.core.invoke("prompt_times"); } catch (e) { say("prompt_times: " + e); }
+  if (Date.now() - promptsAt > 60000) { try { promptsCache = await T.core.invoke("prompt_times"); promptsAt = Date.now(); } catch (e) { say("prompt_times: " + e); } }
+  times = promptsCache.slice();
   times.sort((a, b) => a - b);
   const now = Date.now() / 1000, h = new Date().getHours(), lastT = times.length ? times[times.length - 1] : null;
   const last10 = times.filter(t => now - t < 600).length;
@@ -1145,16 +1219,21 @@ async function guessMood() {
   return ["guilleret", "rythme régulier"];
 }
 async function autoMood() {
-  if (moodMode !== "auto") return;
-  const [m, why] = await guessMood(); moodReason = why;
-  if (m !== mood) { say(`humeur devinee : ${m} (${why})`); applyMood(m); } else sendState();
+  // l'humeur choisie à la main ne change pas, mais la bulle et le sommeil suivent toujours Claude
+  if (moodMode !== "auto") await contextMood();
+  else {
+    const [m, why] = await guessMood();
+    moodReason = noConversation ? "aucune conversation en cours, il dort" : claudeIdle ? why + ", Claude attend, il dort" : why;
+    if (m !== mood) { say(`humeur devinee : ${m} (${why})`); applyMood(m); } else sendState();
+  }
+  if (!claudeIdle && mode === "sleep" && Date.now() - sleepSince > 3000) wakeUp("seul");   // Claude se remet au travail : il se réveille
 }
 T.event.listen("mood", e => {
   moodMode = e.payload;
   if (moodMode === "auto") { mood = null; autoMood(); }
   else { moodReason = "choisie à la main"; say("humeur choisie : " + moodMode); applyMood(moodMode); bubble(MOOD_LABEL[moodMode], 1200); }
 });
-setInterval(autoMood, 60000);
+setInterval(autoMood, 3000);
 T.event.listen("bonbon-clic", e => {
   say("bonbon-clic reçu : " + e.payload);
   const s = sweets.find(c => c.id === e.payload);
