@@ -583,7 +583,7 @@ function fallAsleep() { mode = "sleep"; img.src = FR.dort; pose("breathe"); slee
 function wakeUp(why) {
   mode = "waking"; reactUntil = Date.now() + (isSheet() && tagDur("baille") || 1100); img.src = FR.baille; pose(isSheet() ? "" : "shake"); wake = 0; calm = 0;
   if (isSheet()) playOnce("baille");          // dessiné : il se réveille avec son bâillement, une fois, sans tremblement
-  bubble(why === "seul" ? "*s'étire*" : "Hein ?", 1000); say(`il se reveille (${why})`);
+  bubble(why === "seul" ? "*s'étire*" : why === "fini" ? "À toi !" : "Hein ?", why === "fini" ? 1800 : 1000); say(`il se reveille (${why})`);
 }
 function react(m, ms, frame, cls = "") { mode = m; reactUntil = Date.now() + ms; img.src = frame; pose(cls); img.style.rotate = "0deg"; watching = false; lookKey = ""; }
 function toWalk() { mode = "walk"; img.src = FR.normal; pose("walk"); }
@@ -1286,7 +1286,15 @@ setInterval(() => {
 }, 450);
 let noConversation = false, claudeIdle = false, claudeWaits = false;
 const NO_CONV_SLEEP = 5000;          // ms de calme avant de se rendormir, le temps de jouer s'il est réveillé à la main
-const sleepyNow = () => claudeIdle;          // Claude ne fait rien (pas de conversation, ou réponse finie) : il dort et ne se réveille pas seul, pour te dire d'y retourner
+const sleepyNow = () => claudeIdle && Date.now() > finiUntil;          // Claude ne fait rien (pas de conversation, ou réponse finie) : il dort et ne se réveille pas seul, pour te dire d'y retourner
+// Claude vient de finir de répondre (hook « Stop » de Claude Code, main.rs) : il te prévient tout de suite, et reste éveillé 20 s avant de s'endormir
+let finiUntil = 0;
+T.event.listen("claude-fini", () => {
+  finiUntil = Date.now() + 20000; calm = 0; say("Claude a fini (hook)");
+  if (mode === "sleep" || mode === "drowsy") { wakeUp("fini"); return; }
+  bubble("À toi !", 1800);
+  if (mode === "walk" && isSheet() && !sheetOnce) { idleUntil = Date.now() + 3000; playOnce(FRONT.has(img.src) ? "saut-face" : "saut"); }
+});
 const CONTEXT_MOODS = [[30, "guilleret"], [60, null], [Infinity, "vaseux"]];
 async function contextMood() {
   let j = null;
