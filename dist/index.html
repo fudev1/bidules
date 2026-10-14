@@ -615,7 +615,7 @@ function ceilingToWall(side) {
   const T2 = SHEET_DATA[style].tags;
   dir = side; unceil(false);
   if (!T2.coule) { unceil(true); return; }
-  mode = "wall"; wallSide = side; pose(""); vx = vy = 0; wallV = .15; peakY = null; fall = null; watching = false; lookKey = "";
+  mode = "wall"; wallSide = side; pose(""); vx = vy = 0; wallV = .3; wallMax = 3;          // du plafond, il descend trois fois plus vite peakY = null; fall = null; watching = false; lookKey = "";
   x = side < 0 ? minX - WALL_OVER : maxX + WALL_OVER;
   img.src = T2.coule[0].src; y = minY - headroom();
   say("arrive au bord en haut : il descend le long du mur");
@@ -636,11 +636,11 @@ async function flush() {
 }
 // Lancé contre le bord de l'écran, un perso dessiné s'écrase contre lui (choc-bord) puis coule le long du mur (coule) jusqu'au sol.
 // La fenêtre dépasse un peu de l'écran (WALL_OVER) pour que le corps touche le bord : le dessin laisse 24 px de marge de chaque côté.
-const WALL_OVER = 22, WALL_SLIDE = 380; let wallV = 0, wallSide = 1, wallEnd = 0;      // WALL_SLIDE : durée (ms) des dernières images de coule-fin, pendant lesquelles la fenêtre rentre
+const WALL_OVER = 22, WALL_SLIDE = 380; let wallV = 0, wallSide = 1, wallEnd = 0, wallMax = 1;          // wallMax : vitesse de glissade la plus haute (3 en venant du plafond)      // WALL_SLIDE : durée (ms) des dernières images de coule-fin, pendant lesquelles la fenêtre rentre
 function hitWall(side) {
   const T2 = isSheet() && SHEET_DATA[style].tags;
   if (!T2 || !T2.coule || !T2["choc-bord"] || Math.abs(vx) < 4 || y > floorY - 60) return false;
-  mode = "wall"; wallSide = side; dir = side; face(); pose(""); vx = vy = 0; angle = 0; spin = 0; img.style.rotate = "0deg"; wallV = .3; peakY = y; fall = null;
+  mode = "wall"; wallSide = side; dir = side; face(); pose(""); vx = vy = 0; angle = 0; spin = 0; img.style.rotate = "0deg"; wallV = .3; wallMax = 1; peakY = y; fall = null;
   x = side < 0 ? minX - WALL_OVER : maxX + WALL_OVER; watching = false; lookKey = "";
   playOnce(nausea && T2["choc-bord-vert"] ? "choc-bord-vert" : "choc-bord"); say("il percute le bord : il coule le long du mur");
   return true;
@@ -729,7 +729,7 @@ function tickBody() {
   }
   if (mode === "wall") {      // collé au bord de l'écran : il coule, de plus en plus vite, jusqu'au sol
     const impact = sheetOnce && /^choc-bord/.test(sheetOnce.tag);          // pendant l'écrasement il reste en place, ensuite il coule
-    if (!impact) { wallV = Math.min(1, wallV + .01 * k); y += wallV * k; }
+    if (!impact) { wallV = Math.min(wallMax, wallV + .01 * wallMax * k); y += wallV * k; }
     if (y >= floorY) {
       y = floorY;
       const T2 = SHEET_DATA[style].tags, fin = nausea && T2["coule-fin-vert"] ? "coule-fin-vert" : "coule-fin";      // secoué, il se reforme en vert
