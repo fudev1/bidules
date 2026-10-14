@@ -127,6 +127,8 @@ main{flex:1;overflow:auto;padding:0 12px 12px}
 
 .btn{font:400 13px/1 var(--display);letter-spacing:.6px;border-radius:14px;padding:10px 14px 8px;background:rgba(255,255,255,.18)}
 .btn.primary{background:var(--yellow);color:var(--ink)}
+.fini{display:flex;align-items:center;gap:10px}
+.fini .hint{flex:1}
 .moods{display:grid;grid-template-columns:repeat(2,1fr);gap:6px}
 .moods .chip{border-radius:14px;text-align:left;padding:9px 12px}
 .now{background:rgba(30,27,58,.22);border-radius:14px;padding:10px 12px;font-size:12.5px}
@@ -161,6 +163,7 @@ main{flex:1;overflow:auto;padding:0 12px 12px}
       <p class="hint">L'humeur suit la jauge de contexte de ta conversation Claude en cours : joyeuse jusqu'à 30 %, normale jusqu'à 60 %, fatiguée au-delà. Quand Claude ne fait rien (réponse finie, ou pas de conversation), il dort : c'est le signal pour y retourner. Jamais en lisant tes messages. Tu peux la forcer ici.</p>
       <div class="now" id="moodNow"></div>
       <div class="moods" id="moods"></div>
+      <div class="now fini"><p class="hint" id="finiTxt"></p><button class="chip" id="fini" hidden>Brancher</button></div>
     </section>
   </main>
 </div>
@@ -298,9 +301,18 @@ function applyEssai() {
 }
 applyEssai();
 placePill();
+// Prévenir quand Claude a fini : un hook de Claude Code (main.rs), branché ici d'un clic
+async function renderFini() {
+  if (!T) return;
+  const ok = await T.core.invoke("hooks_branches");
+  $("finiTxt").textContent = ok ? "Branché : il te prévient dès que Claude a fini de répondre."
+    : "Il peut te prévenir dès que Claude a fini de répondre. Pour ça, on ajoute un petit hook aux réglages de Claude Code ; il ne lit rien de tes messages.";
+  $("fini").hidden = ok;
+}
+renderFini();
 document.addEventListener("click", e => {
   const b = e.target.closest("button"); if (!b || b.disabled) return;
-  if (b.dataset.tab) { document.querySelectorAll(".tab").forEach(t => t.setAttribute("aria-selected", t === b)); ["piste", "evo", "humeur", "tests"].forEach(k => $("p-" + k).hidden = k !== b.dataset.tab); placePill(); }
+  if (b.dataset.tab) { document.querySelectorAll(".tab").forEach(t => t.setAttribute("aria-selected", t === b)); ["piste", "evo", "humeur", "tests"].forEach(k => $("p-" + k).hidden = k !== b.dataset.tab); placePill(); if (b.dataset.tab === "humeur") renderFini(); }
   else if (b.dataset.vue !== undefined) { vue = b.dataset.vue; try { localStorage.setItem("bidule.vue", vue); } catch (e) {} applyEssai(); }
   else if (b.dataset.sim !== undefined) { sim = b.dataset.sim; applyEssai(); }
   else if (b.dataset.simpc !== undefined) { simPc = +b.dataset.simpc; if (!sim) sim = "pense"; applyEssai(); }
@@ -310,6 +322,7 @@ document.addEventListener("click", e => {
   else if (b.dataset.mood) send("mood", b.dataset.mood);
   else if (b.id === "random") send("evo", "evo:random");
   else if (b.id === "reset") send("evo", "evo:reset");
+  else if (b.id === "fini") T.core.invoke("brancher_hooks").then(renderFini, err => { $("finiTxt").textContent = "Pas pu brancher : " + err; });
   else if (b.id === "quit") { if (T) T.core.invoke("quit"); }
 });
 document.addEventListener("keydown", e => { if (e.key === "Escape" && T) T.core.invoke("hide_panel"); });

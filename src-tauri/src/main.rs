@@ -406,9 +406,43 @@ fn contexte() -> Option<Jauge> {
     Some(Jauge { tokens, fenetre, pourcent: tokens as f64 * 100.0 / fenetre as f64, source, activite, attend })
 }
 
+// Claude a fini de répondre : un hook « Stop » de Claude Code touche ~/.bidules/claude-fini, l'app surveille l'heure du fichier.
+// Le hook ne lit rien et n'écrit rien d'autre : ni le texte, ni la session.
+const HOOK_FINI: &str = "mkdir -p \"$HOME/.bidules\" && touch \"$HOME/.bidules/claude-fini\"";
+fn reglages_claude(home: &str) -> Vec<PathBuf> {
+    [".claude", ".claude-masana"].iter().map(|d| PathBuf::from(format!("{home}/{d}"))).filter(|d| d.is_dir()).map(|d| d.join("settings.json")).collect()
+}
+#[tauri::command(async)]
+fn hooks_branches() -> bool {
+    let home = std::env::var("HOME").unwrap_or_default();
+    let f = reglages_claude(&home);
+    !f.is_empty() && f.iter().all(|p| std::fs::read_to_string(p).is_ok_and(|t| t.contains("claude-fini")))
+}
+// Ajoute le hook aux réglages de Claude Code (et du second profil s'il existe), sans toucher au reste ; une copie de l'ancien fichier est gardée à côté.
+#[tauri::command(async)]
+fn brancher_hooks() -> Result<(), String> {
+    let home = std::env::var("HOME").unwrap_or_default();
+    let fichiers = reglages_claude(&home);
+    if fichiers.is_empty() { return Err("Claude Code n'est pas installé (pas de dossier ~/.claude)".into()) }
+    for p in fichiers {
+        let texte = std::fs::read_to_string(&p).unwrap_or_default();
+        if texte.contains("claude-fini") { continue }
+        let mut v: serde_json::Value = if texte.trim().is_empty() { serde_json::json!({}) } else {
+            serde_json::from_str(&texte).map_err(|e| format!("{} illisible : {e}", p.display()))?
+        };
+        let racine = v.as_object_mut().ok_or(format!("{} : pas un objet JSON", p.display()))?;
+        let hooks = racine.entry("hooks").or_insert(serde_json::json!({})).as_object_mut().ok_or("« hooks » n'est pas un objet")?;
+        let stop = hooks.entry("Stop").or_insert(serde_json::json!([])).as_array_mut().ok_or("« Stop » n'est pas une liste")?;
+        stop.push(serde_json::json!({"hooks": [{"type": "command", "command": HOOK_FINI}]}));
+        if !texte.is_empty() { std::fs::write(p.with_extension("json.avant-bidule"), &texte).map_err(|e| e.to_string())?; }
+        std::fs::write(&p, serde_json::to_string_pretty(&v).unwrap() + "\n").map_err(|e| e.to_string())?;
+    }
+    Ok(())
+}
+
 fn main() {
     tauri::Builder::default()
-        .invoke_handler(tauri::generate_handler![log, quit, hide_panel, prompt_times, contexte, icone, session_active, montrer_bidule, ouvrir_panneau, lire_choix, garder_choix, bonbon_poser, bonbon_retirer, bonbon_clic])
+        .invoke_handler(tauri::generate_handler![log, quit, hide_panel, prompt_times, contexte, icone, session_active, hooks_branches, brancher_hooks, montrer_bidule, ouvrir_panneau, lire_choix, garder_choix, bonbon_poser, bonbon_retirer, bonbon_clic])
         .setup(|app| {
             #[cfg(target_os = "macos")]
             app.set_activation_policy(tauri::ActivationPolicy::Accessory);
@@ -470,6 +504,20 @@ fn main() {
                     }
                 })
                 .build(app)?;
+
+            // Claude a fini (hook) : le fichier change d'heure, le Bidule est prévenu.
+            let h4 = app.handle().clone();
+            std::thread::spawn(move || {
+                let p = PathBuf::from(format!("{}/.bidules/claude-fini", std::env::var("HOME").unwrap_or_default()));
+                let heure = || std::fs::metadata(&p).and_then(|m| m.modified()).ok();
+                let mut avant = heure();
+                loop {
+                    std::thread::sleep(Duration::from_millis(400));
+                    let h = heure();
+                    if h.is_some() && h != avant { let _ = h4.emit("claude-fini", ()); }
+                    avant = h;
+                }
+            });
 
             // Bidule fermé : l'icône se fige sur la limace au repos.
             if let Some(main) = app.get_webview_window("main") {
