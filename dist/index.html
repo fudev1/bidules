@@ -615,10 +615,23 @@ function ceilingToWall(side) {
   const T2 = SHEET_DATA[style].tags;
   dir = side; unceil(false);
   if (!T2.coule) { unceil(true); return; }
-  mode = "wall"; wallSide = side; pose(""); vx = vy = 0; wallV = .3; wallMax = 3;          // du plafond, il descend trois fois plus vite peakY = null; fall = null; watching = false; lookKey = "";
-  x = side < 0 ? minX - WALL_OVER : maxX + WALL_OVER;
-  img.src = T2.coule[0].src; y = minY - headroom();
-  say("arrive au bord en haut : il descend le long du mur");
+  // le coin du haut : coule-fin (du mur au sol) à l'envers et retourné de haut en bas, du plafond vers le mur ; la fenêtre glisse vers le bord au début
+  corner = {seq:T2["coule-fin"] ? T2["coule-fin"].slice(7).reverse() : [], i:0, next:0, t0:Date.now(), side};          // sans ses 7 premières images (la goutte en bas du mur) : la glissade prend le relais sur l'image la plus étirée
+  mode = "corner"; pose(""); vx = vy = 0; peakY = null; fall = null; watching = false; lookKey = "";
+  img.style.scale = `${side < 0 ? -1 : 1} -1`;
+  say("arrive au bord en haut : il passe le coin");
+}
+let corner = null;
+function cornerStep(now) {          // une image du coin à chaque fois ; à la fin, il est sur le mur et coule, trois fois plus vite que d'habitude
+  const c = corner, T2 = SHEET_DATA[style].tags;
+  if (c.i < c.seq.length && now >= c.next) { img.src = c.seq[c.i].src; c.next = (c.next || now) + c.seq[c.i].dur; c.i++; }
+  const p = Math.min(1, (now - c.t0) / WALL_SLIDE);          // comme coule-fin à l'envers : la fenêtre passe de l'écran au bord pendant les premières images
+  x = c.side < 0 ? minX - WALL_OVER * p : maxX + WALL_OVER * p; y = ceilingY();
+  if (c.i >= c.seq.length && now >= c.next) {
+    corner = null; face(); mode = "wall"; wallSide = c.side; vx = vy = 0; wallV = .3; wallMax = 3;
+    img.src = T2.coule[0].src; y = minY - headroom();
+    say("passe le coin : il descend le long du mur");
+  }
 }
 function unceil(tombe) {          // il se décolle : l'image se remet à l'endroit, et s'il tombe, il tombe
   face(); document.body.style.translate = "";
@@ -727,6 +740,7 @@ function tickBody() {
     if (now > ceilingUntil) unceil(true);
     return;
   }
+  if (mode === "corner") { cornerStep(now); push(); return; }          // il passe le coin du plafond au mur
   if (mode === "wall") {      // collé au bord de l'écran : il coule, de plus en plus vite, jusqu'au sol
     const impact = sheetOnce && /^choc-bord/.test(sheetOnce.tag);          // pendant l'écrasement il reste en place, ensuite il coule
     if (!impact) { wallV = Math.min(wallMax, wallV + .01 * wallMax * k); y += wallV * k; }
@@ -1034,7 +1048,7 @@ function clicked() {
 }
 img.addEventListener("pointerdown", e => {
   if (e.button !== 0 || pull.on) return;
-  if (mode === "ceiling") { unceil(false); mode = "fly"; }          // pris à la souris pendant qu'il rampe en haut : il se remet à l'endroit
+  if (mode === "ceiling" || mode === "corner") { corner = null; unceil(false); mode = "fly"; }          // pris à la souris pendant qu'il rampe en haut : il se remet à l'endroit
   img.setPointerCapture(e.pointerId);
   drag = {sx:e.screenX, sy:e.screenY, x0:x, y0:y, gx:e.clientX, gy:e.clientY, moved:false, rev:[], sign:0, shaken:false, asleep:mode === "sleep"};
   samples = [{t:performance.now(), x:e.screenX, y:e.screenY}];
