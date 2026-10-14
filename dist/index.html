@@ -83,7 +83,7 @@ async function loadSheet(id) {
     // sommet de la tête : la première ligne non vide et le milieu de ses pixels (c'est là que la souris tient le Bidule quand il pend)
     let top = f.frame.h, tl = 0, tn = 0;
     for (let i = 3; i < px.length; i += 4) if (px[i]) { const Y = Math.floor((i >> 2) / f.frame.w), X = (i >> 2) % f.frame.w; if (Y < top) { top = Y; tl = 0; tn = 0; } if (Y === top) { tl += X; tn++; } }
-    return {src:cv.toDataURL(), dur:f.duration || 100, bot, cx:(l + r) / 2, tail, head, top, tipx:tn ? tl / tn : f.frame.w / 2, step:f.step};
+    return {src:cv.toDataURL(), cv, dur:f.duration || 100, bot, cx:(l + r) / 2, tail, head, top, tipx:tn ? tl / tn : f.frame.w / 2, step:f.step};
   });
   const tags = {};
   for (const t of meta.meta.frameTags || []) tags[t.name] = frames.slice(t.from, Math.min(t.to, frames.length - 1) + 1);
@@ -601,13 +601,40 @@ function headroom() {
 }
 // Lancé assez fort vers le haut, il se colle au haut de l'écran, à l'envers (l'image retournée de haut en bas autour de 60 % de sa hauteur),
 // et y rampe comme au sol, 6 à 14 s, puis se décolle et retombe.
-let ceilingUntil = 0;
+let ceilingUntil = 0, ceilingEdge = 0;          // ceilingEdge : le bord atteint, il finit son cycle de reptation avant le demi-tour
 const ceilingY = () => minY - (WH - 128 + 2 * (76.8 - 1 - SHEET_DATA[style].tags.crawl[0].bot));          // ses pieds (la ligne du sol) touchent le haut de l'écran
 function cling() {
   mode = "ceiling"; vx = vy = 0; angle = 0; img.style.rotate = "0deg"; img.style.translate = ""; pose("");
   if (Math.sign(dir) === 0) dir = 1;
   img.style.scale = `${dir < 0 ? -1 : 1} -1`; ceilingUntil = Date.now() + 6000 + Math.random() * 8000;
-  y = ceilingY(); say("colle au haut de l'ecran, a l'envers");
+  ceilingEdge = 0; y = ceilingY(); say("colle au haut de l'ecran, a l'envers");
+}
+// Arrivé au bord de l'écran en rampant au plafond : il passe sur le mur et le descend en coulant, comme après un choc contre le bord
+// (coule, puis coule-fin au sol), sans l'écrasement du choc.
+function ceilingToWall(side) {
+  const T2 = SHEET_DATA[style].tags;
+  dir = side; face();          // sans unceil : le dessin garde son décalage sous la barre de menus, sinon il saute vers le bas le temps que la fenêtre bouge
+  if (!T2.coule) { unceil(true); return; }
+  // le coin du haut : coule-fin (du mur au sol) à l'envers et retourné de haut en bas, du plafond vers le mur ; la fenêtre glisse vers le bord au début
+  // d'abord le demi-tour (de profil jusqu'à la face), retourné lui aussi, puis le coin
+  const half = HALF || [], fin = T2["coule-fin"] ? T2["coule-fin"].slice(7).reverse() : [];
+  corner = {seq:[...half, ...fin], half:half.length, i:0, next:sheetLoop.next, t0:0, side};          // la dernière image de la reptation garde sa durée          // sans ses 7 premières images (la goutte en bas du mur) : la glissade prend le relais sur l'image la plus étirée
+  mode = "corner"; pose(""); vx = vy = 0; peakY = null; fall = null; watching = false; lookKey = "";
+  img.style.scale = `${side < 0 ? -1 : 1} -1`;
+  say("arrive au bord en haut : il passe le coin");
+}
+let corner = null;
+function cornerStep(now) {          // une image du coin à chaque fois ; à la fin, il est sur le mur et coule par à-coups, comme une goutte
+  const c = corner, T2 = SHEET_DATA[style].tags;
+  if (c.i < c.seq.length && now >= c.next) { img.src = c.seq[c.i].src; c.next = (c.next || now) + c.seq[c.i].dur; c.i++; }
+  if (!c.t0 && c.i > c.half) c.t0 = now;          // le coin commence après le demi-tour
+  const p = c.t0 ? Math.min(1, (now - c.t0) / WALL_SLIDE) : 0;          // comme coule-fin à l'envers : la fenêtre passe de l'écran au bord pendant les premières images du coin
+  x = c.side < 0 ? minX - WALL_OVER * p : maxX + WALL_OVER * p; y = ceilingY();
+  if (c.i >= c.seq.length && now >= c.next) {
+    corner = null; face(); mode = "wall"; wallSide = c.side; vx = vy = 0; wallV = 0; wallStick = now + 300; wallRun = 0;
+    img.src = T2.coule[0].src; y = minY - headroom();
+    say("passe le coin : il descend le long du mur");
+  }
 }
 function unceil(tombe) {          // il se décolle : l'image se remet à l'endroit, et s'il tombe, il tombe
   face(); document.body.style.translate = "";
@@ -625,11 +652,37 @@ async function flush() {
 }
 // Lancé contre le bord de l'écran, un perso dessiné s'écrase contre lui (choc-bord) puis coule le long du mur (coule) jusqu'au sol.
 // La fenêtre dépasse un peu de l'écran (WALL_OVER) pour que le corps touche le bord : le dessin laisse 24 px de marge de chaque côté.
-const WALL_OVER = 22, WALL_SLIDE = 380; let wallV = 0, wallSide = 1, wallEnd = 0;      // WALL_SLIDE : durée (ms) des dernières images de coule-fin, pendant lesquelles la fenêtre rentre
+const WALL_OVER = 22, WALL_SLIDE = 380; let wallV = 0, wallSide = 1, wallEnd = 0, wallStick = 0, wallRun = 0;          // en venant du plafond : collé jusqu'à wallStick, puis il glisse d'un coup sur wallRun px (wallStick à 0 : glissade continue, après un choc)      // WALL_SLIDE : durée (ms) des dernières images de coule-fin, pendant lesquelles la fenêtre rentre
+// En venant du plafond, la queue de la goutte (les lignes étroites au-dessus du corps) s'allonge vers le haut pendant la glissade (la traînée)
+// et rentre dans le corps à l'arrêt net, ligne par ligne, au pixel près ; le corps et le visage ne bougent pas. wallDef : allongement de la queue
+// (1 = deux fois plus longue, négatif = rentrée). L'image déformée a DEF_UP lignes de plus en haut, prises sur la marge de la fenêtre.
+let wallDef = 0, wallDefV = 0;
+const DEF_UP = 24, DEF_BASE = new Map(), DEF_CACHE = new Map();
+function wallShape(on) {
+  const base = DEF_BASE.get(img.src) || img.src, D = SHEET_DATA[style];
+  const f = (D.bySrc || (D.bySrc = new Map(D.frames.map(f => [f.src, f])))).get(base);
+  let n = 0, A = 0, L = 0;
+  if (on && f) {
+    if (!f.rows) { const px = f.cv.getContext("2d").getImageData(0, 0, 64, 64).data; f.rows = [];
+      for (let Y = 0; Y < 64; Y++) { let w = 0; for (let X = 0; X < 64; X++) if (px[(Y * 64 + X) * 4 + 3]) w++; f.rows.push(w); } }
+    A = f.rows.findIndex((w, Y) => Y > f.top && w >= 12); if (A < 0) A = f.top; L = A - f.top;
+    n = Math.max(2 - L, Math.min(DEF_UP, Math.round(wallDef * L)));
+  }
+  if (!on) wallDef = wallDefV = 0;
+  if (!n) { img.style.height = ""; if (img.src !== base) img.src = base; return; }
+  const key = base + n;
+  if (!DEF_CACHE.has(key)) {
+    const cv = document.createElement("canvas"); cv.width = 64; cv.height = 64 + DEF_UP; const g = cv.getContext("2d");
+    g.drawImage(f.cv, 0, A, 64, 64 - A, 0, DEF_UP + A, 64, 64 - A);          // le corps, tel quel
+    for (let j = 1; j <= L + n; j++) { const src = A - Math.ceil(j * L / (L + n)); g.drawImage(f.cv, 0, src, 64, 1, 0, DEF_UP + A - j, 64, 1); }          // la queue, ligne par ligne
+    const url = cv.toDataURL(); DEF_CACHE.set(key, url); DEF_BASE.set(url, base);
+  }
+  img.style.height = 2 * (64 + DEF_UP) + "px"; img.src = DEF_CACHE.get(key);
+}
 function hitWall(side) {
   const T2 = isSheet() && SHEET_DATA[style].tags;
   if (!T2 || !T2.coule || !T2["choc-bord"] || Math.abs(vx) < 4 || y > floorY - 60) return false;
-  mode = "wall"; wallSide = side; dir = side; face(); pose(""); vx = vy = 0; angle = 0; spin = 0; img.style.rotate = "0deg"; wallV = .3; peakY = y; fall = null;
+  mode = "wall"; wallSide = side; dir = side; face(); pose(""); vx = vy = 0; angle = 0; spin = 0; img.style.rotate = "0deg"; wallV = .3; wallStick = 0; peakY = y; fall = null;
   x = side < 0 ? minX - WALL_OVER : maxX + WALL_OVER; watching = false; lookKey = "";
   playOnce(nausea && T2["choc-bord-vert"] ? "choc-bord-vert" : "choc-bord"); say("il percute le bord : il coule le long du mur");
   return true;
@@ -710,19 +763,32 @@ function tickBody() {
     push(); return;
   }
   const now = Date.now();
-  if (mode === "ceiling") {          // collé au haut de l'écran, à l'envers : il rampe (le pas est fait par sheetAnim), fait demi-tour aux bords, puis se décolle
-    if (x < minX || x > maxX) { x = Math.max(minX, Math.min(maxX, x)); dir = -dir; img.style.scale = `${dir < 0 ? -1 : 1} -1`; }
+  if (mode === "ceiling") {          // collé au haut de l'écran, à l'envers : il rampe (le pas est fait par sheetAnim), descend par le bord qu'il atteint, ou se décolle
+    // le bord atteint, il s'arrête et finit son cycle : le demi-tour part de la première image de la reptation, comme au sol
+    if (x < minX || x > maxX) { ceilingEdge = x < minX ? -1 : 1; x = Math.max(minX, Math.min(maxX, x)); }
+    const cr = SHEET_DATA[style].tags[sheetLoop.tag];
+    if (ceilingEdge && (!cr || sheetLoop.i % cr.length === 0)) { ceilingToWall(ceilingEdge); push(); return; }
     y = ceilingY(); push();
     if (now > ceilingUntil) unceil(true);
     return;
   }
+  if (mode === "corner") { cornerStep(now); push(); return; }          // il passe le coin du plafond au mur
   if (mode === "wall") {      // collé au bord de l'écran : il coule, de plus en plus vite, jusqu'au sol
     const impact = sheetOnce && /^choc-bord/.test(sheetOnce.tag);          // pendant l'écrasement il reste en place, ensuite il coule
-    if (!impact) { wallV = Math.min(1, wallV + .01 * k); y += wallV * k; }
+    if (!impact && !wallStick) { wallV = Math.min(1, wallV + .01 * k); y += wallV * k; }
+    else if (!impact) {          // venant du plafond, comme une goutte : collé, il glisse d'un coup, freine, se recolle, et recommence
+      if (wallRun > 0) { wallV = Math.min(5, wallV + .35 * k); wallRun -= wallV * k; if (wallRun <= 0) wallStick = now + 250 + Math.random() * 700; }
+      else if (now >= wallStick) wallRun = 40 + Math.random() * 90;
+      else wallV *= Math.pow(.8, k);
+      y += wallV * k;
+      // un ressort : elle s'étire avec la vitesse pendant la glissade ; à l'arrêt net, elle dépasse et se ramasse, puis reprend sa forme
+      wallDefV += ((wallRun > 0 ? wallV * .16 : 0) - wallDef) * .25 * k; wallDefV *= Math.pow(.7, k); wallDef += wallDefV * k; wallShape(true);
+    }
     if (y >= floorY) {
       y = floorY;
       const T2 = SHEET_DATA[style].tags, fin = nausea && T2["coule-fin-vert"] ? "coule-fin-vert" : "coule-fin";      // secoué, il se reforme en vert
       if (!T2[fin]) { x = Math.max(minX, Math.min(maxX, x)); push(); land(); return; }
+      if (wallStick) wallShape(false);
       mode = "wallland"; wallEnd = now + tagDur(fin); playOnce(fin); say("coule jusqu'au sol : il se reforme");
     }
     push(); return;
@@ -1023,13 +1089,14 @@ function clicked() {
 }
 img.addEventListener("pointerdown", e => {
   if (e.button !== 0 || pull.on) return;
-  if (mode === "ceiling") { unceil(false); mode = "fly"; }          // pris à la souris pendant qu'il rampe en haut : il se remet à l'endroit
+  if (mode === "ceiling" || mode === "corner") { corner = null; unceil(false); mode = "fly"; }          // pris à la souris pendant qu'il rampe en haut : il se remet à l'endroit
   img.setPointerCapture(e.pointerId);
   drag = {sx:e.screenX, sy:e.screenY, x0:x, y0:y, gx:e.clientX, gy:e.clientY, moved:false, rev:[], sign:0, shaken:false, asleep:mode === "sleep"};
   samples = [{t:performance.now(), x:e.screenX, y:e.screenY}];
   img.style.cursor = "grabbing";
   if (mode === "fly" || mode === "wall" || mode === "wallland") {      // rattrapé en l'air (ou décroché du mur) : il se débat dès le clic, sans attendre que la souris bouge
     if (mode === "wall" || mode === "wallland") { x = Math.max(minX, Math.min(maxX, x)); drag.x0 = x; }
+    if (mode === "wall" && wallStick) wallShape(false);
     drag.moved = true; drag.lastX = e.screenX; drag.lastY = e.screenY;
     mode = "held"; struggle(true); if (isSheet()) holdByHead(e.screenX, e.screenY); disturb(); if (style === "candy") bubble("Hé !", 900);
     say("rattrape en l'air");
