@@ -83,7 +83,7 @@ async function loadSheet(id) {
     // sommet de la tête : la première ligne non vide et le milieu de ses pixels (c'est là que la souris tient le Bidule quand il pend)
     let top = f.frame.h, tl = 0, tn = 0;
     for (let i = 3; i < px.length; i += 4) if (px[i]) { const Y = Math.floor((i >> 2) / f.frame.w), X = (i >> 2) % f.frame.w; if (Y < top) { top = Y; tl = 0; tn = 0; } if (Y === top) { tl += X; tn++; } }
-    return {src:cv.toDataURL(), dur:f.duration || 100, bot, cx:(l + r) / 2, tail, head, top, tipx:tn ? tl / tn : f.frame.w / 2, step:f.step};
+    return {src:cv.toDataURL(), cv, dur:f.duration || 100, bot, cx:(l + r) / 2, tail, head, top, tipx:tn ? tl / tn : f.frame.w / 2, step:f.step};
   });
   const tags = {};
   for (const t of meta.meta.frameTags || []) tags[t.name] = frames.slice(t.from, Math.min(t.to, frames.length - 1) + 1);
@@ -653,12 +653,31 @@ async function flush() {
 // Lancé contre le bord de l'écran, un perso dessiné s'écrase contre lui (choc-bord) puis coule le long du mur (coule) jusqu'au sol.
 // La fenêtre dépasse un peu de l'écran (WALL_OVER) pour que le corps touche le bord : le dessin laisse 24 px de marge de chaque côté.
 const WALL_OVER = 22, WALL_SLIDE = 380; let wallV = 0, wallSide = 1, wallEnd = 0, wallStick = 0, wallRun = 0;          // en venant du plafond : collé jusqu'à wallStick, puis il glisse d'un coup sur wallRun px (wallStick à 0 : glissade continue, après un choc)      // WALL_SLIDE : durée (ms) des dernières images de coule-fin, pendant lesquelles la fenêtre rentre
-let wallDef = 0, wallDefV = 0;          // forme en venant du plafond : > 0 étirée vers le haut (la traînée), < 0 ramassée sur elle-même
+// En venant du plafond, la queue de la goutte (les lignes étroites au-dessus du corps) s'allonge vers le haut pendant la glissade (la traînée)
+// et rentre dans le corps à l'arrêt net, ligne par ligne, au pixel près ; le corps et le visage ne bougent pas. wallDef : allongement de la queue
+// (1 = deux fois plus longue, négatif = rentrée). L'image déformée a DEF_UP lignes de plus en haut, prises sur la marge de la fenêtre.
+let wallDef = 0, wallDefV = 0;
+const DEF_UP = 24, DEF_BASE = new Map(), DEF_CACHE = new Map();
 function wallShape(on) {
-  const D = SHEET_DATA[style], ax = (D.axis + .5) / 64 * 100 + "% ";
-  if (!on) { wallDef = wallDefV = 0; img.style.transformOrigin = ax + "60%"; face(); return; }
-  img.style.transformOrigin = ax + (D.tags.coule[0].bot + 1) / 64 * 100 + "%";          // ancrée sur le bas du corps, qui mène la glissade
-  img.style.scale = `${(dir < 0 ? -1 : 1) * (1 - wallDef * .45)} ${1 + wallDef}`;
+  const base = DEF_BASE.get(img.src) || img.src, D = SHEET_DATA[style];
+  const f = (D.bySrc || (D.bySrc = new Map(D.frames.map(f => [f.src, f])))).get(base);
+  let n = 0, A = 0, L = 0;
+  if (on && f) {
+    if (!f.rows) { const px = f.cv.getContext("2d").getImageData(0, 0, 64, 64).data; f.rows = [];
+      for (let Y = 0; Y < 64; Y++) { let w = 0; for (let X = 0; X < 64; X++) if (px[(Y * 64 + X) * 4 + 3]) w++; f.rows.push(w); } }
+    A = f.rows.findIndex((w, Y) => Y > f.top && w >= 12); if (A < 0) A = f.top; L = A - f.top;
+    n = Math.max(2 - L, Math.min(DEF_UP, Math.round(wallDef * L)));
+  }
+  if (!on) wallDef = wallDefV = 0;
+  if (!n) { img.style.height = ""; if (img.src !== base) img.src = base; return; }
+  const key = base + n;
+  if (!DEF_CACHE.has(key)) {
+    const cv = document.createElement("canvas"); cv.width = 64; cv.height = 64 + DEF_UP; const g = cv.getContext("2d");
+    g.drawImage(f.cv, 0, A, 64, 64 - A, 0, DEF_UP + A, 64, 64 - A);          // le corps, tel quel
+    for (let j = 1; j <= L + n; j++) { const src = A - Math.ceil(j * L / (L + n)); g.drawImage(f.cv, 0, src, 64, 1, 0, DEF_UP + A - j, 64, 1); }          // la queue, ligne par ligne
+    const url = cv.toDataURL(); DEF_CACHE.set(key, url); DEF_BASE.set(url, base);
+  }
+  img.style.height = 2 * (64 + DEF_UP) + "px"; img.src = DEF_CACHE.get(key);
 }
 function hitWall(side) {
   const T2 = isSheet() && SHEET_DATA[style].tags;
@@ -763,7 +782,7 @@ function tickBody() {
       else wallV *= Math.pow(.8, k);
       y += wallV * k;
       // un ressort : elle s'étire avec la vitesse pendant la glissade ; à l'arrêt net, elle dépasse et se ramasse, puis reprend sa forme
-      wallDefV += ((wallRun > 0 ? wallV * .07 : 0) - wallDef) * .25 * k; wallDefV *= Math.pow(.7, k); wallDef += wallDefV * k; wallShape(true);
+      wallDefV += ((wallRun > 0 ? wallV * .16 : 0) - wallDef) * .25 * k; wallDefV *= Math.pow(.7, k); wallDef += wallDefV * k; wallShape(true);
     }
     if (y >= floorY) {
       y = floorY;
