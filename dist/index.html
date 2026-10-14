@@ -624,14 +624,14 @@ function ceilingToWall(side) {
   say("arrive au bord en haut : il passe le coin");
 }
 let corner = null;
-function cornerStep(now) {          // une image du coin à chaque fois ; à la fin, il est sur le mur et coule, trois fois plus vite que d'habitude
+function cornerStep(now) {          // une image du coin à chaque fois ; à la fin, il est sur le mur et coule par à-coups, comme une goutte
   const c = corner, T2 = SHEET_DATA[style].tags;
   if (c.i < c.seq.length && now >= c.next) { img.src = c.seq[c.i].src; c.next = (c.next || now) + c.seq[c.i].dur; c.i++; }
   if (!c.t0 && c.i > c.half) c.t0 = now;          // le coin commence après le demi-tour
   const p = c.t0 ? Math.min(1, (now - c.t0) / WALL_SLIDE) : 0;          // comme coule-fin à l'envers : la fenêtre passe de l'écran au bord pendant les premières images du coin
   x = c.side < 0 ? minX - WALL_OVER * p : maxX + WALL_OVER * p; y = ceilingY();
   if (c.i >= c.seq.length && now >= c.next) {
-    corner = null; face(); mode = "wall"; wallSide = c.side; vx = vy = 0; wallV = .3; wallMax = 3;
+    corner = null; face(); mode = "wall"; wallSide = c.side; vx = vy = 0; wallV = 0; wallStick = now + 300; wallRun = 0;
     img.src = T2.coule[0].src; y = minY - headroom();
     say("passe le coin : il descend le long du mur");
   }
@@ -652,11 +652,11 @@ async function flush() {
 }
 // Lancé contre le bord de l'écran, un perso dessiné s'écrase contre lui (choc-bord) puis coule le long du mur (coule) jusqu'au sol.
 // La fenêtre dépasse un peu de l'écran (WALL_OVER) pour que le corps touche le bord : le dessin laisse 24 px de marge de chaque côté.
-const WALL_OVER = 22, WALL_SLIDE = 380; let wallV = 0, wallSide = 1, wallEnd = 0, wallMax = 1;          // wallMax : vitesse de glissade la plus haute (3 en venant du plafond)      // WALL_SLIDE : durée (ms) des dernières images de coule-fin, pendant lesquelles la fenêtre rentre
+const WALL_OVER = 22, WALL_SLIDE = 380; let wallV = 0, wallSide = 1, wallEnd = 0, wallStick = 0, wallRun = 0;          // en venant du plafond : collé jusqu'à wallStick, puis il glisse d'un coup sur wallRun px (wallStick à 0 : glissade continue, après un choc)      // WALL_SLIDE : durée (ms) des dernières images de coule-fin, pendant lesquelles la fenêtre rentre
 function hitWall(side) {
   const T2 = isSheet() && SHEET_DATA[style].tags;
   if (!T2 || !T2.coule || !T2["choc-bord"] || Math.abs(vx) < 4 || y > floorY - 60) return false;
-  mode = "wall"; wallSide = side; dir = side; face(); pose(""); vx = vy = 0; angle = 0; spin = 0; img.style.rotate = "0deg"; wallV = .3; wallMax = 1; peakY = y; fall = null;
+  mode = "wall"; wallSide = side; dir = side; face(); pose(""); vx = vy = 0; angle = 0; spin = 0; img.style.rotate = "0deg"; wallV = .3; wallStick = 0; peakY = y; fall = null;
   x = side < 0 ? minX - WALL_OVER : maxX + WALL_OVER; watching = false; lookKey = "";
   playOnce(nausea && T2["choc-bord-vert"] ? "choc-bord-vert" : "choc-bord"); say("il percute le bord : il coule le long du mur");
   return true;
@@ -749,7 +749,13 @@ function tickBody() {
   if (mode === "corner") { cornerStep(now); push(); return; }          // il passe le coin du plafond au mur
   if (mode === "wall") {      // collé au bord de l'écran : il coule, de plus en plus vite, jusqu'au sol
     const impact = sheetOnce && /^choc-bord/.test(sheetOnce.tag);          // pendant l'écrasement il reste en place, ensuite il coule
-    if (!impact) { wallV = Math.min(wallMax, wallV + .01 * wallMax * k); y += wallV * k; }
+    if (!impact && !wallStick) { wallV = Math.min(1, wallV + .01 * k); y += wallV * k; }
+    else if (!impact) {          // venant du plafond, comme une goutte : collé, il glisse d'un coup, freine, se recolle, et recommence
+      if (wallRun > 0) { wallV = Math.min(5, wallV + .35 * k); wallRun -= wallV * k; if (wallRun <= 0) wallStick = now + 250 + Math.random() * 700; }
+      else if (now >= wallStick) wallRun = 40 + Math.random() * 90;
+      else wallV *= Math.pow(.8, k);
+      y += wallV * k;
+    }
     if (y >= floorY) {
       y = floorY;
       const T2 = SHEET_DATA[style].tags, fin = nausea && T2["coule-fin-vert"] ? "coule-fin-vert" : "coule-fin";      // secoué, il se reforme en vert
