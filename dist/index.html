@@ -48,6 +48,7 @@ img.dangle{transform-origin:50% 8%;animation:dangle 2s ease-in-out infinite}
 </style></head>
 <body><img id="b" alt=""><canvas id="el" width="176" height="210" hidden></canvas><div id="fx"></div>
 <script src="bidule64.js"></script>
+<script src="pense.js"></script>
 <script src="monstre64.js"></script>
 <script>
 const COL = {k:"#2a2238", p:"#ff7fa0"};
@@ -344,7 +345,7 @@ function pullFinish() {
 }// Un perso dessiné joue l'animation qui correspond à ce qu'il fait ; sheetOnce joue une animation une fois (saut, atterrissage, choc).
 // tenu par la souris : la boule avec une pointe (attrape-boule) si elle existe, sinon attrape
 const heldTag = T2 => T2["attrape-boule"] ? "attrape-boule" : "attrape";
-const SHEET_MODE_TAG = {held:"attrape", fly:"vol", dizzy:"etourdi", nausea:"nausee", recover:"remis", pet:"caresse", laugh:"rire", angry:"fache",
+const SHEET_MODE_TAG = {held:"attrape", ceiling:"crawl", fly:"vol", dizzy:"etourdi", nausea:"nausee", recover:"remis", pet:"caresse", laugh:"rire", angry:"fache",
   sulk:"boude", wall:"coule", ooh:"intrigue", sleep:"dort", carried:"attrape", waking:"baille", evolving:"fier"};
 // Candy rebondit comme une balle quand on la lance ; crashed : la première chute était grosse, l'écrasement viendra à la fin des rebonds ; sing : elle chante pendant cette pause
 const BOUNCY = new Set(["candy"]);
@@ -424,7 +425,7 @@ function sheetAnim(now) {
   if (sheetLoop.tag !== tag) sheetLoop = {tag, i:0, next:0};
   if (now >= sheetLoop.next) { const fr = T2[tag], k2 = sheetLoop.i % fr.length; img.src = fr[k2].src; sheetLoop.next = nextAt(sheetLoop.next, fr[k2].dur * (mode === "nausea" ? 1.6 : 1), now); sheetLoop.i++;
     // nausée au sol : la reptation en vert, plus lente ; il avance d'un pas à chaque image, comme à la marche (pas de glissade)
-    if (mode === "nausea") x += dir * 2 * (fr[k2].step || 0);
+    if (mode === "nausea" || mode === "ceiling") x += dir * 2 * (fr[k2].step || 0);          // collé en haut, il avance aussi pas à pas
   }
 }
 // Candy sautille en marchant, sauf ronchon ou vaseuse (elle garde la reptation) ; la marche ne change qu'en fin de cycle
@@ -598,10 +599,28 @@ function headroom() {
   if (t === undefined) { t = spriteTop().y; if (img.complete) TOPS.set(img.src, t); }
   return WH - 128 + 2 * t;
 }
+// Lancé assez fort vers le haut, il se colle au haut de l'écran, à l'envers (l'image retournée de haut en bas autour de 60 % de sa hauteur),
+// et y rampe comme au sol, 6 à 14 s, puis se décolle et retombe.
+let ceilingUntil = 0;
+const ceilingY = () => minY - (WH - 128 + 2 * (76.8 - 1 - SHEET_DATA[style].tags.crawl[0].bot));          // ses pieds (la ligne du sol) touchent le haut de l'écran
+function cling() {
+  mode = "ceiling"; vx = vy = 0; angle = 0; img.style.rotate = "0deg"; img.style.translate = ""; pose("");
+  if (Math.sign(dir) === 0) dir = 1;
+  img.style.scale = `${dir < 0 ? -1 : 1} -1`; ceilingUntil = Date.now() + 6000 + Math.random() * 8000;
+  y = ceilingY(); say("colle au haut de l'ecran, a l'envers");
+}
+function unceil(tombe) {          // il se décolle : l'image se remet à l'endroit, et s'il tombe, il tombe
+  face(); document.body.style.translate = "";
+  if (tombe) { mode = "fly"; vx = 0; vy = 1; y = minY - headroom(); peakY = y; fall = null; bubble("Oups !", 900); say("se decolle du haut de l'ecran"); }
+}
 function push() { want = [x, y]; if (!sending) flush(); }
 async function flush() {
   while (want) { const [a, b] = want; want = null; sending = true;
-    try { await win.setPosition(new LogicalPosition(Math.round(a), Math.round(b))); } catch (e) { say("setPosition: " + e); }
+    // macOS ne laisse pas la fenêtre passer au-dessus de la barre de menus : au-delà, la fenêtre reste dessous et c'est le dessin qui monte
+    // dans sa fenêtre (la marge transparente au-dessus de lui). Sans ça, lancé vers le haut, il resterait figé là-haut le temps de redescendre.
+    const up = Math.max(0, Math.round(minY - b));
+    try { await win.setPosition(new LogicalPosition(Math.round(a), Math.round(b) + up)); } catch (e) { say("setPosition: " + e); }
+    document.body.style.translate = up ? `0 ${-up}px` : "";
     sending = false; }
 }
 // Lancé contre le bord de l'écran, un perso dessiné s'écrase contre lui (choc-bord) puis coule le long du mur (coule) jusqu'au sol.
@@ -670,7 +689,10 @@ function tickBody() {
     } else angle += vx * 1.2 * k;
     if (x < minX) { if (hitWall(-1)) { push(); return; } x = minX; vx = -vx * (BOUNCY.has(style) ? .7 : .25); squash("wall"); }
     if (x > maxX) { if (hitWall(1)) { push(); return; } x = maxX; vx = -vx * (BOUNCY.has(style) ? .7 : .25); squash("wall"); }
-    if (y < minY - headroom()) { y = minY - headroom(); vy = -vy * 0.4; }          // plafond : le haut du dessin touche le haut de l'écran, pas celui de la fenêtre
+    if (y < minY - headroom()) {          // plafond : le haut du dessin touche le haut de l'écran, pas celui de la fenêtre
+      if (isSheet() && style !== "candy" && !nausea && vy < -10) { cling(); push(); return; }          // assez d'élan : il s'y colle, à l'envers
+      y = minY - headroom(); vy = -vy * 0.4;
+    }
     if (y >= floorY) {
       y = floorY; const impact = Math.abs(vy); maxImpact = Math.max(maxImpact, impact);
       if (impact > (isSheet() ? 10 : 7) && bounces < (isSheet() ? 3 : 4) && (!isSheet() || BOUNCY.has(style))) {
@@ -688,6 +710,12 @@ function tickBody() {
     push(); return;
   }
   const now = Date.now();
+  if (mode === "ceiling") {          // collé au haut de l'écran, à l'envers : il rampe (le pas est fait par sheetAnim), fait demi-tour aux bords, puis se décolle
+    if (x < minX || x > maxX) { x = Math.max(minX, Math.min(maxX, x)); dir = -dir; img.style.scale = `${dir < 0 ? -1 : 1} -1`; }
+    y = ceilingY(); push();
+    if (now > ceilingUntil) unceil(true);
+    return;
+  }
   if (mode === "wall") {      // collé au bord de l'écran : il coule, de plus en plus vite, jusqu'au sol
     const impact = sheetOnce && /^choc-bord/.test(sheetOnce.tag);          // pendant l'écrasement il reste en place, ensuite il coule
     if (!impact) { wallV = Math.min(1, wallV + .01 * k); y += wallV * k; }
@@ -976,6 +1004,7 @@ function struggle(on) {
 }
 function clicked() {
   const now = Date.now();
+  if (mode === "ceiling") { ceilingUntil = 0; return; }          // collé en haut : un clic le fait se décoller
   if (mode === "sleep") {
     wake += 40;
     if (wake >= 100) wakeUp("clics");
@@ -994,6 +1023,7 @@ function clicked() {
 }
 img.addEventListener("pointerdown", e => {
   if (e.button !== 0 || pull.on) return;
+  if (mode === "ceiling") { unceil(false); mode = "fly"; }          // pris à la souris pendant qu'il rampe en haut : il se remet à l'endroit
   img.setPointerCapture(e.pointerId);
   drag = {sx:e.screenX, sy:e.screenY, x0:x, y0:y, gx:e.clientX, gy:e.clientY, moved:false, rev:[], sign:0, shaken:false, asleep:mode === "sleep"};
   samples = [{t:performance.now(), x:e.screenX, y:e.screenY}];
@@ -1122,7 +1152,8 @@ try {
 } catch (e) { say("drag-drop: " + e); }
 let bidHidden = false;          // caché par un clic droit (main.rs : montrer_bidule)
 let chosen = false;          // un Bidule a été choisi (au premier lancement, pas encore)
-function sendState() { T.event.emit("etat", {style:chosen ? style : null, partsBy, thumb:FR.normal, mood, moodMode, moodReason, cache:bidHidden}); }
+let claudeJ = null;          // la dernière jauge lue (contexte), envoyée au panneau
+function sendState() { T.event.emit("etat", {style:chosen ? style : null, partsBy, thumb:FR.normal, mood, moodMode, moodReason, cache:bidHidden}); T.event.emit("claude", claudeJ); }
 function refreshSprite() {
   const cur = {sleep:"dort", carried:"dort", dizzy:"d1", nausea:"n1", pet:"content", laugh:"rire", angry:"fache",
     sulk:"fache", eat:"rire", ooh:"ooh", drowsy:"baille", waking:"baille", fly:"p1", held:"p1"}[mode];
@@ -1155,29 +1186,6 @@ const PENSE_BODY = ["...kkkkkkkkkkkkkkkkkkkkk...", "..kwwwwwwwwwwwwwwwwwwwwwk.."
   "kwwwwwwwwwwwwwwwwwwwwwwwwwk", "kwwwwwwwwwwwwwwwwwwwwwwwwwk", "kwwwwwwwwwwwwwwwwwwwwwwwwwk", "kwwwwwwwwwwwwwwwwwwwwwwwwwk", "kwwwwwwwwwwwwwwwwwwwwwwwwwk",
   ".kwwwwwwwwwwwwwwwwwwwwwwwk.", "..kwwwwwwwwwwwwwwwwwwwwwk..", "...kkkkkkkkkkkkkkkkkkkkk...", "...........................", "....kkk....................",
   "...kwwwk...................", "....kkk....................", "..kk.......................", "..kk......................."];
-const PENSE_ICONS = {
-  pense:   [[".........", ".........", ".kk......", ".kk......", ".........", ".........", "........."], [".........", ".........", ".kk.kk...", ".kk.kk...", ".........", ".........", "........."],
-            [".........", ".........", ".kk.kk.kk", ".kk.kk.kk", ".........", ".........", "........."]],
-  lit:     [["kkkk.kkkk", "kwwkkkwwk", "kbbkkkbbk", "kwwkkkwwk", "kbbkkkbbk", "kwwkkkwwk", "kkkkkkkkk"], ["kkkk.kkkk", "kbbkkkwwk", "kwwkkkbbk", "kbbkkkwwk", "kwwkkkbbk", "kbbkkkwwk", "kkkkkkkkk"]],
-  ecrit:   [[".......kk", "......kpk", ".....kyk.", "....kyk..", "...kyk...", "..kk.....", "bbbbb...."], ["......kk.", ".....kpk.", "....kyk..", "...kyk...", "..kyk....", ".kk......", "bbbbbbbb."]],
-  commande:[["kkkkkkkkk", "kgk.....k", "k.gk....k", "kgk.ggg.k", "k.......k", "kkkkkkkkk", "........."], ["kkkkkkkkk", "kgk.....k", "k.gk....k", "kgk.....k", "k.......k", "kkkkkkkkk", "........."]],
-  cherche: [["..kkk....", ".kbbbk...", "kbwbbbk..", "kbbbbbk..", ".kbbbk...", "..kkkkk..", "......kk."], ["...kkk...", "..kbbbk..", ".kbwbbbk.", ".kbbbbbk.", "..kbbbk..", "...kkkkk.", ".......kk"]],
-  web:     [["..kkkkk..", ".kbgbbgk.", "kggbbgggk", "kbbbggbbk", "kbggbbbgk", ".kbbbggk.", "..kkkkk.."], ["..kkkkk..", ".kgbbgbk.", "kbbgggbgk", "kggbbbggk", "kbbbggbbk", ".kggbbbk.", "..kkkkk.."]],
-  agent:   [[".kk...kk.", "kppk.kbbk", "kppk.kbbk", ".kk...kk.", ".........", "..k...k..", "........."], [".kk...kk.", "kbbk.kppk", "kbbk.kppk", ".kk...kk.", ".........", "...k.k...", "........."]],
-  outil:   [["......kk.", ".....k..k", "....kk.k.", "...kyk...", "..kyk....", ".kyk.....", "kk......."], [".....kk..", "....k..k.", "...kk.k..", "..kyk....", ".kyk.....", "kyk......", "kk......."]],
-};
-const PENSE_COL = {k:COL.k, w:"#ffffff", b:"#8ec5ff", g:"#5fd38a", p:"#ff7fa0", y:"#ffd25a"};
-const PENSE_LABEL = {pense:"il réfléchit", lit:"il lit", ecrit:"il écrit", commande:"il lance une commande", cherche:"il cherche", web:"il va sur le web", agent:"il délègue", outil:"il bricole"};
-function penseIcon(tool) {
-  if (!tool || tool === "pense") return tool && "pense";
-  if (/^(Read|NotebookRead)$/.test(tool)) return "lit";
-  if (/^(Edit|Write|MultiEdit|NotebookEdit)$/.test(tool)) return "ecrit";
-  if (/^(Bash|BashOutput|Monitor|KillShell|TaskStop)$/.test(tool)) return "commande";
-  if (/^(Grep|Glob|LS|ToolSearch)$/.test(tool)) return "cherche";
-  if (/^Web/.test(tool)) return "web";
-  if (/^(Agent|Task|SendMessage)$/.test(tool)) return "agent";
-  return "outil";
-}
 const pense = document.createElement("canvas"); pense.width = 28; pense.height = 18; pense.className = "pense off"; fx.appendChild(pense);
 let activity = null, penseFrame = 0;
 const topCv = document.createElement("canvas"); topCv.width = topCv.height = 64; const topG = topCv.getContext("2d", {willReadFrequently:true});
@@ -1212,6 +1220,7 @@ async function contextMood() {
   let j = null;
   try { j = await T.core.invoke("contexte"); } catch (e) { say("contexte: " + e); }
   noConversation = !j; activity = j ? j.activite : null; claudeIdle = !activity; claudeWaits = !!(j && j.attend);
+  claudeJ = j; T.event.emit("claude", j);          // le panneau montre l'état de Claude (onglet Tests, essais « État de Claude »)
   if (!j) return null;
   const pc = Math.round(j.pourcent);
   return [CONTEXT_MOODS.find(([max]) => j.pourcent < max)[1], `contexte à ${pc} %${j.source === "terminal" ? " (terminal)" : ""}`];
