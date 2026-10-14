@@ -616,8 +616,9 @@ function unceil(tombe) {          // il se décolle : l'image se remet à l'endr
 function push() { want = [x, y]; if (!sending) flush(); }
 async function flush() {
   while (want) { const [a, b] = want; want = null; sending = true;
-    // collé en haut : macOS ne laisse pas la fenêtre passer au-dessus de la barre de menus, alors c'est le dessin qui monte dans sa fenêtre
-    const up = mode === "ceiling" ? Math.max(0, Math.round(minY - b)) : 0;
+    // macOS ne laisse pas la fenêtre passer au-dessus de la barre de menus : au-delà, la fenêtre reste dessous et c'est le dessin qui monte
+    // dans sa fenêtre (la marge transparente au-dessus de lui). Sans ça, lancé vers le haut, il resterait figé là-haut le temps de redescendre.
+    const up = Math.max(0, Math.round(minY - b));
     try { await win.setPosition(new LogicalPosition(Math.round(a), Math.round(b) + up)); } catch (e) { say("setPosition: " + e); }
     document.body.style.translate = up ? `0 ${-up}px` : "";
     sending = false; }
