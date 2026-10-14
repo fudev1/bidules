@@ -653,6 +653,13 @@ async function flush() {
 // Lancé contre le bord de l'écran, un perso dessiné s'écrase contre lui (choc-bord) puis coule le long du mur (coule) jusqu'au sol.
 // La fenêtre dépasse un peu de l'écran (WALL_OVER) pour que le corps touche le bord : le dessin laisse 24 px de marge de chaque côté.
 const WALL_OVER = 22, WALL_SLIDE = 380; let wallV = 0, wallSide = 1, wallEnd = 0, wallStick = 0, wallRun = 0;          // en venant du plafond : collé jusqu'à wallStick, puis il glisse d'un coup sur wallRun px (wallStick à 0 : glissade continue, après un choc)      // WALL_SLIDE : durée (ms) des dernières images de coule-fin, pendant lesquelles la fenêtre rentre
+let wallDef = 0, wallDefV = 0;          // forme en venant du plafond : > 0 étirée vers le haut (la traînée), < 0 ramassée sur elle-même
+function wallShape(on) {
+  const D = SHEET_DATA[style], ax = (D.axis + .5) / 64 * 100 + "% ";
+  if (!on) { wallDef = wallDefV = 0; img.style.transformOrigin = ax + "60%"; face(); return; }
+  img.style.transformOrigin = ax + (D.tags.coule[0].bot + 1) / 64 * 100 + "%";          // ancrée sur le bas du corps, qui mène la glissade
+  img.style.scale = `${(dir < 0 ? -1 : 1) * (1 - wallDef * .45)} ${1 + wallDef}`;
+}
 function hitWall(side) {
   const T2 = isSheet() && SHEET_DATA[style].tags;
   if (!T2 || !T2.coule || !T2["choc-bord"] || Math.abs(vx) < 4 || y > floorY - 60) return false;
@@ -755,11 +762,14 @@ function tickBody() {
       else if (now >= wallStick) wallRun = 40 + Math.random() * 90;
       else wallV *= Math.pow(.8, k);
       y += wallV * k;
+      // un ressort : elle s'étire avec la vitesse pendant la glissade ; à l'arrêt net, elle dépasse et se ramasse, puis reprend sa forme
+      wallDefV += ((wallRun > 0 ? wallV * .07 : 0) - wallDef) * .25 * k; wallDefV *= Math.pow(.7, k); wallDef += wallDefV * k; wallShape(true);
     }
     if (y >= floorY) {
       y = floorY;
       const T2 = SHEET_DATA[style].tags, fin = nausea && T2["coule-fin-vert"] ? "coule-fin-vert" : "coule-fin";      // secoué, il se reforme en vert
       if (!T2[fin]) { x = Math.max(minX, Math.min(maxX, x)); push(); land(); return; }
+      if (wallStick) wallShape(false);
       mode = "wallland"; wallEnd = now + tagDur(fin); playOnce(fin); say("coule jusqu'au sol : il se reforme");
     }
     push(); return;
@@ -1067,6 +1077,7 @@ img.addEventListener("pointerdown", e => {
   img.style.cursor = "grabbing";
   if (mode === "fly" || mode === "wall" || mode === "wallland") {      // rattrapé en l'air (ou décroché du mur) : il se débat dès le clic, sans attendre que la souris bouge
     if (mode === "wall" || mode === "wallland") { x = Math.max(minX, Math.min(maxX, x)); drag.x0 = x; }
+    if (mode === "wall" && wallStick) wallShape(false);
     drag.moved = true; drag.lastX = e.screenX; drag.lastY = e.screenY;
     mode = "held"; struggle(true); if (isSheet()) holdByHead(e.screenX, e.screenY); disturb(); if (style === "candy") bubble("Hé !", 900);
     say("rattrape en l'air");
