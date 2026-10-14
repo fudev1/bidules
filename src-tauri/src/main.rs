@@ -2,6 +2,7 @@
 
 use serde::de::IgnoredAny;
 use serde::Deserialize;
+use std::collections::HashMap;
 use std::io::{BufRead, BufReader, Read, Seek, SeekFrom};
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
@@ -183,6 +184,8 @@ struct DesktopSession {
 struct UsageLine {
     #[serde(rename = "type")]
     kind: Option<String>,
+    // le dossier où tourne la session : seulement son dernier nom, pour la liste des sessions du panneau
+    cwd: Option<String>,
     subtype: Option<String>,
     #[serde(rename = "isSidechain")]
     is_sidechain: Option<bool>,
@@ -257,8 +260,8 @@ fn desktop_session(home: &str) -> Option<(String, Option<String>)> {
 
 fn find_journal(home: &str, id: &str) -> Option<PathBuf> {
     let want = format!("{id}.jsonl");
-    let rd = std::fs::read_dir(format!("{home}/.claude/projects")).ok()?;
-    rd.flatten().map(|e| e.path().join(&want)).find(|p| p.is_file())
+    [".claude", ".claude-masana"].iter().filter_map(|d| std::fs::read_dir(format!("{home}/{d}/projects")).ok())
+        .flat_map(|rd| rd.flatten().map(|e| e.path().join(&want))).find(|p| p.is_file())
 }
 
 // Journal Claude Code le plus récent (terminal), s'il a bougé dans la dernière demi-heure.
@@ -273,19 +276,20 @@ fn latest_journal(home: &str) -> Option<PathBuf> {
     best.map(|b| b.1)
 }
 
-type Ctx = Option<(u64, Option<String>, Option<String>)>;
-// Le dernier journal lu : tant qu'il n'a pas changé (même taille, même date), on ne le relit pas.
-static LAST_CTX: Mutex<Option<(PathBuf, u64, SystemTime, Ctx)>> = Mutex::new(None);
+// (tokens, modèle, activité, dossier du projet)
+type Ctx = Option<(u64, Option<String>, Option<String>, Option<String>)>;
+// Les journaux déjà lus : tant que l'un n'a pas changé (même taille, même date), on ne le relit pas.
+static LAST_CTX: Mutex<Option<HashMap<PathBuf, (u64, SystemTime, Ctx)>>> = Mutex::new(None);
 
 // Tokens dans le contexte d'après la dernière réponse (ou le dernier résumé), en lisant la fin du journal seulement.
 fn last_context(path: &Path) -> Ctx {
     let meta = std::fs::metadata(path).ok()?;
     let (len, mtime) = (meta.len(), meta.modified().ok()?);
-    if let Some((p, l, m, c)) = LAST_CTX.lock().unwrap().as_ref() {
-        if p == path && *l == len && *m == mtime { return c.clone() }
+    if let Some((l, m, c)) = LAST_CTX.lock().unwrap().as_ref().and_then(|h| h.get(path)) {
+        if *l == len && *m == mtime { return c.clone() }
     }
     let c = read_context(path, len);
-    *LAST_CTX.lock().unwrap() = Some((path.to_path_buf(), len, mtime, c.clone()));
+    LAST_CTX.lock().unwrap().get_or_insert_with(HashMap::new).insert(path.to_path_buf(), (len, mtime, c.clone()));
     c
 }
 
@@ -298,9 +302,11 @@ fn read_context(path: &Path, len: u64) -> Ctx {
         f.by_ref().take(tail).read_to_end(&mut buf).ok()?;
         let mut found = None;
         let mut act: Option<String> = None;
+        let mut cwd: Option<String> = None;
         for line in buf.split(|&b| b == b'\n') {
             let Ok(l) = serde_json::from_slice::<UsageLine>(line) else { continue };
             if l.is_sidechain == Some(true) { continue }
+            if let Some(d) = l.cwd { cwd = Path::new(&d).file_name().map(|n| n.to_string_lossy().to_string()) }
             if l.kind.as_deref() == Some("system") && l.subtype.as_deref() == Some("compact_boundary") {
                 if let Some(t) = l.compact.and_then(|c| c.post_tokens) { found = Some((t, None)) }
             } else if l.kind.as_deref() == Some("user") {
@@ -322,7 +328,7 @@ fn read_context(path: &Path, len: u64) -> Ctx {
                 if t > 0 { found = Some((t, m.model)) }
             }
         }
-        if found.is_some() || start == 0 { return found.map(|(t, m)| (t, m, act)) }
+        if found.is_some() || start == 0 { return found.map(|(t, m)| (t, m, act, cwd)) }
     }
     None
 }
@@ -395,7 +401,7 @@ fn contexte() -> Option<Jauge> {
     // Une conversation sans réponse depuis une demi-heure n'est plus « en cours » : le Bidule dort.
     let recent = std::fs::metadata(&path).and_then(|m| m.modified()).ok()? > SystemTime::now() - Duration::from_secs(1800);
     if !recent { return None }
-    let (tokens, seen, act) = last_context(&path)?;
+    let (tokens, seen, act, _) = last_context(&path)?;
     // Plus rien d'écrit depuis 5 min : il attend sans doute une permission, ou s'est arrêté. Pas de bulle.
     let idle = std::fs::metadata(&path).and_then(|m| m.modified()).ok()?.elapsed().unwrap_or_default();
     let fresh = idle < Duration::from_secs(300);
@@ -406,9 +412,18 @@ fn contexte() -> Option<Jauge> {
     Some(Jauge { tokens, fenetre, pourcent: tokens as f64 * 100.0 / fenetre as f64, source, activite, attend })
 }
 
-// Claude a fini de répondre : un hook « Stop » de Claude Code touche ~/.bidules/claude-fini, l'app surveille l'heure du fichier.
-// Le hook ne lit rien et n'écrit rien d'autre : ni le texte, ni la session.
-const HOOK_FINI: &str = "mkdir -p \"$HOME/.bidules\" && touch \"$HOME/.bidules/claude-fini\"";
+// --- Les sessions de Claude Code, d'après ses hooks : chaque session note son état (travaille, attend, fini) dans ~/.bidules/sessions/<id>
+// (hook.sh). Le Bidule montre l'ensemble des sessions, pas seulement celle qu'on regarde. Les hooks ne gardent que l'id de la session.
+const HOOK_SH: &str = include_str!("hook.sh");
+// (événement de Claude Code, filtre, état noté). Une permission accordée ou une question répondue : l'outil se termine (PostToolUse), il retravaille.
+const HOOKS: [(&str, Option<&str>, &str); 6] = [
+    ("UserPromptSubmit", None, "travaille"),
+    ("PostToolUse", None, "travaille"),
+    ("PreToolUse", Some("AskUserQuestion"), "attend"),
+    ("Notification", Some("permission_prompt|elicitation_dialog"), "attend"),
+    ("Stop", None, "fini"),
+    ("SessionEnd", None, "fin"),
+];
 fn reglages_claude(home: &str) -> Vec<PathBuf> {
     [".claude", ".claude-masana"].iter().map(|d| PathBuf::from(format!("{home}/{d}"))).filter(|d| d.is_dir()).map(|d| d.join("settings.json")).collect()
 }
@@ -416,33 +431,79 @@ fn reglages_claude(home: &str) -> Vec<PathBuf> {
 fn hooks_branches() -> bool {
     let home = std::env::var("HOME").unwrap_or_default();
     let f = reglages_claude(&home);
-    !f.is_empty() && f.iter().all(|p| std::fs::read_to_string(p).is_ok_and(|t| t.contains("claude-fini")))
+    Path::new(&format!("{home}/.bidules/hook.sh")).is_file()
+        && !f.is_empty() && f.iter().all(|p| std::fs::read_to_string(p).is_ok_and(|t| t.contains("bidules/hook.sh") && t.contains("SessionEnd")))
 }
-// Ajoute le hook aux réglages de Claude Code (et du second profil s'il existe), sans toucher au reste ; une copie de l'ancien fichier est gardée à côté.
+fn ecrire_hook_sh(home: &str) -> Result<(), String> {
+    std::fs::create_dir_all(format!("{home}/.bidules")).map_err(|e| e.to_string())?;
+    std::fs::write(format!("{home}/.bidules/hook.sh"), HOOK_SH).map_err(|e| e.to_string())
+}
+// Pose les hooks dans les réglages de Claude Code (et du second profil s'il existe), sans toucher au reste. Les anciens hooks du Bidule
+// (ceux qui parlent de ~/.bidules) sont remplacés. La première fois, une copie du fichier d'origine est gardée à côté.
 #[tauri::command(async)]
 fn brancher_hooks() -> Result<(), String> {
     let home = std::env::var("HOME").unwrap_or_default();
     let fichiers = reglages_claude(&home);
     if fichiers.is_empty() { return Err("Claude Code n'est pas installé (pas de dossier ~/.claude)".into()) }
+    ecrire_hook_sh(&home)?;
     for p in fichiers {
         let texte = std::fs::read_to_string(&p).unwrap_or_default();
-        if texte.contains("claude-fini") { continue }
         let mut v: serde_json::Value = if texte.trim().is_empty() { serde_json::json!({}) } else {
             serde_json::from_str(&texte).map_err(|e| format!("{} illisible : {e}", p.display()))?
         };
         let racine = v.as_object_mut().ok_or(format!("{} : pas un objet JSON", p.display()))?;
         let hooks = racine.entry("hooks").or_insert(serde_json::json!({})).as_object_mut().ok_or("« hooks » n'est pas un objet")?;
-        let stop = hooks.entry("Stop").or_insert(serde_json::json!([])).as_array_mut().ok_or("« Stop » n'est pas une liste")?;
-        stop.push(serde_json::json!({"hooks": [{"type": "command", "command": HOOK_FINI}]}));
-        if !texte.is_empty() { std::fs::write(p.with_extension("json.avant-bidule"), &texte).map_err(|e| e.to_string())?; }
+        for liste in hooks.values_mut() {
+            if let Some(a) = liste.as_array_mut() { a.retain(|h| !h.to_string().contains(".bidules")) }
+        }
+        hooks.retain(|_, l| l.as_array().map_or(true, |a| !a.is_empty()));
+        for (evt, filtre, etat) in HOOKS {
+            let mut h = serde_json::json!({"hooks": [{"type": "command", "command": format!("sh \"$HOME/.bidules/hook.sh\" {etat}")}]});
+            if let Some(f) = filtre { h["matcher"] = f.into() }
+            hooks.entry(evt).or_insert(serde_json::json!([])).as_array_mut().ok_or(format!("« {evt} » n'est pas une liste"))?.push(h);
+        }
+        let copie = p.with_extension("json.avant-bidule");
+        if !texte.is_empty() && !copie.exists() { std::fs::write(copie, &texte).map_err(|e| e.to_string())?; }
         std::fs::write(&p, serde_json::to_string_pretty(&v).unwrap() + "\n").map_err(|e| e.to_string())?;
     }
     Ok(())
 }
 
+#[derive(serde::Serialize)]
+struct Session {
+    etat: String,
+    // secondes depuis le dernier changement d'état
+    depuis: u64,
+    // le dossier du projet (son dernier nom), la jauge de contexte
+    projet: Option<String>,
+    tokens: u64,
+    fenetre: u64,
+    pourcent: f64,
+}
+// Toutes les sessions connues par les hooks. Une session oubliée (fermée sans prévenir) disparaît : finie depuis 30 min,
+// sans nouvelle depuis 1 h en travaillant, ou depuis 8 h en attendant.
+#[tauri::command(async)]
+fn sessions() -> Vec<Session> {
+    let home = std::env::var("HOME").unwrap_or_default();
+    let mut out = Vec::new();
+    let Ok(rd) = std::fs::read_dir(format!("{home}/.bidules/sessions")) else { return out };
+    for e in rd.flatten() {
+        let p = e.path();
+        let (Ok(etat), Some(age)) = (std::fs::read_to_string(&p), e.metadata().and_then(|m| m.modified()).ok().and_then(|m| m.elapsed().ok())) else { continue };
+        let max = match etat.as_str() { "fini" => 1800, "travaille" => 3600, _ => 8 * 3600 };
+        if age.as_secs() > max { let _ = std::fs::remove_file(&p); continue }
+        let id = e.file_name().to_string_lossy().to_string();
+        let ctx = find_journal(&home, &id).and_then(|j| last_context(&j));
+        let (tokens, model, projet) = ctx.map_or((0, None, None), |c| (c.0, c.1, c.3));
+        let fenetre = window_for(&model.unwrap_or_default()).max(tokens);
+        out.push(Session { etat, depuis: age.as_secs(), projet, tokens, fenetre, pourcent: tokens as f64 * 100.0 / fenetre as f64 });
+    }
+    out
+}
+
 fn main() {
     tauri::Builder::default()
-        .invoke_handler(tauri::generate_handler![log, quit, hide_panel, prompt_times, contexte, icone, session_active, hooks_branches, brancher_hooks, montrer_bidule, ouvrir_panneau, lire_choix, garder_choix, bonbon_poser, bonbon_retirer, bonbon_clic])
+        .invoke_handler(tauri::generate_handler![log, quit, hide_panel, prompt_times, contexte, icone, session_active, hooks_branches, brancher_hooks, sessions, montrer_bidule, ouvrir_panneau, lire_choix, garder_choix, bonbon_poser, bonbon_retirer, bonbon_clic])
         .setup(|app| {
             #[cfg(target_os = "macos")]
             app.set_activation_policy(tauri::ActivationPolicy::Accessory);
@@ -505,6 +566,8 @@ fn main() {
                 })
                 .build(app)?;
 
+            // Déjà branché : le script du hook est remis à jour à chaque lancement (une nouvelle version de l'app peut le changer).
+            if hooks_branches() { let _ = ecrire_hook_sh(&std::env::var("HOME").unwrap_or_default()); }
             // Claude a fini (hook) : le fichier change d'heure, le Bidule est prévenu.
             let h4 = app.handle().clone();
             std::thread::spawn(move || {
