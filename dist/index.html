@@ -613,7 +613,7 @@ function cling() {
 // (coule, puis coule-fin au sol), sans l'écrasement du choc.
 function ceilingToWall(side) {
   const T2 = SHEET_DATA[style].tags;
-  dir = side; unceil(false);
+  dir = side; face();          // sans unceil : le dessin garde son décalage sous la barre de menus, sinon il saute vers le bas le temps que la fenêtre bouge
   if (!T2.coule) { unceil(true); return; }
   // le coin du haut : coule-fin (du mur au sol) à l'envers et retourné de haut en bas, du plafond vers le mur ; la fenêtre glisse vers le bord au début
   // d'abord le demi-tour (de profil jusqu'à la face), retourné lui aussi, puis le coin
