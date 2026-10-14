@@ -345,7 +345,7 @@ function pullFinish() {
 }// Un perso dessiné joue l'animation qui correspond à ce qu'il fait ; sheetOnce joue une animation une fois (saut, atterrissage, choc).
 // tenu par la souris : la boule avec une pointe (attrape-boule) si elle existe, sinon attrape
 const heldTag = T2 => T2["attrape-boule"] ? "attrape-boule" : "attrape";
-const SHEET_MODE_TAG = {held:"attrape", ceiling:"attrape", fly:"vol", dizzy:"etourdi", nausea:"nausee", recover:"remis", pet:"caresse", laugh:"rire", angry:"fache",
+const SHEET_MODE_TAG = {held:"attrape", ceiling:"crawl", fly:"vol", dizzy:"etourdi", nausea:"nausee", recover:"remis", pet:"caresse", laugh:"rire", angry:"fache",
   sulk:"boude", wall:"coule", ooh:"intrigue", sleep:"dort", carried:"attrape", waking:"baille", evolving:"fier"};
 // Candy rebondit comme une balle quand on la lance ; crashed : la première chute était grosse, l'écrasement viendra à la fin des rebonds ; sing : elle chante pendant cette pause
 const BOUNCY = new Set(["candy"]);
@@ -425,7 +425,7 @@ function sheetAnim(now) {
   if (sheetLoop.tag !== tag) sheetLoop = {tag, i:0, next:0};
   if (now >= sheetLoop.next) { const fr = T2[tag], k2 = sheetLoop.i % fr.length; img.src = fr[k2].src; sheetLoop.next = nextAt(sheetLoop.next, fr[k2].dur * (mode === "nausea" ? 1.6 : 1), now); sheetLoop.i++;
     // nausée au sol : la reptation en vert, plus lente ; il avance d'un pas à chaque image, comme à la marche (pas de glissade)
-    if (mode === "nausea") x += dir * 2 * (fr[k2].step || 0);
+    if (mode === "nausea" || mode === "ceiling") x += dir * 2 * (fr[k2].step || 0);          // collé en haut, il avance aussi pas à pas
   }
 }
 // Candy sautille en marchant, sauf ronchon ou vaseuse (elle garde la reptation) ; la marche ne change qu'en fin de cycle
@@ -599,17 +599,24 @@ function headroom() {
   if (t === undefined) { t = spriteTop().y; if (img.complete) TOPS.set(img.src, t); }
   return WH - 128 + 2 * t;
 }
-// Lancé assez fort vers le haut, il s'accroche au haut de l'écran par la tête (la pose « attrapé »), 1 à 3 s.
+// Lancé assez fort vers le haut, il se colle au haut de l'écran, à l'envers (l'image retournée de haut en bas autour de 60 % de sa hauteur),
+// et y rampe comme au sol, 6 à 14 s, puis se décolle et retombe.
 let ceilingUntil = 0;
+const ceilingY = () => minY - (WH - 128 + 2 * (76.8 - 1 - SHEET_DATA[style].tags.crawl[0].bot));          // ses pieds (la ligne du sol) touchent le haut de l'écran
 function cling() {
-  mode = "ceiling"; vx = vy = 0; angle = 0; img.style.rotate = "0deg"; img.style.translate = "";
-  img.src = FR.p1; pose("struggle"); ceilingUntil = Date.now() + 1000 + Math.random() * 2000;
-  y = minY - headroom(); bubble("Hop !", 900); say("accroche au haut de l'ecran");
+  mode = "ceiling"; vx = vy = 0; angle = 0; img.style.rotate = "0deg"; img.style.translate = ""; pose("");
+  if (Math.sign(dir) === 0) dir = 1;
+  img.style.scale = `${dir < 0 ? -1 : 1} -1`; ceilingUntil = Date.now() + 6000 + Math.random() * 8000;
+  y = ceilingY(); say("colle au haut de l'ecran, a l'envers");
+}
+function unceil(tombe) {          // il se décolle : l'image se remet à l'endroit, et s'il tombe, il tombe
+  face(); document.body.style.translate = "";
+  if (tombe) { mode = "fly"; vx = 0; vy = 1; y = minY - headroom(); peakY = y; fall = null; bubble("Oups !", 900); say("se decolle du haut de l'ecran"); }
 }
 function push() { want = [x, y]; if (!sending) flush(); }
 async function flush() {
   while (want) { const [a, b] = want; want = null; sending = true;
-    // accroché en haut : macOS ne laisse pas la fenêtre passer au-dessus de la barre de menus, alors c'est le dessin qui monte dans sa fenêtre
+    // collé en haut : macOS ne laisse pas la fenêtre passer au-dessus de la barre de menus, alors c'est le dessin qui monte dans sa fenêtre
     const up = mode === "ceiling" ? Math.max(0, Math.round(minY - b)) : 0;
     try { await win.setPosition(new LogicalPosition(Math.round(a), Math.round(b) + up)); } catch (e) { say("setPosition: " + e); }
     document.body.style.translate = up ? `0 ${-up}px` : "";
@@ -682,8 +689,7 @@ function tickBody() {
     if (x < minX) { if (hitWall(-1)) { push(); return; } x = minX; vx = -vx * (BOUNCY.has(style) ? .7 : .25); squash("wall"); }
     if (x > maxX) { if (hitWall(1)) { push(); return; } x = maxX; vx = -vx * (BOUNCY.has(style) ? .7 : .25); squash("wall"); }
     if (y < minY - headroom()) {          // plafond : le haut du dessin touche le haut de l'écran, pas celui de la fenêtre
-      if (isSheet() && style !== "candy" && !nausea && vy < -10) { cling(); push(); return; }          // assez d'élan : il s'y accroche
-      if (isSheet() && style !== "candy" && vy < -4) bubble("Raté !", 800);
+      if (isSheet() && style !== "candy" && !nausea && vy < -10) { cling(); push(); return; }          // assez d'élan : il s'y colle, à l'envers
       y = minY - headroom(); vy = -vy * 0.4;
     }
     if (y >= floorY) {
@@ -703,9 +709,10 @@ function tickBody() {
     push(); return;
   }
   const now = Date.now();
-  if (mode === "ceiling") {          // accroché au haut de l'écran par la tête : il gigote, puis lâche et retombe
-    y = minY - headroom(); push();
-    if (now > ceilingUntil) { mode = "fly"; vx = 0; vy = 1; peakY = y; fall = null; pose(""); bubble("Oups !", 900); say("lache le haut de l'ecran"); }
+  if (mode === "ceiling") {          // collé au haut de l'écran, à l'envers : il rampe (le pas est fait par sheetAnim), fait demi-tour aux bords, puis se décolle
+    if (x < minX || x > maxX) { x = Math.max(minX, Math.min(maxX, x)); dir = -dir; img.style.scale = `${dir < 0 ? -1 : 1} -1`; }
+    y = ceilingY(); push();
+    if (now > ceilingUntil) unceil(true);
     return;
   }
   if (mode === "wall") {      // collé au bord de l'écran : il coule, de plus en plus vite, jusqu'au sol
@@ -996,7 +1003,7 @@ function struggle(on) {
 }
 function clicked() {
   const now = Date.now();
-  if (mode === "ceiling") { ceilingUntil = 0; return; }          // accroché en haut : un clic le fait lâcher
+  if (mode === "ceiling") { ceilingUntil = 0; return; }          // collé en haut : un clic le fait se décoller
   if (mode === "sleep") {
     wake += 40;
     if (wake >= 100) wakeUp("clics");
@@ -1015,6 +1022,7 @@ function clicked() {
 }
 img.addEventListener("pointerdown", e => {
   if (e.button !== 0 || pull.on) return;
+  if (mode === "ceiling") { unceil(false); mode = "fly"; }          // pris à la souris pendant qu'il rampe en haut : il se remet à l'endroit
   img.setPointerCapture(e.pointerId);
   drag = {sx:e.screenX, sy:e.screenY, x0:x, y0:y, gx:e.clientX, gy:e.clientY, moved:false, rev:[], sign:0, shaken:false, asleep:mode === "sleep"};
   samples = [{t:performance.now(), x:e.screenX, y:e.screenY}];
