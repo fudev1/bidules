@@ -609,6 +609,17 @@ function cling() {
   img.style.scale = `${dir < 0 ? -1 : 1} -1`; ceilingUntil = Date.now() + 6000 + Math.random() * 8000;
   y = ceilingY(); say("colle au haut de l'ecran, a l'envers");
 }
+// Arrivé au bord de l'écran en rampant au plafond : il passe sur le mur et le descend en coulant, comme après un choc contre le bord
+// (coule, puis coule-fin au sol), sans l'écrasement du choc.
+function ceilingToWall(side) {
+  const T2 = SHEET_DATA[style].tags;
+  dir = side; unceil(false);
+  if (!T2.coule) { unceil(true); return; }
+  mode = "wall"; wallSide = side; pose(""); vx = vy = 0; wallV = .15; peakY = null; fall = null; watching = false; lookKey = "";
+  x = side < 0 ? minX - WALL_OVER : maxX + WALL_OVER;
+  img.src = T2.coule[0].src; y = minY - headroom();
+  say("arrive au bord en haut : il descend le long du mur");
+}
 function unceil(tombe) {          // il se décolle : l'image se remet à l'endroit, et s'il tombe, il tombe
   face(); document.body.style.translate = "";
   if (tombe) { mode = "fly"; vx = 0; vy = 1; y = minY - headroom(); peakY = y; fall = null; bubble("Oups !", 900); say("se decolle du haut de l'ecran"); }
@@ -710,8 +721,8 @@ function tickBody() {
     push(); return;
   }
   const now = Date.now();
-  if (mode === "ceiling") {          // collé au haut de l'écran, à l'envers : il rampe (le pas est fait par sheetAnim), fait demi-tour aux bords, puis se décolle
-    if (x < minX || x > maxX) { x = Math.max(minX, Math.min(maxX, x)); dir = -dir; img.style.scale = `${dir < 0 ? -1 : 1} -1`; }
+  if (mode === "ceiling") {          // collé au haut de l'écran, à l'envers : il rampe (le pas est fait par sheetAnim), descend par le bord qu'il atteint, ou se décolle
+    if (x < minX || x > maxX) { ceilingToWall(x < minX ? -1 : 1); push(); return; }
     y = ceilingY(); push();
     if (now > ceilingUntil) unceil(true);
     return;
