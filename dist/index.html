@@ -601,13 +601,13 @@ function headroom() {
 }
 // Lancé assez fort vers le haut, il se colle au haut de l'écran, à l'envers (l'image retournée de haut en bas autour de 60 % de sa hauteur),
 // et y rampe comme au sol, 6 à 14 s, puis se décolle et retombe.
-let ceilingUntil = 0;
+let ceilingUntil = 0, ceilingEdge = 0;          // ceilingEdge : le bord atteint, il finit son cycle de reptation avant le demi-tour
 const ceilingY = () => minY - (WH - 128 + 2 * (76.8 - 1 - SHEET_DATA[style].tags.crawl[0].bot));          // ses pieds (la ligne du sol) touchent le haut de l'écran
 function cling() {
   mode = "ceiling"; vx = vy = 0; angle = 0; img.style.rotate = "0deg"; img.style.translate = ""; pose("");
   if (Math.sign(dir) === 0) dir = 1;
   img.style.scale = `${dir < 0 ? -1 : 1} -1`; ceilingUntil = Date.now() + 6000 + Math.random() * 8000;
-  y = ceilingY(); say("colle au haut de l'ecran, a l'envers");
+  ceilingEdge = 0; y = ceilingY(); say("colle au haut de l'ecran, a l'envers");
 }
 // Arrivé au bord de l'écran en rampant au plafond : il passe sur le mur et le descend en coulant, comme après un choc contre le bord
 // (coule, puis coule-fin au sol), sans l'écrasement du choc.
@@ -618,7 +618,7 @@ function ceilingToWall(side) {
   // le coin du haut : coule-fin (du mur au sol) à l'envers et retourné de haut en bas, du plafond vers le mur ; la fenêtre glisse vers le bord au début
   // d'abord le demi-tour (de profil jusqu'à la face), retourné lui aussi, puis le coin
   const half = HALF || [], fin = T2["coule-fin"] ? T2["coule-fin"].slice(7).reverse() : [];
-  corner = {seq:[...half, ...fin], half:half.length, i:0, next:0, t0:0, side};          // sans ses 7 premières images (la goutte en bas du mur) : la glissade prend le relais sur l'image la plus étirée
+  corner = {seq:[...half, ...fin], half:half.length, i:0, next:sheetLoop.next, t0:0, side};          // la dernière image de la reptation garde sa durée          // sans ses 7 premières images (la goutte en bas du mur) : la glissade prend le relais sur l'image la plus étirée
   mode = "corner"; pose(""); vx = vy = 0; peakY = null; fall = null; watching = false; lookKey = "";
   img.style.scale = `${side < 0 ? -1 : 1} -1`;
   say("arrive au bord en haut : il passe le coin");
@@ -738,7 +738,10 @@ function tickBody() {
   }
   const now = Date.now();
   if (mode === "ceiling") {          // collé au haut de l'écran, à l'envers : il rampe (le pas est fait par sheetAnim), descend par le bord qu'il atteint, ou se décolle
-    if (x < minX || x > maxX) { ceilingToWall(x < minX ? -1 : 1); push(); return; }
+    // le bord atteint, il s'arrête et finit son cycle : le demi-tour part de la première image de la reptation, comme au sol
+    if (x < minX || x > maxX) { ceilingEdge = x < minX ? -1 : 1; x = Math.max(minX, Math.min(maxX, x)); }
+    const cr = SHEET_DATA[style].tags[sheetLoop.tag];
+    if (ceilingEdge && (!cr || sheetLoop.i % cr.length === 0)) { ceilingToWall(ceilingEdge); push(); return; }
     y = ceilingY(); push();
     if (now > ceilingUntil) unceil(true);
     return;
