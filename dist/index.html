@@ -616,7 +616,9 @@ function ceilingToWall(side) {
   dir = side; unceil(false);
   if (!T2.coule) { unceil(true); return; }
   // le coin du haut : coule-fin (du mur au sol) à l'envers et retourné de haut en bas, du plafond vers le mur ; la fenêtre glisse vers le bord au début
-  corner = {seq:T2["coule-fin"] ? T2["coule-fin"].slice(7).reverse() : [], i:0, next:0, t0:Date.now(), side};          // sans ses 7 premières images (la goutte en bas du mur) : la glissade prend le relais sur l'image la plus étirée
+  // d'abord le demi-tour (de profil jusqu'à la face), retourné lui aussi, puis le coin
+  const half = HALF || [], fin = T2["coule-fin"] ? T2["coule-fin"].slice(7).reverse() : [];
+  corner = {seq:[...half, ...fin], half:half.length, i:0, next:0, t0:0, side};          // sans ses 7 premières images (la goutte en bas du mur) : la glissade prend le relais sur l'image la plus étirée
   mode = "corner"; pose(""); vx = vy = 0; peakY = null; fall = null; watching = false; lookKey = "";
   img.style.scale = `${side < 0 ? -1 : 1} -1`;
   say("arrive au bord en haut : il passe le coin");
@@ -625,7 +627,8 @@ let corner = null;
 function cornerStep(now) {          // une image du coin à chaque fois ; à la fin, il est sur le mur et coule, trois fois plus vite que d'habitude
   const c = corner, T2 = SHEET_DATA[style].tags;
   if (c.i < c.seq.length && now >= c.next) { img.src = c.seq[c.i].src; c.next = (c.next || now) + c.seq[c.i].dur; c.i++; }
-  const p = Math.min(1, (now - c.t0) / WALL_SLIDE);          // comme coule-fin à l'envers : la fenêtre passe de l'écran au bord pendant les premières images
+  if (!c.t0 && c.i > c.half) c.t0 = now;          // le coin commence après le demi-tour
+  const p = c.t0 ? Math.min(1, (now - c.t0) / WALL_SLIDE) : 0;          // comme coule-fin à l'envers : la fenêtre passe de l'écran au bord pendant les premières images du coin
   x = c.side < 0 ? minX - WALL_OVER * p : maxX + WALL_OVER * p; y = ceilingY();
   if (c.i >= c.seq.length && now >= c.next) {
     corner = null; face(); mode = "wall"; wallSide = c.side; vx = vy = 0; wallV = .3; wallMax = 3;
