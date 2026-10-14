@@ -413,7 +413,9 @@ function sheetAnim(now) {
     if (img.style.translate !== "0px " + lift) img.style.translate = "0px " + lift;
     return;
   }
-  if (mode === "turning") return;
+  // collé en haut, à la fin de l'atterrissage (de face) : le demi-tour vers le profil, avant de ramper
+  if (mode === "ceiling" && !faceSeq && HALF && FRONT.has(img.src)) faceSeq = {frames:HALF.slice().reverse(), i:0, next:0};
+  if (mode === "turning" || mode === "ceiling" && faceSeq) return;
   let tag = SHEET_MODE_TAG[mode];
   if (tag === "attrape") tag = heldTag(T2);
   if (mode === "held" && drag && drag.shaken) tag = "secoue";
@@ -608,6 +610,8 @@ function cling() {
   if (Math.sign(dir) === 0) dir = 1;
   img.style.scale = `${dir < 0 ? -1 : 1} -1`; ceilingUntil = Date.now() + 6000 + Math.random() * 8000;
   ceilingEdge = 0; y = ceilingY(); say("colle au haut de l'ecran, a l'envers");
+  // il arrive comme au sol après une chute : l'atterrissage (de face), à l'envers, puis le demi-tour vers le profil, et il rampe
+  faceSeq = null; sheetLoop = {tag:null, i:0, next:0}; playOnce("atterrissage");
 }
 // Arrivé au bord de l'écran en rampant au plafond : il passe sur le mur et le descend en coulant, comme après un choc contre le bord
 // (coule, puis coule-fin au sol), sans l'écrasement du choc.
@@ -637,7 +641,7 @@ function cornerStep(now) {          // une image du coin à chaque fois ; à la 
   }
 }
 function unceil(tombe) {          // il se décolle : l'image se remet à l'endroit, et s'il tombe, il tombe
-  face(); document.body.style.translate = "";
+  face(); faceSeq = null; document.body.style.translate = "";
   if (tombe) { mode = "fly"; vx = 0; vy = 1; y = minY - headroom(); peakY = y; fall = null; bubble("Oups !", 900); say("se decolle du haut de l'ecran"); }
 }
 function push() { want = [x, y]; if (!sending) flush(); }
@@ -769,6 +773,7 @@ function tickBody() {
     const cr = SHEET_DATA[style].tags[sheetLoop.tag];
     if (ceilingEdge && (!cr || sheetLoop.i % cr.length === 0)) { ceilingToWall(ceilingEdge); push(); return; }
     y = ceilingY(); push();
+    if (faceSeq) faceStep(now);
     if (now > ceilingUntil) unceil(true);
     return;
   }
