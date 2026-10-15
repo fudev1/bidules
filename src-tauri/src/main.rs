@@ -771,10 +771,10 @@ fn lire_jeton(home: &str, dir: &str) -> Option<String> {
     lire(String::from_utf8_lossy(&o.stdout).trim())
 }
 // Le jeton passe par l'entrée de curl, pas par sa ligne de commande (visible des autres programmes).
-fn appeler_usage(jeton: &str) -> Result<serde_json::Value, String> {
+fn appeler(jeton: &str, quoi: &str) -> Result<serde_json::Value, String> {
     use std::io::Write;
     let mut c = std::process::Command::new("curl")
-        .args(["-sS", "-m", "15", "-w", "\n%{http_code}", "-H", "@-", "-H", "anthropic-beta: oauth-2025-04-20", "-H", "Content-Type: application/json", "https://api.anthropic.com/api/oauth/usage"])
+        .args(["-sS", "-m", "15", "-w", "\n%{http_code}", "-H", "@-", "-H", "anthropic-beta: oauth-2025-04-20", "-H", "Content-Type: application/json", &format!("https://api.anthropic.com/api/oauth/{quoi}")])
         .stdin(std::process::Stdio::piped()).stdout(std::process::Stdio::piped()).stderr(std::process::Stdio::piped()).spawn().map_err(|e| e.to_string())?;
     let _ = c.stdin.take().unwrap().write_all(format!("Authorization: Bearer {jeton}\n").as_bytes());
     let o = c.wait_with_output().map_err(|e| e.to_string())?;
@@ -802,7 +802,7 @@ fn releve(v: &serde_json::Value, t: u64) -> serde_json::Value {
 fn relever() {
     let home = std::env::var("HOME").unwrap_or_default();
     let t = secondes();
-    let mut vus: Vec<String> = Vec::new();
+    let mut vus: Vec<(String, String)> = Vec::new();
     for dir in PROFILS {
         if !Path::new(&format!("{home}/{dir}")).is_dir() { continue }
         let erreur = |e: String| { ERREURS.lock().unwrap().get_or_insert_with(HashMap::new).insert(dir, e); };
@@ -812,22 +812,26 @@ fn relever() {
             // le jeton gardé a pu être renouvelé par Claude Code entre-temps : on le relit une fois
             if essai == 1 || jeton.is_none() { jeton = lire_jeton(&home, dir); }
             let Some(j) = &jeton else { break };
-            r = appeler_usage(j);
+            r = appeler(j, "usage");
             if !matches!(&r, Err(c) if c == "401") { break }
         }
         let Some(j) = jeton else { erreur("jeton".into()); continue };
-        JETONS.lock().unwrap().get_or_insert_with(HashMap::new).insert(dir, j);
+        JETONS.lock().unwrap().get_or_insert_with(HashMap::new).insert(dir, j.clone());
         let v = match r { Ok(v) => v, Err(e) => { erreur(e); continue } };
         ERREURS.lock().unwrap().get_or_insert_with(HashMap::new).remove(dir);
-        let rl = releve(&v, t);
-        // deux profils connectés au même compte : un seul relevé
-        let cle = format!("{}{}", rl["cinq_h"], rl["semaine"]);
-        if vus.contains(&cle) { continue }
-        vus.push(cle);
+        let mut rl = releve(&v, t);
         let p = format!("{home}/.bidules/usage-{}.jsonl", dir.trim_start_matches('.'));
+        // L'organisation du jeton (perso, Team...) : les limites vont avec elle. Deux profils sur la même : un seul relevé, et le second le dit.
+        let org = appeler(&j, "profile").ok().map(|p| (p["organization"]["uuid"].as_str().unwrap_or("").to_string(), p["organization"]["name"].as_str().unwrap_or("").to_string()));
+        if let Some((id, nom)) = &org {
+            if let Some((_, autre)) = vus.iter().find(|(i, _)| i == id) { erreur(format!("meme:{autre}")); let _ = std::fs::remove_file(&p); continue }
+            vus.push((id.clone(), dir.trim_start_matches('.').to_string()));
+            rl["compte"] = serde_json::json!(nom);
+        }
         let _ = std::fs::create_dir_all(format!("{home}/.bidules"));
+        // les relevés d'un autre compte (jeton changé) ne vont pas sur la même courbe
         let garde: Vec<String> = std::fs::read_to_string(&p).unwrap_or_default().lines()
-            .filter(|l| serde_json::from_str::<serde_json::Value>(l).ok().and_then(|v| v["t"].as_u64()).map_or(false, |x| x + 8 * 86400 > t))
+            .filter(|l| serde_json::from_str::<serde_json::Value>(l).ok().map_or(false, |v| v["t"].as_u64().map_or(false, |x| x + 8 * 86400 > t) && v["compte"] == rl["compte"]))
             .map(String::from).chain([rl.to_string()]).collect();
         let _ = std::fs::write(&p, garde.join("\n") + "\n");
     }

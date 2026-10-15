@@ -401,7 +401,8 @@ function fenetre(rel, k, duree, recent) {
   const [tD, pD] = pts[pts.length - 1], a = pts.find(p => p[0] >= tD - recent);
   // trop peu de relevés récents : la moyenne depuis le début de la fenêtre
   const pente = a && tD - a[0] >= recent / 4 ? (pD - a[1]) / (tD - a[0]) : pD / Math.max(tD - debut, 60);
-  const fin = pente > 0 ? tD + (100 - pD) / pente : Infinity;
+  // déjà à 100 % : vide depuis le premier relevé à 100 %
+  const fin = pD >= 100 ? pts.find(p => p[1] >= 100)[0] : pente > 0 ? tD + (100 - pD) / pente : Infinity;
   return {pc, remise, debut, duree, pts, now, ecart: pc - (now - debut) / duree * 100, fin, finPc: pD + pente * (remise - tD), reste: (100 - pc) / Math.max(remise - now, 60)};
 }
 const courbesF = [];
@@ -414,7 +415,7 @@ const jourC = t => new Date(t * 1000).toLocaleDateString("fr-FR", {weekday:"shor
 const duree = s => { const j = Math.floor(s / 86400), h = Math.floor(s % 86400 / 3600), m = Math.floor(s % 3600 / 60); return j ? `${j} j ${h} h` : h ? `${h} h ${String(m).padStart(2, "0")}` : `${m} min`; };
 function courbe(f, sem) {
   const i = courbesF.push(f) - 1, x = t => gx(f, t).toFixed(1), y = p => gy(p).toFixed(1), P = f.pts;
-  const [tD, pD] = P[P.length - 1], vide = f.fin < f.remise, tF = isFinite(f.fin) ? Math.min(f.fin, f.remise) : 0, pF = Math.min(100, f.finPc);
+  const [tD, pD] = P[P.length - 1], vide = f.fin < f.remise, tF = isFinite(f.fin) && f.fin > tD ? Math.min(f.fin, f.remise) : 0, pF = Math.min(100, f.finPc);
   const reg = t => (t - f.debut) / f.duree * 100, av = f.ecart <= 0;
   const aire = P.map(p => x(p[0]) + "," + y(p[1])).join(" ") + " " + [...P].reverse().map(p => x(p[0]) + "," + y(reg(p[0]))).join(" ");
   const lx = (v, w) => Math.max(G.L + w / 2, Math.min(G.R - w / 2, v));
@@ -470,15 +471,18 @@ function carte(nom, f, sem) {
   const e = -f.ecart;
   return `<div class="graphe prevision"><div class="ligne"><h3>${nom}</h3><span>à zéro dans <b>${dans(f.remise - Date.now() / 1000)}</b></span></div>`
     + `<div class="ligne"><span class="gros">${Math.max(0, Math.round(100 - f.pc))} %<small>restant</small></span>`
-    + `<span class="badge ${e >= 0 ? "av" : "ret"}">${Math.abs(e) < .05 ? "pile au rythme" : `${e > 0 ? "+" : "−"}${virg(Math.abs(e))} pts ${e > 0 ? "d'avance" : "de retard"}`}</span></div>${courbe(f, sem)}</div>`;
+    + `<span class="badge ${e >= 0 ? "av" : "ret"}">${f.pc >= 100 ? "épuisé" : Math.abs(e) < .05 ? "pile au rythme" : `${e > 0 ? "+" : "−"}${virg(Math.abs(e))} pts ${e > 0 ? "d'avance" : "de retard"}`}</span></div>${courbe(f, sem)}</div>`;
 }
 // En haut, quand une fenêtre se viderait avant sa remise à zéro : quand, et le rythme à tenir.
 function alerte(nom, f, u, n) {
   if (!f || !f.pts || !(f.fin < f.remise)) return "";
+  if (f.pc >= 100) return `<div class="alerte"><b>${nom} : limite atteinte</b>, de retour ${quand(f.remise).replace(" vers ", " ")}.</div>`;
   return `<div class="alerte"><b>${nom} : plus rien ${quand(f.fin)}</b> au rythme actuel. Reste sous ${virg(Math.max(0, f.reste * n))} %/${u} pour tenir jusqu'à la remise à zéro, ${quand(f.remise).replace(" vers ", " ")}.</div>`;
 }
 const ERREURS_USAGE = {jeton:"Pas de connexion de Claude Code trouvée : connecte-toi dans Claude Code (/login), avec un abonnement Pro ou Max.",
   "401":"La connexion de Claude Code a expiré : elle se renouvelle à la prochaine utilisation de Claude Code.", "429":"claude.ai demande d'attendre un peu avant de redemander les limites."};
+const msgUsage = e => ERREURS_USAGE[e] || (e && e.startsWith("meme:") ? `Même compte que le profil ${e.slice(5)} : l'un des deux est connecté au mauvais compte. Lance Claude Code avec celui-là et reconnecte-le (/login).`
+  : e ? `claude.ai ne répond pas (${e}).` : "");
 async function renderLimites() {
   if (Date.now() - usageAt > 60000) { try { usageL = await T.core.invoke("usage"); usageAt = Date.now(); } catch (e) {} }
   const avec = usageL.filter(u => u.releves.length);
@@ -487,12 +491,13 @@ async function renderLimites() {
     $("limites").innerHTML = avec.map(u => {
       const rel = u.releves, der = rel[rel.length - 1], vieux = Date.now() / 1000 - der.t > 20 * 60;
       const f5 = fenetre(rel, "cinq_h", 5 * 3600, 3600), fS = fenetre(rel, "semaine", 7 * 86400, 86400);
-      return `<h3>Limites de ton abonnement${avec.length > 1 ? ` (${u.profil})` : ""}</h3>`
-        + (vieux ? `<p class="hint">Dernier relevé il y a ${dans(Date.now() / 1000 - der.t)}. ${ERREURS_USAGE[u.erreur] || (u.erreur ? `claude.ai ne répond pas (${u.erreur}).` : "")}</p>` : "")
+      const cs = [["Sur 5 h", f5, false], ["Sur la semaine", fS, true]].filter(c => c[1] && !(c[1] === f5 && !f5.pts && fS && fS.pc >= 100)), gr = cs.filter(c => c[1].pts);
+      return `<h3>Limites de ton abonnement${usageL.length > 1 ? ` (${u.profil}${der.compte ? ", " + der.compte : ""})` : ""}</h3>`
+        + (vieux ? `<p class="hint">Dernier relevé il y a ${dans(Date.now() / 1000 - der.t)}. ${msgUsage(u.erreur)}</p>` : "")
         + alerte("Semaine", fS, "jour", 86400) + alerte("Sur 5 h", f5, "heure", 3600)
-        + `<div class="lim2">${carte("Sur 5 h", f5, false)}${carte("Sur la semaine", fS, true)}</div>`
+        + (gr.length ? `<div class="lim2">${gr.map(c => carte(...c)).join("")}</div>` : "") + cs.filter(c => !c[1].pts).map(c => ligneLim(c[0], c[1])).join("")
         + (der.modeles || []).map(([nom, pc, remise]) => ligneLim(`${nom}, semaine`, {pc: remise && remise > Date.now() / 1000 ? pc : 0, remise: remise && remise > Date.now() / 1000 ? remise : 0})).join("");
-    }).join("");
+    }).join("") + usageL.filter(u => !u.releves.length && u.erreur).map(u => `<h3>Limites de ton abonnement (${u.profil})</h3><p class="hint">${msgUsage(u.erreur)}</p>`).join("");
     $("limites").querySelectorAll(".suivi").forEach(suivre);
     return;
   }
