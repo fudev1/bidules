@@ -583,7 +583,7 @@ function fallAsleep() { mode = "sleep"; img.src = FR.dort; pose("breathe"); slee
 function wakeUp(why) {
   mode = "waking"; reactUntil = Date.now() + (isSheet() && tagDur("baille") || 1100); img.src = FR.baille; pose(isSheet() ? "" : "shake"); wake = 0; calm = 0;
   if (isSheet()) playOnce("baille");          // dessiné : il se réveille avec son bâillement, une fois, sans tremblement
-  bubble(why === "seul" ? "*s'étire*" : why === "fini" ? "À toi !" : "Hein ?", why === "fini" ? 1800 : 1000); say(`il se reveille (${why})`);
+  bubble(why === "seul" ? "*s'étire*" : why === "fini" ? "À toi !" : why === "attend" ? waitTxt() : "Hein ?", why === "fini" || why === "attend" ? 1800 : 1000); say(`il se reveille (${why})`);
 }
 function react(m, ms, frame, cls = "") { mode = m; reactUntil = Date.now() + ms; img.src = frame; pose(cls); img.style.rotate = "0deg"; watching = false; lookKey = ""; }
 function toWalk() { mode = "walk"; img.src = FR.normal; pose("walk"); }
@@ -1250,8 +1250,6 @@ function moodExtra() {
 function applyMood(m) {
   mood = m; document.body.dataset.mood = m || ""; for (const id in SHEET_DATA) moodTags(id); buildFrames(style); lookKey = ""; refreshSprite(); sendState();
 }
-// Humeur d'après la jauge de contexte de la conversation en cours (Claude Desktop, sinon le terminal) : 0-30 % joyeux, 30-60 % normal, 60-100 % fatigué.
-// L'app ne reçoit que des quantités de tokens. Sans conversation en cours, l'humeur est devinée d'après le rythme.
 // --- Bulle de pensée : il rumine ce que fait Claude, d'après le nom de l'outil en cours (jamais le texte). Pixel art, 28 × 18, affichée × 2.
 // Chaque icône a 2 images de 9 × 7, alternées. Les pastilles du bas montent vers sa tête.
 const PENSE_BODY = ["...kkkkkkkkkkkkkkkkkkkkk...", "..kwwwwwwwwwwwwwwwwwwwwwk..", ".kwwwwwwwwwwwwwwwwwwwwwwwk.", "kwwwwwwwwwwwwwwwwwwwwwwwwwk",
@@ -1295,45 +1293,64 @@ T.event.listen("claude-fini", () => {
   bubble("À toi !", 1800);
   if (mode === "walk" && isSheet() && !sheetOnce) { idleUntil = Date.now() + 3000; playOnce(FRONT.has(img.src) ? "saut-face" : "saut"); }
 });
-const CONTEXT_MOODS = [[30, "guilleret"], [60, null], [Infinity, "vaseux"]];
-async function contextMood() {
-  let j = null;
-  try { j = await T.core.invoke("contexte"); } catch (e) { say("contexte: " + e); }
-  noConversation = !j; activity = j ? j.activite : null; claudeIdle = !activity; claudeWaits = !!(j && j.attend);
-  claudeJ = j; T.event.emit("claude", j);          // le panneau montre l'état de Claude (onglet Tests, essais « État de Claude »)
-  if (!j) return null;
-  const pc = Math.round(j.pourcent);
-  return [CONTEXT_MOODS.find(([max]) => j.pourcent < max)[1], `contexte à ${pc} %${j.source === "terminal" ? " (terminal)" : ""}`];
+// L'état de Claude, toutes sessions confondues (main.rs : sessions, d'après les hooks de Claude Code) : il suffit qu'une session attende
+// pour qu'il le montre, même si on regarde une autre session. Sans hooks branchés, on retombe sur la session en cours (contexte).
+let waiting = 0, working = 0, lastCall = 0;
+async function claudeState() {
+  let s = [], j = null;
+  try { [s, j] = await Promise.all([T.core.invoke("sessions"), T.core.invoke("contexte")]); } catch (e) { say("etat de Claude: " + e); }
+  s = s || [];
+  if (s.length) {
+    waiting = s.filter(x => x.etat === "attend").length; working = s.filter(x => x.etat === "travaille").length;
+    noConversation = false; claudeWaits = waiting > 0; claudeIdle = !waiting && !working;
+    activity = working ? (j && j.activite && j.activite !== "pense" ? j.activite : "pense") : null;          // la bulle : l'outil de la session en vue, sinon il pense
+  } else {
+    noConversation = !j; activity = j ? j.activite : null; claudeIdle = !activity; claudeWaits = !!(j && j.attend);
+    waiting = claudeWaits ? 1 : 0; working = activity ? 1 : 0;
+  }
+  // une session t'attend : il te le dit tout de suite (réveillé s'il dormait), puis te le rappelle toutes les 30 s ; il ne s'endort pas
+  const now = Date.now();
+  if (waiting) {
+    calm = 0;
+    if (now - lastCall > 30000) { lastCall = now; if (mode === "sleep" || mode === "drowsy") wakeUp("attend"); else bubble(waitTxt(), 1800); }
+  } else lastCall = 0;
+  claudeJ = (s.length || j) ? {...(j || {}), attend:claudeWaits, activite:activity, sessions:s} : null;
+  T.event.emit("claude", claudeJ);          // le panneau montre les sessions et leur jauge de contexte
 }
-// Humeur devinée d'après le rythme : l'app ne reçoit que les heures des prompts, jamais leur texte.
+const waitTxt = () => waiting > 1 ? `${waiting} sessions t'attendent !` : "Une session t'attend !";
+// Humeur générale, d'après le rythme de toute la journée (toutes sessions confondues) : l'heure, le temps passé sans vraie pause, le nombre
+// de sessions en parallèle et de prompts. L'app ne reçoit que les heures des prompts, jamais leur texte.
 let promptsCache = [], promptsAt = 0;          // les heures des prompts : relues au plus une fois par minute
 async function guessMood() {
-  const c = await contextMood();
-  if (c) return c;
   let times = [];
   if (Date.now() - promptsAt > 60000) { try { promptsCache = await T.core.invoke("prompt_times"); promptsAt = Date.now(); } catch (e) { say("prompt_times: " + e); } }
   times = promptsCache.slice();
   times.sort((a, b) => a - b);
   const now = Date.now() / 1000, h = new Date().getHours(), lastT = times.length ? times[times.length - 1] : null;
-  const last10 = times.filter(t => now - t < 600).length;
+  const last10 = times.filter(t => now - t < 600).length, busy = waiting + working;
   let start = lastT;
   for (let i = times.length - 1; i > 0; i--) { if (times[i] - times[i - 1] > 1200) break; start = times[i - 1]; }
   const sessionH = lastT && now - lastT < 1200 ? (lastT - start) / 3600 : 0;
   if (h >= 20 || h < 7) return ["vaseux", "il est tard"];
   if (sessionH >= 3) return ["vaseux", `tu travailles depuis ${Math.floor(sessionH)} h sans vraie pause`];
+  if (busy >= 4) return ["stresse", `${busy} sessions de Claude en même temps`];
   if (last10 > 10) return ["stresse", `${last10} prompts en 10 minutes`];
   if (!lastT || now - lastT > 2700) return ["lune", lastT ? `pas de prompt depuis ${Math.round((now - lastT) / 60)} min` : "pas de prompt récent"];
   return ["guilleret", "rythme régulier"];
 }
+// l'humeur change lentement : la nouvelle doit tenir une minute avant d'être prise (sauf la toute première)
+const MOOD_HOLD = 60000;
+let moodNext = null, moodNextSince = 0;
 async function autoMood() {
+  await claudeState();
   // l'humeur choisie à la main ne change pas, mais la bulle et le sommeil suivent toujours Claude
-  if (moodMode !== "auto") await contextMood();
-  else {
-    const [m, why] = await guessMood();
-    moodReason = noConversation ? "aucune conversation en cours, il dort" : claudeIdle ? why + ", Claude attend, il dort" : why;
-    if (m !== mood) { say(`humeur devinee : ${m} (${why})`); applyMood(m); } else sendState();
+  if (moodMode === "auto") {
+    const [m, why] = await guessMood(), now = Date.now();
+    moodReason = noConversation ? why + ", aucune session en cours, il dort" : claudeIdle ? why + ", Claude a fini partout, il dort" : why;
+    if (m !== moodNext) { moodNext = m; moodNextSince = now; }
+    if (m !== mood && (mood === null || now - moodNextSince >= MOOD_HOLD)) { say(`humeur devinee : ${m} (${why})`); applyMood(m); } else sendState();
   }
-  if (!claudeIdle && mode === "sleep" && Date.now() - sleepSince > 3000) wakeUp("seul");   // Claude se remet au travail : il se réveille
+  if (!claudeIdle && mode === "sleep" && Date.now() - sleepSince > 3000) wakeUp(claudeWaits ? "attend" : "seul");   // Claude se remet au travail : il se réveille
 }
 function chooseMood(m) {
   moodMode = m;
@@ -1341,7 +1358,7 @@ function chooseMood(m) {
   else { moodReason = "choisie à la main"; say("humeur choisie : " + moodMode); applyMood(moodMode); bubble(MOOD_LABEL[moodMode], 1200); }
 }
 T.event.listen("mood", e => chooseMood(e.payload));
-setInterval(autoMood, 3000);
+setInterval(autoMood, 1500);
 // On change de session dans Claude Desktop : on relit tout de suite son état, sans attendre les 3 s.
 let lastSession;
 setInterval(async () => {
