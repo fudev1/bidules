@@ -19,7 +19,7 @@ img.giggle{animation:giggle .12s linear infinite}
 img.shake{animation:shake .08s linear infinite}
 @keyframes shake{0%,100%{translate:-2px 0}50%{translate:2px 0}}
 #fx{position:absolute;inset:0;pointer-events:none;overflow:hidden}
-#el{position:absolute;left:0;top:0;width:352px;height:420px;image-rendering:pixelated;pointer-events:none}
+#el{position:absolute;left:0;top:0;width:352px;height:420px;image-rendering:pixelated;pointer-events:none;transform-origin:176px 356px}
 img.recoil{transform-origin:50% 100%;animation:recoil .5s ease-out}
 @keyframes recoil{20%{scale:calc(var(--sx) * .82) 1.3}45%{scale:calc(var(--sx) * 1.18) .84}70%{scale:calc(var(--sx) * .95) 1.07}}
 body[data-mood="guilleret"] img.walk{animation:bobHappy .36s ease-in-out infinite}
@@ -104,10 +104,22 @@ const isSheet = () => !!(SHEETS[style] && SHEET_DATA[style]);
 const BIG_W = 352, BIG_H = 420, CW2 = 176, CH2 = 210, ORX = 56, ORY = 146, HANG_G = [88, 40];
 const pull = {on:false, phase:null, src:null, g:[0, 0], d:[0, 0], vd:[0, 0], b:[0, 0], vb:[0, 0], pw:[0, 0], pv:[0, 0], aw:[0, 0], skip:0};
 const pullCanvas = document.getElementById("el"), pullCtx = pullCanvas.getContext("2d");
-function captureFrame() {
+// On le tire du sol, du haut de l'écran (collé à l'envers) ou d'un bord (couché contre le mur). Le calcul est toujours celui du sol : l'image
+// est tournée pour que la surface où il est collé soit en bas (cap), et le grand canevas est tourné dans l'autre sens à l'affichage (css, autour
+// du centre de son image : 176, 356). w × h : la grande fenêtre ; off : son décalage par rapport à la petite, pour que le dessin ne bouge pas ;
+// pt : un point de son image (vue à l'écran) dans l'image tournée ; vec : un geste de la souris dans le sens « sol » (vers le haut = s'éloigner).
+const PULL_ORI = {
+  sol:{w:BIG_W, h:BIG_H, off:[-88, -244], css:"", cap:g => {}, pt:([u, v]) => [u, v], vec:([a, b]) => [a, b]},
+  plafond:{w:BIG_W, h:BIG_H, off:[-88, 48], css:"translate(0px, -292px) scale(1, -1)", cap:g => g.scale(1, -1), pt:([u, v]) => [u, 64 - v], vec:([a, b]) => [a, -b]},
+  "mur-d":{w:BIG_H, h:BIG_W, off:[-268, -64], css:"translate(180px, -180px) rotate(-90deg)", cap:g => g.rotate(Math.PI / 2), pt:([u, v]) => [64 - v, u], vec:([a, b]) => [-b, a]},
+  "mur-g":{w:BIG_H, h:BIG_W, off:[24, -64], css:"translate(-112px, -180px) rotate(90deg)", cap:g => g.rotate(-Math.PI / 2), pt:([u, v]) => [v, 64 - u], vec:([a, b]) => [b, -a]}};
+function captureFrame(ori = "sol") {
   const cv = document.createElement("canvas"); cv.width = 64; cv.height = 64; const g = cv.getContext("2d");
-  if (img.style.scale === "-1 1") { g.translate(2 * (SHEET_DATA[style].axis + .5), 0); g.scale(-1, 1); }
-  g.drawImage(img, 0, 0, 64, 64);
+  // l'image telle qu'on la voit (avec son retournement : de profil vers la gauche, à l'envers au plafond), tournée pour que sa surface soit en bas
+  g.translate(32, 32); PULL_ORI[ori].cap(g); g.translate(-32, -32);
+  const [sx, sy = sx] = (img.style.scale || "1").split(" ").map(Number), [ox, oy] = (img.style.transformOrigin || "50% 60%").split(" ").map(v => parseFloat(v) / 100 * 64);
+  g.translate(ox, oy); g.scale(sx, sy); g.translate(-ox, -oy);
+  g.drawImage(img, 0, 0, 64, 64); g.setTransform(1, 0, 0, 1, 0, 0);
   const px = g.getImageData(0, 0, 64, 64).data, mask = new Uint8Array(4096);
   let top = 64, bot = 0, x0 = 64, x1 = 0;
   for (let i = 0; i < 4096; i++) if (px[i * 4 + 3]) { mask[i] = 1; const X = i % 64, Y = (i - X) / 64; top = Math.min(top, Y); bot = Math.max(bot, Y); x0 = Math.min(x0, X); x1 = Math.max(x1, X); }
@@ -152,21 +164,23 @@ let winChain = Promise.resolve();
 const nextPaint = () => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
 function setBigWindow(on) { return winChain = winChain.then(() => resizeWin(on)).catch(e => say("fenetre: " + e)); }
 async function resizeWin(on) {
-  const {LogicalSize} = T.dpi, size = n => { for (const el of [document.documentElement, document.body]) { el.style.width = n ? BIG_W + "px" : ""; el.style.height = n ? BIG_H + "px" : ""; } };
+  const {LogicalSize} = T.dpi, O = PULL_ORI[pull.ori || "sol"], size = n => { for (const el of [document.documentElement, document.body]) { el.style.width = n ? O.w + "px" : ""; el.style.height = n ? O.h + "px" : ""; } };
+  // comme flush : macOS garde la fenêtre sous la barre de menus, c'est alors le dessin qui monte dans sa fenêtre (tiré du haut de l'écran)
+  const place = async () => { const up = Math.max(0, Math.round(minY - y)); await win.setPosition(new LogicalPosition(Math.round(x), Math.round(y) + up)); document.body.style.translate = up ? `0 ${-up}px` : ""; };
   want = null;
   if (on) {
-    img.style.opacity = "0"; pullCanvas.hidden = false; size(true);
+    img.style.opacity = "0"; pullCanvas.style.transform = O.css; pullCanvas.hidden = false; size(true);
     await nextPaint();
-    x -= (BIG_W - WW) / 2; y -= BIG_H - WH;
-    await win.setPosition(new LogicalPosition(Math.round(x), Math.round(y)));
-    await win.setSize(new LogicalSize(BIG_W, BIG_H));
+    x += O.off[0]; y += O.off[1];
+    await place();
+    await win.setSize(new LogicalSize(O.w, O.h));
   } else {
     // d'abord réduire sur place : l'image reste au bon endroit, juste recadrée ; puis déplacer et remettre l'image normale
     const hung = pull.wasHang;
     await win.setSize(new LogicalSize(WW, WH));
-    pullCanvas.hidden = true;
+    pullCanvas.hidden = true; pullCanvas.style.transform = "";
     if (hung) await nextPaint();
-    await win.setPosition(new LogicalPosition(Math.round(x), Math.round(y)));
+    await place();
     size(false);
   }
 }
@@ -179,10 +193,11 @@ function haptic(motif) {
   const now = performance.now(); if (!hapticOn || now - (hapticAt[motif] || 0) < 60) return;
   hapticAt[motif] = now; T.core.invoke("haptique", {motif}).catch(() => {});
 }
-function pullStart(e) {
-  const S0 = captureFrame();
-  const gu = Math.max(S0.cx - 12, Math.min(S0.cx + 12, (drag.gx - 24) / 2)), gv = Math.max(S0.top, Math.min(S0.bot - 3, (drag.gy - 48) / 2));
-  Object.assign(pull, {on:true, ready:false, phase:"ground", src:S0, srcImg:img.src, g:[gu, gv], d:[0, 0], vd:[0, 0], cran:0});
+function pullStart(ori = "sol") {
+  const S0 = captureFrame(ori), up = -(parseFloat((document.body.style.translate || "0 0").split(" ")[1]) || 0);
+  const [u, v] = PULL_ORI[ori].pt([(drag.gx - 24) / 2, (drag.gy + up - 48) / 2]);          // le point pris, dans l'image tournée
+  const gu = Math.max(S0.cx - 12, Math.min(S0.cx + 12, u)), gv = Math.max(S0.top, Math.min(S0.bot - 3, v));
+  Object.assign(pull, {on:true, ready:false, phase:"ground", ori, src:S0, srcImg:img.src, g:[gu, gv], d:[0, 0], vd:[0, 0], cran:0});
   // la bulle de pensée disparaît tout de suite, sans fondu : la fenêtre va s'agrandir vers le haut et la gauche, elle se retrouverait dans le coin
   pense.style.transition = "none"; pense.classList.add("off"); pense.offsetWidth; pense.style.transition = "";
   pullDraw(); setBigWindow(true).then(() => { pull.ready = true; });
@@ -311,8 +326,8 @@ function pullStep(dt) {
     pull.cran = cran;
     if (f > 1) {
       // décollé : la fenêtre reprend sa taille et il est tenu comme dans tous les autres cas (la goutte qui se balance)
-      say("il se decolle du sol"); bubble("Plop !", 900); haptic("palier");
-      x += (BIG_W - WW) / 2; y += BIG_H - WH; pull.phase = "closing"; pull.ready = false;
+      say(`il se decolle (${pull.ori})`); bubble("Plop !", 900); haptic("palier");
+      const O = PULL_ORI[pull.ori]; x -= O.off[0]; y -= O.off[1]; pull.phase = "closing"; pull.ready = false;
       setBigWindow(false).then(() => {
         pull.on = false; pull.phase = null; img.style.opacity = "";
         if (drag) { mode = "held"; struggle(true); holdByHead(drag.lastX, drag.lastY); }
@@ -346,14 +361,16 @@ function pullFinish() {
     const {B} = pullGeom(), S0 = pull.src;
     const nx = x + B[0] * 2 - (24 + (S0.cx + .5) * 2) - 0, ny = y + B[1] * 2 - (48 + (S0.bot + 1) * 2);
     x = nx + (BIG_W - WW) / 2 - (BIG_W - WW) / 2; y = ny;
-  } else { x += (BIG_W - WW) / 2; y += BIG_H - WH; }
+  } else { const O = PULL_ORI[pull.ori]; x -= O.off[0]; y -= O.off[1]; }
   // pull.on reste vrai tant que la fenêtre n'est pas revenue à sa taille : rien d'autre ne la déplace entre-temps
   const hung = pull.wasHang = pull.phase === "hang"; pull.phase = "closing"; pull.ready = false;
   // relâché sur place : on réaffiche l'image qu'il avait quand on l'a pris (pas celle de la prise en main)
   return setBigWindow(false).then(() => { pull.on = false; pull.phase = null; if (!hung) {
-    img.src = pull.srcImg; mode = "walk"; pose("walk"); img.style.opacity = "";
-    // la souris est encore sur lui : il continue de la regarder au lieu de reprendre sa marche une image avant
-    watching = true; idleUntil = Date.now() + 700; lookKey = "";
+    img.src = pull.srcImg; img.style.opacity = "";
+    // revenu au haut de l'écran ou contre le mur : il reprend où il en était ; au sol, la souris est encore sur lui : il continue de la regarder
+    if (pull.ori === "plafond") { mode = "ceiling"; pose(""); sheetLoop = {tag:null, i:0, next:0}; ceilingUntil = Math.max(ceilingUntil, Date.now() + 3000); }
+    else if (pull.ori !== "sol") { mode = "wall"; pose(""); wallV = 0; }
+    else { mode = "walk"; pose("walk"); watching = true; idleUntil = Date.now() + 700; lookKey = ""; }
   } });
 }// Un perso dessiné joue l'animation qui correspond à ce qu'il fait ; sheetOnce joue une animation une fois (saut, atterrissage, choc).
 // tenu par la souris : la boule avec une pointe (attrape-boule) si elle existe, sinon attrape
@@ -1146,6 +1163,7 @@ function struggle(on) {
 function clicked() {
   const now = Date.now();
   if (mode === "ceiling" || mode === "ceilswing") { ceilingUntil = 0; ceilSw = null; mode = "ceiling"; return; }          // collé en haut : un clic le fait se décoller
+  if (mode === "wall") { x = Math.max(minX, Math.min(maxX, x)); face(); mode = "fly"; vx = 0; vy = 1; peakY = y; fall = null; return; }          // collé au mur : il s'en détache et tombe
   if (mode === "sleep") {
     wake += 40;
     if (wake >= 100) wakeUp("clics");
@@ -1164,14 +1182,15 @@ function clicked() {
 }
 img.addEventListener("pointerdown", e => {
   if (e.button !== 0 || pull.on) return;
-  if (mode === "ceiling" || mode === "corner" || mode === "ceilswing") { corner = null; ceilSw = null; unceil(false); mode = "fly"; }          // pris à la souris pendant qu'il rampe en haut : il se remet à l'endroit
+  // pris pendant qu'il passe le coin ou se balance au bout de son fil : il se remet à l'endroit et il est tenu (collé en haut ou au mur, on le tire)
+  if (mode === "corner" || mode === "ceilswing") { corner = null; ceilSw = null; unceil(false); mode = "fly"; }
   img.setPointerCapture(e.pointerId);
   drag = {sx:e.screenX, sy:e.screenY, x0:x, y0:y, gx:e.clientX, gy:e.clientY, moved:false, rev:[], sign:0, shaken:false, asleep:mode === "sleep"};
   samples = [{t:performance.now(), x:e.screenX, y:e.screenY}];
   img.style.cursor = "grabbing"; haptic("clic");
-  if (mode === "fly" || mode === "wall" || mode === "wallland") {      // rattrapé en l'air (ou décroché du mur) : il se débat dès le clic, sans attendre que la souris bouge
-    if (mode === "wall" || mode === "wallland") { x = Math.max(minX, Math.min(maxX, x)); drag.x0 = x; }
-    if (mode === "wall" && wallStick) wallShape(false);
+  if (mode === "wall" && wallStick) wallShape(false);
+  if (mode === "fly" || mode === "wallland") {      // rattrapé en l'air (ou en train de se détacher du mur) : il se débat dès le clic, sans attendre que la souris bouge
+    if (mode === "wallland") { x = Math.max(minX, Math.min(maxX, x)); drag.x0 = x; }
     drag.moved = true; drag.lastX = e.screenX; drag.lastY = e.screenY;
     mode = "held"; struggle(true); if (isSheet()) holdByHead(e.screenX, e.screenY); disturb(); if (style === "candy") bubble("Hé !", 900);
     say("rattrape en l'air");
@@ -1182,14 +1201,17 @@ img.addEventListener("pointermove", e => {
   const dx = e.screenX - drag.sx, dy = e.screenY - drag.sy;
   if (!drag.moved && Math.abs(dx) + Math.abs(dy) > 3) {
     drag.moved = true;
-    if (mode === "wall") { x = Math.max(minX, Math.min(maxX, x)); drag.x0 = x; }          // décroché du mur : la fenêtre revient dans l'écran
-    if (isSheet() && !NO_PULL.has(style) && !drag.asleep && !["fly", "splat", "reform"].includes(mode) && y >= floorY - 4) pullStart();
+    // on le tire de là où il est collé : le sol, le haut de l'écran ou un bord
+    const ori = mode === "ceiling" ? "plafond" : mode === "wall" ? (wallSide < 0 ? "mur-g" : "mur-d") : y >= floorY - 4 ? "sol" : null;
+    if (isSheet() && !NO_PULL.has(style) && !drag.asleep && !["fly", "splat", "reform"].includes(mode) && ori) pullStart(ori);
+    if (!pull.on && mode === "ceiling") unceil(false);          // sans étirement (Candy) : il se remet à l'endroit
+    if (!pull.on && mode === "wall") { x = Math.max(minX, Math.min(maxX, x)); drag.x0 = x; }          // décroché du mur : la fenêtre revient dans l'écran
     if (drag.asleep) { mode = "carried"; pose(isSheet() ? "" : "dangle"); img.src = isSheet() ? FR.p1 : FR.dort; holdByHead(e.screenX, e.screenY); say("porte endormi"); }
     else { mode = "held"; struggle(true); if (isSheet() && !pull.on) holdByHead(e.screenX, e.screenY); disturb(); if (style === "candy") bubble("Hé !", 900); }
   }
   if (!drag.moved) return;
   drag.lastX = e.screenX; drag.lastY = e.screenY;
-  if (pull.on && pull.phase === "ground") { pull.d = [(e.screenX - drag.sx) / 2, (e.screenY - drag.sy) / 2]; return; }
+  if (pull.on && pull.phase === "ground") { pull.d = PULL_ORI[pull.ori].vec([(e.screenX - drag.sx) / 2, (e.screenY - drag.sy) / 2]); return; }
   if (drag.asleep) {
     const pv = samples[samples.length - 1], dtm = Math.max(8, performance.now() - pv.t);
     const speed = Math.hypot(e.screenX - pv.x, e.screenY - pv.y) / dtm * 1000;
