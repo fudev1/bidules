@@ -80,6 +80,19 @@ fn surligner(app: &AppHandle, on: bool) {
     let _ = (app, on);
 }
 
+// Retour haptique du trackpad Force Touch (macOS) : "clic" (neutre), "cran" (alignement) ou "palier". Avec une souris ou sous Windows, rien.
+#[tauri::command]
+fn haptique(motif: String) {
+    #[cfg(target_os = "macos")]
+    {
+        use objc2_app_kit::{NSHapticFeedbackManager, NSHapticFeedbackPattern as P, NSHapticFeedbackPerformanceTime, NSHapticFeedbackPerformer};
+        let p = match motif.as_str() { "cran" => P::Alignment, "palier" => P::LevelChange, _ => P::Generic };
+        NSHapticFeedbackManager::defaultPerformer().performFeedbackPattern_performanceTime(p, NSHapticFeedbackPerformanceTime::Now);
+    }
+    #[cfg(not(target_os = "macos"))]
+    let _ = motif;
+}
+
 // Pour deviner l'humeur, on ne retient que le type, l'heure et la forme du contenu de chaque ligne.
 // Le texte des messages n'est jamais extrait dans une variable : il n'est ni utilisé, ni gardé, ni envoyé.
 #[derive(Deserialize)]
@@ -528,7 +541,7 @@ fn sessions() -> Vec<Session> {
 
 fn main() {
     tauri::Builder::default()
-        .invoke_handler(tauri::generate_handler![log, quit, hide_panel, prompt_times, contexte, icone, session_active, hooks_etat, brancher_hooks, debrancher_hooks, sessions, montrer_bidule, ouvrir_panneau, lire_choix, garder_choix, bonbon_poser, bonbon_retirer, bonbon_clic])
+        .invoke_handler(tauri::generate_handler![log, quit, hide_panel, prompt_times, contexte, icone, session_active, haptique, hooks_etat, brancher_hooks, debrancher_hooks, sessions, montrer_bidule, ouvrir_panneau, lire_choix, garder_choix, bonbon_poser, bonbon_retirer, bonbon_clic])
         .setup(|app| {
             #[cfg(target_os = "macos")]
             app.set_activation_policy(tauri::ActivationPolicy::Accessory);

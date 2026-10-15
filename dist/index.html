@@ -170,10 +170,19 @@ async function resizeWin(on) {
     size(false);
   }
 }
+// Retour haptique du trackpad Force Touch du Mac (main.rs : haptique) : "clic", "cran" ou "palier". Coupé dans le panneau (onglet Piste).
+// Au plus un de chaque sorte toutes les 60 ms : le trackpad ne bourdonne pas quand les occasions s'enchaînent.
+let hapticOn = true;
+const hapticAt = {};
+try { hapticOn = localStorage.getItem("bidule.haptique") !== "non"; } catch (e) {}
+function haptic(motif) {
+  const now = performance.now(); if (!hapticOn || now - (hapticAt[motif] || 0) < 60) return;
+  hapticAt[motif] = now; T.core.invoke("haptique", {motif}).catch(() => {});
+}
 function pullStart(e) {
   const S0 = captureFrame();
   const gu = Math.max(S0.cx - 12, Math.min(S0.cx + 12, (drag.gx - 24) / 2)), gv = Math.max(S0.top, Math.min(S0.bot - 3, (drag.gy - 48) / 2));
-  Object.assign(pull, {on:true, ready:false, phase:"ground", src:S0, srcImg:img.src, g:[gu, gv], d:[0, 0], vd:[0, 0]});
+  Object.assign(pull, {on:true, ready:false, phase:"ground", src:S0, srcImg:img.src, g:[gu, gv], d:[0, 0], vd:[0, 0], cran:0});
   // la bulle de pensée disparaît tout de suite, sans fondu : la fenêtre va s'agrandir vers le haut et la gauche, elle se retrouverait dans le coin
   pense.style.transition = "none"; pense.classList.add("off"); pense.offsetWidth; pense.style.transition = "";
   pullDraw(); setBigWindow(true).then(() => { pull.ready = true; });
@@ -291,14 +300,18 @@ function styleRender(out, faceAt) {
   for (const st of S0.faceStamps) { const [fx2, fy2] = faceAt(st.u, st.v); for (const [a2, b2] of st.px) put(Math.floor(fx2) + a2, Math.floor(fy2) + b2, S0.ink); }
   pullCtx.putImageData(imd, 0, 0);
 }
+const PULL_CRANS = [.3, .5, .65, .77, .86, .93];
 function pullStep(dt) {
   dt = Math.min(.05, Math.max(.008, dt));
   const S0 = pull.src, hs = Math.max(2, S0.bot + 1 - pull.g[1]);
   if (pull.phase === "ground") {
-    // il décolle quand on a tiré assez loin
-    if (Math.hypot(pull.d[0], pull.d[1]) > (S0.bot + 1 - S0.top) * 2.4) {
+    // il décolle quand on a tiré assez loin ; en chemin, des crans de plus en plus serrés à mesure que le fil s'étire
+    const f = Math.hypot(pull.d[0], pull.d[1]) / ((S0.bot + 1 - S0.top) * 2.4), cran = PULL_CRANS.filter(c => f >= c).length;
+    if (cran > pull.cran) haptic("cran");
+    pull.cran = cran;
+    if (f > 1) {
       // décollé : la fenêtre reprend sa taille et il est tenu comme dans tous les autres cas (la goutte qui se balance)
-      say("il se decolle du sol"); bubble("Plop !", 900);
+      say("il se decolle du sol"); bubble("Plop !", 900); haptic("palier");
       x += (BIG_W - WW) / 2; y += BIG_H - WH; pull.phase = "closing"; pull.ready = false;
       setBigWindow(false).then(() => {
         pull.on = false; pull.phase = null; img.style.opacity = "";
@@ -744,14 +757,17 @@ function tickBody() {
       angle += spin * k + (Math.max(-20, Math.min(20, vx * .8)) * (1 - near) - angle) * Math.min(1, (.1 + .3 * near) * k);
       spin *= Math.pow(.88, k); angle = Math.max(-60, Math.min(60, angle));
     } else angle += vx * 1.2 * k;
-    if (x < minX) { if (hitWall(-1)) { push(); return; } x = minX; vx = -vx * (BOUNCY.has(style) ? .7 : .25); squash("wall"); }
-    if (x > maxX) { if (hitWall(1)) { push(); return; } x = maxX; vx = -vx * (BOUNCY.has(style) ? .7 : .25); squash("wall"); }
+    // lancé, il cogne : un coup du trackpad à chaque choc (on le sent si le doigt y est encore, et on l'entend)
+    if (x < minX) { haptic(Math.abs(vx) > 12 ? "palier" : "clic"); if (hitWall(-1)) { push(); return; } x = minX; vx = -vx * (BOUNCY.has(style) ? .7 : .25); squash("wall"); }
+    if (x > maxX) { haptic(Math.abs(vx) > 12 ? "palier" : "clic"); if (hitWall(1)) { push(); return; } x = maxX; vx = -vx * (BOUNCY.has(style) ? .7 : .25); squash("wall"); }
     if (y < minY - headroom()) {          // plafond : le haut du dessin touche le haut de l'écran, pas celui de la fenêtre
+      haptic(vy < -10 ? "palier" : "clic");
       if (isSheet() && style !== "candy" && !nausea && vy < -10) { cling(); push(); return; }          // assez d'élan : il s'y colle, à l'envers
       y = minY - headroom(); vy = -vy * 0.4;
     }
     if (y >= floorY) {
       y = floorY; const impact = Math.abs(vy); maxImpact = Math.max(maxImpact, impact);
+      if (impact > 4) haptic(impact > 14 ? "palier" : "clic");
       if (impact > (isSheet() ? 10 : 7) && bounces < (isSheet() ? 3 : 4) && (!isSheet() || BOUNCY.has(style))) {
         if (isSheet() && bigFall()) crashed = true;
         if (isSheet()) {
@@ -1098,7 +1114,7 @@ img.addEventListener("pointerdown", e => {
   img.setPointerCapture(e.pointerId);
   drag = {sx:e.screenX, sy:e.screenY, x0:x, y0:y, gx:e.clientX, gy:e.clientY, moved:false, rev:[], sign:0, shaken:false, asleep:mode === "sleep"};
   samples = [{t:performance.now(), x:e.screenX, y:e.screenY}];
-  img.style.cursor = "grabbing";
+  img.style.cursor = "grabbing"; haptic("clic");
   if (mode === "fly" || mode === "wall" || mode === "wallland") {      // rattrapé en l'air (ou décroché du mur) : il se débat dès le clic, sans attendre que la souris bouge
     if (mode === "wall" || mode === "wallland") { x = Math.max(minX, Math.min(maxX, x)); drag.x0 = x; }
     if (mode === "wall" && wallStick) wallShape(false);
@@ -1131,7 +1147,7 @@ img.addEventListener("pointermove", e => {
   if (Math.abs(ddx) > 6) {
     const sg = Math.sign(ddx), t = performance.now();
     if (drag.sign && sg !== drag.sign) {
-      drag.rev = drag.rev.filter(r => t - r < 1200); drag.rev.push(t);
+      drag.rev = drag.rev.filter(r => t - r < 1200); drag.rev.push(t); haptic("clic");
       if (drag.asleep && drag.rev.length >= 3) { drag.asleep = false; mode = "held"; struggle(true); holdByHead(); bubble("Hein ?!", 900); say("reveille : secoue"); calm = 0; wake = 0; }
       if (drag.rev.length >= 5 && !drag.shaken) {
         drag.shaken = true; say("il se fait secouer"); bubble("Ouaaah !", 1100);
@@ -1143,6 +1159,9 @@ img.addEventListener("pointermove", e => {
   if (drag.shaken && performance.now() > nextDrop) { drop(); drop(); nextDrop = performance.now() + 80; }
   samples.push({t:performance.now(), x:e.screenX, y:e.screenY}); if (samples.length > 8) samples.shift();
   x = drag.x0 + dx; y = drag.y0 + dy; push();
+  const dehors = x < minX || x > maxX || y > floorY;          // tenu, il bute contre un bord de l'écran (ou le bas) : un cran en y arrivant
+  if (dehors && !drag.dehors) haptic("cran");
+  drag.dehors = dehors;
 });
 img.addEventListener("pointerup", async () => {
   if (!drag) return;
@@ -1175,7 +1194,7 @@ async function watchCursor() {
     const ddx = cx - pet.last;
     if (Math.abs(ddx) >= 3) {
       const sg = Math.sign(ddx), t = Date.now();
-      if (pet.dir && sg !== pet.dir) { pet.flips = pet.flips.filter(f => t - f < 1200); pet.flips.push(t); }
+      if (pet.dir && sg !== pet.dir) { pet.flips = pet.flips.filter(f => t - f < 1200); pet.flips.push(t); haptic("cran"); }          // caressé : un cran à chaque aller-retour, comme un ronron
       pet.dir = sg;
     }
     if (pet.flips.length >= 2 && mode === "sleep") {
@@ -1225,7 +1244,7 @@ try {
 let bidHidden = false;          // caché par un clic droit (main.rs : montrer_bidule)
 let chosen = false;          // un Bidule a été choisi (au premier lancement, pas encore)
 let claudeJ = null;          // la dernière jauge lue (contexte), envoyée au panneau
-function sendState() { T.event.emit("etat", {style:chosen ? style : null, partsBy, thumb:FR.normal, mood, moodMode, moodReason, cache:bidHidden}); T.event.emit("claude", claudeJ); }
+function sendState() { T.event.emit("etat", {style:chosen ? style : null, partsBy, thumb:FR.normal, mood, moodMode, moodReason, cache:bidHidden, haptique:hapticOn}); T.event.emit("claude", claudeJ); }
 function refreshSprite() {
   const cur = {sleep:"dort", carried:"dort", dizzy:"d1", nausea:"n1", pet:"content", laugh:"rire", angry:"fache",
     sulk:"fache", eat:"rire", ooh:"ooh", drowsy:"baille", waking:"baille", fly:"p1", held:"p1"}[mode];
@@ -1405,6 +1424,7 @@ async function chooseStyle(s) {
   sendState();
 }
 T.event.listen("style", e => chooseStyle(e.payload));
+T.event.listen("haptique", e => { hapticOn = !!e.payload; try { localStorage.setItem("bidule.haptique", hapticOn ? "oui" : "non"); } catch (err) {} sendState(); if (hapticOn) haptic("clic"); });
 // Demi-tour : avec un perso dessiné, on joue son animation "turn" au lieu de retourner l'image.
 function turnTo(nd, ready) {
   if (nd === dir) return;
