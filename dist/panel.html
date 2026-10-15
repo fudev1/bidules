@@ -175,6 +175,7 @@ main{flex:1;overflow:auto;padding:0 12px 12px}
       <div class="now" id="moodNow"></div>
       <div class="moods" id="moods"></div>
       <div class="sessions" id="sessions"></div>
+      <div class="sessions" id="limites"></div>
       <div class="now fini"><p class="hint" id="finiTxt"></p><button class="chip" id="fini" hidden>Brancher</button></div>
     </section>
   </main>
@@ -266,7 +267,7 @@ function iconCanvas(name, scale) {
   f.forEach((r, y) => [...r].forEach((ch, x) => { if (ch !== ".") { g.fillStyle = name in PANEL_ICONS ? "#1e1b3a" : PENSE_COL[ch]; g.fillRect(x, y, 1, 1); } }));
   return c;
 }
-function barre(pc, n, cls) { const on = Math.round(pc / 100 * n); return Array.from({length:n}, (_, i) => { const p = (i + .5) / n * 100; return `<i class="${i < on ? "z" + zone(p) : ""}${cls && (i === n * .3 || i === n * .6) ? " seuil" : ""}"></i>`; }).join(""); }
+function barre(pc, n, cls, zf = zone) { const on = Math.round(pc / 100 * n); return Array.from({length:n}, (_, i) => { const p = (i + .5) / n * 100; return `<i class="${i < on ? "z" + zf(p) : ""}${cls && (i === n * .3 || i === n * .6) ? " seuil" : ""}"></i>`; }).join(""); }
 function renderClaude() {
   const j = claudeNow(), e = lireEtat(j), pc = j ? Math.min(100, j.pourcent) : 0, C = $("claude"), A = $("anneau"), B = $("bulleBD");
   if (e.cle !== etatDepuis.cle) etatDepuis = {cle:e.cle, t:Date.now()};
@@ -300,7 +301,17 @@ function renderSessions() {
   $("sessions").innerHTML = L.length ? "<h3>Sessions de Claude</h3>" + L.map(x => `<div class="sess"><b>${(x.projet || "Session").replace(/</g, "&lt;")}</b><span class="et ${x.etat}">${ETATS[x.etat] || x.etat}</span>`
     + (x.tokens ? `<div class="barre">${barre(Math.min(100, x.pourcent), 12)}</div><small>${Math.round(x.pourcent)} %</small>` : "<span></span><span></span>") + "</div>").join("") : "";
 }
-if (T) T.event.listen("claude", e => { claudeEtat = e.payload; renderClaude(); renderSessions(); renderFiniTxt(); });
+if (T) T.event.listen("claude", e => { claudeEtat = e.payload; renderClaude(); renderSessions(); renderFiniTxt(); renderLimites(); });
+// Les limites de l'abonnement (Pro, Max), d'après la barre d'état de Claude Code (main.rs : limites). Vert jusqu'à 70 %, orange après 90 %.
+const zoneLim = pc => pc < 70 ? 0 : pc < 90 ? 1 : 2;
+function dans(s) { const j = Math.floor(s / 86400), h = Math.floor(s % 86400 / 3600), m = Math.floor(s % 3600 / 60);
+  return j ? `${j} j ${h} h` : h ? `${h} h ${String(m).padStart(2, "0")}` : `${Math.max(1, m)} min`; }
+async function renderLimites() {
+  let L = null; try { L = await T.core.invoke("limites"); } catch (e) {}
+  const ligne = (nom, l) => l ? `<div class="sess"><b>${nom}</b><span class="et">${l.remise ? "à zéro dans " + dans(l.remise) : "remise à zéro"}</span><div class="barre">${barre(Math.min(100, l.pourcent), 12, false, zoneLim)}</div><small>${Math.round(l.pourcent)} %</small></div>` : "";
+  $("limites").innerHTML = L && (L.cinq_h || L.semaine) ? "<h3>Limites de ton abonnement</h3>" + ligne("Sur 5 h", L.cinq_h) + ligne("Sur la semaine", L.semaine)
+    : finiEtat === "oui" ? `<p class="hint">Les limites de ton abonnement (5 h, semaine) apparaîtront ici après la prochaine réponse de Claude. Seulement avec un abonnement Pro ou Max.</p>` : "";
+}
 setInterval(() => { icFrame++; if (vue) renderClaude(); }, 450);
 // Onglet Tests : des essais d'apparence, gardés dans ce navigateur (ce Mac) seulement.
 const ESSAIS = [["", "Aucun", "Le panneau habituel, en aplats."],
@@ -331,14 +342,14 @@ let finiEtat = "non";
 function renderFiniTxt() {
   const muet = finiEtat === "oui" && claudeEtat && claudeEtat.activite && !(claudeEtat.sessions || []).length;
   $("finiTxt").textContent = finiEtat === "oui" ? (muet ? "Branché, mais les sessions déjà ouvertes ne donnent pas encore de nouvelles. Si ça dure, relance-les : ferme et rouvre la session dans Claude, ou relance claude dans le terminal."
-      : "Branché : il suit toutes tes sessions de Claude, te prévient quand l'une t'attend et quand Claude a fini.")
-    : finiEtat === "ancien" ? "Une ancienne version est branchée : mets-la à jour pour qu'il suive toutes tes sessions."
-    : "Il peut suivre toutes tes sessions de Claude : te prévenir quand l'une t'attend, et quand Claude a fini. Pour ça, on ajoute de petits hooks aux réglages de Claude Code ; ils ne lisent rien de tes messages.";
+      : "Branché : il suit toutes tes sessions de Claude, te prévient quand l'une t'attend et quand Claude a fini, et montre les limites de ton abonnement.")
+    : finiEtat === "ancien" ? "Une ancienne version est branchée : mets-la à jour pour qu'il suive toutes tes sessions et montre les limites de ton abonnement."
+    : "Il peut suivre toutes tes sessions de Claude : te prévenir quand l'une t'attend, quand Claude a fini, et montrer les limites de ton abonnement (5 h, semaine). Pour ça, on ajoute de petits hooks et une barre d'état aux réglages de Claude Code ; ta barre d'état à toi reste la même. Rien de tes messages n'est lu.";
   $("fini").textContent = {oui:"Débrancher", ancien:"Mettre à jour", non:"Brancher"}[finiEtat];
 }
 async function renderFini() {
   if (!T) return;
-  finiEtat = await T.core.invoke("hooks_etat"); $("fini").hidden = false; renderFiniTxt();
+  finiEtat = await T.core.invoke("hooks_etat"); $("fini").hidden = false; renderFiniTxt(); renderLimites();
 }
 renderFini();
 document.addEventListener("click", e => {
