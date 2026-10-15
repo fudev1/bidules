@@ -1098,7 +1098,7 @@ function swingWindow(on) {
   if (on === swingBig) return; swingBig = on;
   for (const el of [document.documentElement, document.body]) { el.style.width = on ? SW_WIN + "px" : ""; el.style.height = on ? SW_WIN + "px" : ""; }
   Object.assign(img.style, on ? {left:"0px", width:SW_WIN + "px", height:SW_WIN + "px"} : {left:"", width:"", height:""});
-  if (!on) { x += SWING_OFF[0]; y += SWING_OFF[1]; push(); }
+  if (!on) { x += SWING_OFF[0]; y += SWING_OFF[1]; push(); face(); }          // lâché : il reprend son orientation
   const n = on ? SW_WIN : WW;
   winChain = winChain.then(() => win.setSize(new T.dpi.LogicalSize(n, on ? SW_WIN : WH))).catch(e => say("fenetre: " + e));
 }
@@ -1107,7 +1107,8 @@ function holdByHead(cx = drag && drag.lastX, cy = drag && drag.lastY) {
   if (!f || !drag) return;
   const dyn = !!(tg["attrape-boule-parts"] && swing.parts);       // la goutte dessinée en direct : on la tient par sa pointe
   const hx = dyn ? SW_G[0] : f.tipx + .5, hy = dyn ? SW_G[1] + .5 : f.top + 1.5;      // le point tenu, en pixels de l'image (un peu sous la pointe)
-  if (dyn) { swingWindow(true); x = cx - SW_WIN / 2; y = cy - SW_WIN / 2; }      // la goutte : la main au milieu de la grande fenêtre
+  // la goutte : la main au milieu de la grande fenêtre ; dessinée en direct, elle n'est jamais retournée (sinon, s'il regardait à gauche, elle tournerait à l'envers)
+  if (dyn) { swingWindow(true); x = cx - SW_WIN / 2; y = cy - SW_WIN / 2; img.style.scale = "1 1"; }
   else { x = cx - (24 + hx * 2); y = cy - (48 + hy * 2); }       // l'image fait 128 px dans la fenêtre : à 24 px du bord gauche, collée en bas (176 - 128 = 48)
   push();
   drag.x0 = x - (cx - drag.sx); drag.y0 = y - (cy - drag.sy);
