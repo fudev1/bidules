@@ -955,7 +955,10 @@ function swayStep(dt) {
 // Comme celle que pullDraw dessine quand on décolle un Bidule éveillé : une boule et un cône qui s'amincit jusqu'au point tenu, calculés en direct.
 // La boule rebondit au bout du ressort (effet yoyo, le même ressort que pullStep) : la queue s'allonge, se raccourcit et penche avec elle.
 // Le visage, les sourcils, les bras et la sueur viennent d'attrape (tag attrape-boule-parts, voir tools/boule.py) et suivent la boule.
-const SW_R = 29 * .44, SW_L = SW_R + 3, SW_G = [31.5, 11], SW_B0 = [31.5, 11 + SW_L + 900 / 110];      // les mêmes valeurs que tools/boule.py
+const SW_R = 29 * .44, SW_L = SW_R + 3, SW_G = [31.5, 11], SW_B0 = [31.5, 11 + SW_L + 900 / 110];      // les mêmes valeurs que tools/boule.py (l'image des parties)
+// La goutte tenue est dessinée dans une image plus grande (SW_N px, la main au milieu) et la fenêtre grandit pendant qu'on la tient (SW_WIN px) :
+// la boule peut tourner tout autour de la souris et s'étirer loin, comme un élastique qu'on fait ballotter.
+const SW_N = 128, SW_WIN = SW_N * 2, SW_H = [SW_N / 2, SW_N / 2];
 const swing = {on:false, b:[0, 0], vb:[0, 0], pw:[0, 0], pv:[0, 0], aw:[0, 0], skip:0, cv:null, parts:null, durs:[], armPx:null};
 const SW_COL = {ink:[0, 0, 0], base:[99, 155, 255], shade:[69, 119, 224], light:[164, 198, 255]};
 const SW_GREEN = {"99,155,255":[127, 212, 106], "69,119,224":[79, 174, 69], "164,198,255":[198, 240, 176]};     // les verts de la nausée (gen.py : TO_VERT)
@@ -980,13 +983,13 @@ function swingHand(A) {
 function swingArm(d, A, side, sx, sy, delta, ghost, dither) {
   const sg = side ? 1 : -1, P0 = SW_PIV[side], P1 = [P0[0] + sx, P0[1] + sy];
   for (let Y = Math.floor(P1[1] - 18); Y <= Math.ceil(P1[1] + 18); Y++) for (let X = Math.floor(P1[0] - 18); X <= Math.ceil(P1[0] + 18); X++) {
-    if (X < 0 || Y < 0 || X > 63 || Y > 63 || (dither >= 0 && (X + Y) % 2 !== dither)) continue;
+    if (X < 0 || Y < 0 || X >= SW_N || Y >= SW_N || (dither >= 0 && (X + Y) % 2 !== dither)) continue;
     const ox = X + .5 - P1[0], oy = Y + .5 - P1[1], r = Math.hypot(ox, oy);
     const a = Math.atan2(-oy, ox) - sg * delta;                                           // on lit l'image du bras à l'angle d'origine (le bras gauche est le miroir du droit)
     const U = Math.floor(P0[0] + r * Math.cos(a)), V = Math.floor(P0[1] - r * Math.sin(a));
     if (U < 0 || V < 0 || U > 63 || V > 63) continue;
     const i = (V * 64 + U) * 4; if (!A[i + 3]) continue;
-    const o = (Y * 64 + X) * 4;
+    const o = (Y * SW_N + X) * 4;
     if (ghost && d[o + 3]) continue;                                                      // un fantôme ne recouvre pas ce qui est déjà dessiné
     const c = ghost || [A[i], A[i + 1], A[i + 2]];
     d[o] = c[0]; d[o + 1] = c[1]; d[o + 2] = c[2]; d[o + 3] = 255;
@@ -1007,8 +1010,8 @@ function swingArms(d, B, ms) {
       for (const dr of [2.5, 4.5]) for (let e = lo + 6; e <= hi - 6; e += 2) {
         const th = side ? h.a + rad(e) : Math.PI - h.a - rad(e);                       // l'angle de la main tournée de e (le bras gauche est le miroir du droit)
         const X = Math.floor(P1[0] + (h.r + dr) * Math.cos(th)), Y = Math.floor(P1[1] - (h.r + dr) * Math.sin(th));
-        if (X < 0 || Y < 0 || X > 63 || Y > 63 || (X + Y + (dr > 3 ? 1 : 0)) % 2) continue;
-        const o = (Y * 64 + X) * 4; if (d[o + 3]) continue;
+        if (X < 0 || Y < 0 || X >= SW_N || Y >= SW_N || (X + Y + (dr > 3 ? 1 : 0)) % 2) continue;
+        const o = (Y * SW_N + X) * 4; if (d[o + 3]) continue;
         d[o] = SW_COL.shade[0]; d[o + 1] = SW_COL.shade[1]; d[o + 2] = SW_COL.shade[2]; d[o + 3] = 255;
       }
     }
@@ -1027,54 +1030,53 @@ function swingStep(dt) {
   // la peau est élastique et résiste de plus en plus : au-delà de l'étirement de repos (le poids), le ressort se durcit vite ; secouée fort,
   // la boule tire sur la peau, qui la renvoie d'un coup sec au lieu de cogner une butée
   const b = swing.b, vb = swing.vb, len = Math.hypot(b[0], b[1]) || 1, ext = len - SW_L, dur = 1 + (Math.max(0, ext - SW_SAG) / SW_DUR) ** 2 + (Math.max(0, -ext) / 4) ** 2;          // et quand elle remonte jusqu'à la main
-  const f = -110 * ext * dur / len;
+  const f = -SW_K * ext * dur / len;
   const ax = f * b[0] - SW_AMORTI * vb[0] - Math.max(-SW_AMAX, Math.min(SW_AMAX, swing.aw[0]));
-  const ay = 900 + f * b[1] - SW_AMORTI * vb[1] - Math.max(-SW_AMAX, Math.min(SW_AMAX, swing.aw[1]));
+  const ay = SW_GRAV + f * b[1] - SW_AMORTI * vb[1] - Math.max(-SW_AMAX, Math.min(SW_AMAX, swing.aw[1]));
   vb[0] += ax * dt; vb[1] += ay * dt; b[0] += vb[0] * dt; b[1] += vb[1] * dt;
-  if (b[1] < 3) { b[1] = 3; vb[1] = Math.max(0, vb[1]); }
+  const l1 = Math.hypot(b[0], b[1]); if (l1 < 4) { b[0] *= 4 / (l1 || 1); b[1] = l1 ? b[1] * 4 / l1 : 4; }          // jamais sur la main
   // pas de butée : la boule va aussi loin que la peau le permet, et le dessin ramène cet étirement dans l'image (swingVis) ; une limite large, par sécurité
   const l2 = Math.hypot(b[0], b[1]), lmax = SW_LMAX * 4;
   if (l2 > lmax) { swing.b = b.map(v => v * lmax / l2); swing.vb = vb.map(v => v * .5); }
-  if (Math.abs(swing.b[0]) > lmax / 2) { swing.b[0] = Math.sign(swing.b[0]) * lmax / 2; swing.vb[0] *= .5; }
   const t = swingTension(); if (t > .7 && swing.t <= .7) haptic("cran"); swing.t = t;          // peau bien tendue : un cran sous le doigt
 }
 // tension de la peau : 0 au repos (la boule pend de son poids), 1 tout au bout, négative quand la boule remonte vers la main
-const SW_AMORTI = 8, SW_AMAX = 12000, SW_DUR = 10, SW_SAG = 900 / 110, SW_LMAX = 63 - SW_R - SW_G[1] - 1;
-function swingTension() { const l = Math.hypot(swing.b[0], swing.b[1]), rest = SW_L + SW_SAG; return Math.tanh((l - rest) / (l > rest ? SW_LMAX - rest : rest - 3)); }
+// SW_K : raideur de la peau (plus petite, elle s'étire plus) ; SW_GRAV : le poids de la boule
+const SW_K = 70, SW_GRAV = 900, SW_AMORTI = 7, SW_AMAX = 12000, SW_DUR = 14, SW_SAG = SW_GRAV / SW_K, SW_LMAX = SW_N / 2 - SW_R - 1;
+function swingTension() { const l = Math.hypot(swing.b[0], swing.b[1]), rest = SW_L + SW_SAG; return Math.tanh((l - rest) / (l > rest ? SW_LMAX - rest : rest - 4)); }
 // où la boule est dessinée : l'étirement est ramené dans l'image en douceur ; plus on secoue fort, plus la peau se tend, sans jamais cogner le bord
 function swingVis() {
-  const b = swing.b, l = Math.hypot(b[0], b[1]) || 1, rest = SW_L + SW_SAG, t = swingTension(), v = rest + t * (t > 0 ? SW_LMAX - rest : rest - 3);
-  const side = 31 - SW_R - 1, s = (31 - SW_R - 1) * Math.tanh(b[0] * v / l / side);
-  return [s, Math.max(3, b[1] * v / l)];
+  const b = swing.b, l = Math.hypot(b[0], b[1]) || 1, rest = SW_L + SW_SAG, t = swingTension(), v = rest + t * (t > 0 ? SW_LMAX - rest : rest - 4);
+  return [b[0] * v / l, b[1] * v / l];
 }
 function swingDraw() {
-  const bv = swingVis(), B = [SW_G[0] + bv[0], SW_G[1] + bv[1]], mask = new Uint8Array(4096), dx = B[0] - SW_G[0], dy = B[1] - SW_G[1], L2 = dx * dx + dy * dy || 1;
+  const N = SW_N, H = SW_H, bv = swingVis(), B = [H[0] + bv[0], H[1] + bv[1]], mask = new Uint8Array(N * N), dx = B[0] - H[0], dy = B[1] - H[1], L2 = dx * dx + dy * dy || 1;
   // peau tendue : la boule s'allonge dans l'axe du cou et le cou s'amincit ; quand elle remonte, elle s'écrase un peu (plus large, plus courte)
   const ten = swingTension(), el = 1 + .12 * ten, neck = 1 - .45 * Math.max(0, ten), L = Math.sqrt(L2), ux = dx / L, uy = dy / L;
-  for (let Y = 0; Y < 64; Y++) for (let X = 0; X < 64; X++) {      // la boule, et le cône de la pointe à son centre (maskDrop)
+  for (let Y = 0; Y < N; Y++) for (let X = 0; X < N; X++) {      // la boule, et le cône de la pointe à son centre (maskDrop)
     const px = X + .5, py = Y + .5, pu = (px - B[0]) * ux + (py - B[1]) * uy, pv = (px - B[0]) * uy - (py - B[1]) * ux;
     let inside = (pu / (SW_R * el)) ** 2 + (pv * el / SW_R) ** 2 <= 1;
-    if (!inside) { const t = Math.max(0, Math.min(1, ((px - SW_G[0]) * dx + (py - SW_G[1]) * dy) / L2));
-      inside = Math.hypot(px - SW_G[0] - t * dx, py - SW_G[1] - t * dy) <= (1.4 + (SW_R * 1.9 - 1.4) * t) / 2 * (neck + (1 - neck) * t * t); }          // le cou s'amincit sur sa longueur, pas contre la boule
-    if (inside) mask[Y * 64 + X] = 1;
+    if (!inside) { const t = Math.max(0, Math.min(1, ((px - H[0]) * dx + (py - H[1]) * dy) / L2));
+      inside = Math.hypot(px - H[0] - t * dx, py - H[1] - t * dy) <= (1.4 + (SW_R * 1.9 - 1.4) * t) / 2 * (neck + (1 - neck) * t * t); }          // le cou s'amincit sur sa longueur, pas contre la boule
+    if (inside) mask[Y * N + X] = 1;
   }
-  const at = (X, Y) => X >= 0 && Y >= 0 && X < 64 && Y < 64 && mask[Y * 64 + X] === 1;
-  const spurs = []; for (let Y = 0; Y < 64; Y++) for (let X = 0; X < 64; X++) if (at(X, Y) && Y > B[1] && at(X, Y - 1) + at(X - 1, Y) + at(X + 1, Y) + at(X, Y + 1) < 2) spurs.push(Y * 64 + X);
-  spurs.forEach(i => { mask[i] = 0; });                           // un pixel isolé sous la boule
+  const at = (X, Y) => X >= 0 && Y >= 0 && X < N && Y < N && mask[Y * N + X] === 1;
+  const spurs = []; for (let Y = 0; Y < N; Y++) for (let X = 0; X < N; X++) if (at(X, Y) && at(X, Y - 1) + at(X - 1, Y) + at(X + 1, Y) + at(X, Y + 1) < 2) spurs.push(Y * N + X);
+  spurs.forEach(i => { mask[i] = 0; });                           // un pixel isolé au bord de la boule
   const inner = (X, Y) => at(X, Y) && at(X + 1, Y) && at(X - 1, Y) && at(X, Y + 1) && at(X, Y - 1);
-  let t0 = 64, b0 = 0, xa = 64, xb = 0;
-  for (let i = 0; i < 4096; i++) if (mask[i]) { const X = i % 64, Y = (i - X) / 64; t0 = Math.min(t0, Y); b0 = Math.max(b0, Y); xa = Math.min(xa, X); xb = Math.max(xb, X); }
+  let t0 = N, b0 = 0, xa = N, xb = 0;
+  for (let i = 0; i < N * N; i++) if (mask[i]) { const X = i % N, Y = (i - X) / N; t0 = Math.min(t0, Y); b0 = Math.max(b0, Y); xa = Math.min(xa, X); xb = Math.max(xb, X); }
   const c0 = (xa + xb) / 2, green = !!(drag && drag.shaken);
-  const cv = swing.cv || (swing.cv = document.createElement("canvas")); cv.width = cv.height = 64;
-  const g = cv.getContext("2d", {willReadFrequently:true}), imd = g.createImageData(64, 64), d = imd.data;
+  const cv = swing.cv || (swing.cv = document.createElement("canvas")); cv.width = cv.height = N;
+  const g = cv.getContext("2d", {willReadFrequently:true}), imd = g.createImageData(N, N), d = imd.data;
   swingArms(d, B, Date.now());                                    // les bras d'abord : ils passent derrière la boule
   for (let Y = t0; Y <= b0; Y++) for (let X = xa; X <= xb; X++) {      // les couleurs de styleRender : contour, ombre, reflet
-    if (!mask[Y * 64 + X]) continue;
+    if (!mask[Y * N + X]) continue;
     let c = SW_COL.base;
     if (!inner(X, Y)) c = SW_COL.ink;
     else if (!inner(X, Y + 3) || !inner(X + 2, Y)) c = SW_COL.shade;
     else if ((!inner(X - 3, Y - 1) && X < c0 && Y < b0 - 7) || (!inner(X - 1, Y - 3) && X < c0 + 3 && Y < t0 + 6)) c = SW_COL.light;
-    const i = (Y * 64 + X) * 4; d[i] = c[0]; d[i + 1] = c[1]; d[i + 2] = c[2]; d[i + 3] = 255;
+    const i = (Y * N + X) * 4; d[i] = c[0]; d[i + 1] = c[1]; d[i + 2] = c[2]; d[i + 3] = 255;
   }
   g.putImageData(imd, 0, 0);
   if (swing.parts && swing.parts.length) {      // le visage, les bras et la sueur d'attrape, qui suivent la boule
@@ -1082,28 +1084,43 @@ function swingDraw() {
     g.imageSmoothingEnabled = false; g.drawImage(swing.parts[k], Math.round(B[0] - SW_B0[0]), Math.round(B[1] - SW_B0[1]));
   }
   if (green) {      // secoué : il verdit
-    const o = g.getImageData(0, 0, 64, 64), od = o.data;
+    const o = g.getImageData(0, 0, N, N), od = o.data;
     for (let i = 0; i < od.length; i += 4) { const v = SW_GREEN[od[i] + "," + od[i + 1] + "," + od[i + 2]]; if (v) { od[i] = v[0]; od[i + 1] = v[1]; od[i + 2] = v[2]; } }
     g.putImageData(o, 0, 0);
   }
   img.src = cv.toDataURL();
+}
+// La fenêtre grandit (SW_WIN px) pendant qu'on tient la goutte, et reprend sa taille au lâcher ; la main reste au même endroit de l'écran.
+// SWING_OFF : de combien la grande fenêtre est décalée par rapport à la petite, pour une même main.
+let swingBig = false;
+const SWING_OFF = [SW_WIN / 2 - (24 + SW_G[0] * 2), SW_WIN / 2 - (48 + (SW_G[1] + .5) * 2)];
+function swingWindow(on) {
+  if (on === swingBig) return; swingBig = on;
+  for (const el of [document.documentElement, document.body]) { el.style.width = on ? SW_WIN + "px" : ""; el.style.height = on ? SW_WIN + "px" : ""; }
+  Object.assign(img.style, on ? {left:"0px", width:SW_WIN + "px", height:SW_WIN + "px"} : {left:"", width:"", height:""});
+  if (!on) { x += SWING_OFF[0]; y += SWING_OFF[1]; push(); }
+  const n = on ? SW_WIN : WW;
+  winChain = winChain.then(() => win.setSize(new T.dpi.LogicalSize(n, on ? SW_WIN : WH))).catch(e => say("fenetre: " + e));
 }
 function holdByHead(cx = drag && drag.lastX, cy = drag && drag.lastY) {
   const tg = isSheet() && SHEET_DATA[style].tags, f = tg && tg[heldTag(tg)] && tg[heldTag(tg)][0];
   if (!f || !drag) return;
   const dyn = !!(tg["attrape-boule-parts"] && swing.parts);       // la goutte dessinée en direct : on la tient par sa pointe
   const hx = dyn ? SW_G[0] : f.tipx + .5, hy = dyn ? SW_G[1] + .5 : f.top + 1.5;      // le point tenu, en pixels de l'image (un peu sous la pointe)
-  x = cx - (24 + hx * 2); y = cy - (48 + hy * 2); push();       // l'image fait 128 px dans la fenêtre : à 24 px du bord gauche, collée en bas (176 - 128 = 48)
+  if (dyn) { swingWindow(true); x = cx - SW_WIN / 2; y = cy - SW_WIN / 2; }      // la goutte : la main au milieu de la grande fenêtre
+  else { x = cx - (24 + hx * 2); y = cy - (48 + hy * 2); }       // l'image fait 128 px dans la fenêtre : à 24 px du bord gauche, collée en bas (176 - 128 = 48)
+  push();
   drag.x0 = x - (cx - drag.sx); drag.y0 = y - (cy - drag.sy);
   if (heldByHead === null) heldByHead = img.style.transformOrigin;
   if (dyn && !swing.on) swingStart();
   img.style.animation = "none";                                   // plus de balancement automatique : il ne bouge que selon la souris (ballottement)
-  img.style.transformOrigin = hx / 64 * 100 + "% " + hy / 64 * 100 + "%";        // pivot : le point tenu (le retournement se fait aussi autour de lui)
+  img.style.transformOrigin = dyn ? "50% 50%" : hx / 64 * 100 + "% " + hy / 64 * 100 + "%";        // pivot : le point tenu (le retournement se fait aussi autour de lui)
 }
 function struggle(on) {
   clearInterval(flap); flap = null;
   if (!on) { sway.a = sway.w = 0; swing.on = false; img.style.transform = ""; img.style.animation = ""; }
   if (!on && heldByHead !== null) { img.style.transformOrigin = heldByHead; heldByHead = null; }
+  if (!on && swingBig) swingWindow(false);
   if (on) { pose(isSheet() ? "" : "struggle"); img.style.rotate = "0deg"; let f = 0; img.src = FR.p1; if (!isSheet()) flap = setInterval(() => { f = 1 - f; img.src = f ? FR.p2 : FR.p1; }, 160); }
 }
 function clicked() {
@@ -1176,7 +1193,7 @@ img.addEventListener("pointermove", e => {
   if (drag.shaken && performance.now() > nextDrop) { drop(); drop(); nextDrop = performance.now() + 80; }
   samples.push({t:performance.now(), x:e.screenX, y:e.screenY}); if (samples.length > 8) samples.shift();
   x = drag.x0 + dx; y = drag.y0 + dy; push();
-  const dehors = x < minX || x > maxX || y > floorY;          // tenu, il bute contre un bord de l'écran (ou le bas) : un cran en y arrivant
+  const ox = swingBig ? SWING_OFF[0] : 0, oy = swingBig ? SWING_OFF[1] : 0, dehors = x + ox < minX || x + ox > maxX || y + oy > floorY;          // tenu, il bute contre un bord de l'écran (ou le bas) : un cran en y arrivant
   if (dehors && !drag.dehors) haptic("cran");
   drag.dehors = dehors;
 });
