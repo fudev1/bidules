@@ -718,9 +718,124 @@ fn depenses() -> Vec<Depense> {
     somme.into_iter().map(|((heure, m, pr), tokens)| Depense { heure, modele: m.to_string(), projet: pr.to_string(), tokens }).collect()
 }
 
+// Les limites de l'abonnement, d'après claude.ai (issue #49) : le point d'accès dont se sert /usage dans Claude Code (api/oauth/usage, pas
+// documenté, il peut changer), avec le jeton de connexion de Claude Code (Trousseau de macOS, ou .credentials.json ailleurs). On ne fait que
+// le lire, sans jamais le renouveler : ce serait déconnecter Claude Code. Toutes les 5 min, le relevé de chaque profil s'ajoute à
+// ~/.bidules/usage-<profil>.jsonl, gardé 8 jours, pour tracer la courbe et prévoir quand la limite sera atteinte.
+const PROFILS: [&str; 2] = [".claude", ".claude-masana"];
+static JETONS: Mutex<Option<HashMap<&'static str, String>>> = Mutex::new(None);
+static ERREURS: Mutex<Option<HashMap<&'static str, String>>> = Mutex::new(None);
+fn secondes() -> u64 { SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).map_or(0, |d| d.as_secs()) }
+// "2026-10-18T16:59:00.123+00:00" -> secondes depuis 1970 (jours d'après l'algorithme de Howard Hinnant).
+fn depuis_iso(s: &str) -> Option<u64> {
+    let n = |a: usize, b: usize| s.get(a..b)?.parse::<i64>().ok();
+    let (y, mo, d, h, mi, se) = (n(0, 4)?, n(5, 7)?, n(8, 10)?, n(11, 13)?, n(14, 16)?, n(17, 19)?);
+    let y = if mo <= 2 { y - 1 } else { y };
+    let (era, mp) = (y.div_euclid(400), if mo > 2 { mo - 3 } else { mo + 9 });
+    let yoe = y - era * 400;
+    let jours = era * 146097 + yoe * 365 + yoe / 4 - yoe / 100 + (153 * mp + 2) / 5 + d - 1 - 719468;
+    let reste = &s[19..];
+    let dec = match reste.rfind(['+', '-']) {
+        Some(i) if reste.len() - i == 6 => (if &reste[i..i + 1] == "-" { -1 } else { 1 }) * (reste.get(i + 1..i + 3)?.parse::<i64>().ok()? * 3600 + reste.get(i + 4..i + 6)?.parse::<i64>().ok()? * 60),
+        _ => 0,
+    };
+    Some((jours * 86400 + h * 3600 + mi * 60 + se - dec) as u64)
+}
+fn lire_jeton(home: &str, dir: &str) -> Option<String> {
+    let lire = |t: &str| -> Option<String> {
+        let v: serde_json::Value = serde_json::from_str(t).ok()?;
+        let o = &v["claudeAiOauth"];
+        if o["expiresAt"].as_u64().map_or(false, |e| e <= secondes() * 1000) { return None }
+        o["accessToken"].as_str().map(String::from)
+    };
+    if let Some(j) = std::fs::read_to_string(format!("{home}/{dir}/.credentials.json")).ok().and_then(|t| lire(&t)) { return Some(j) }
+    // Le Trousseau : « Claude Code-credentials », suivi, pour un autre dossier que ~/.claude (CLAUDE_CONFIG_DIR), des 8 premiers caractères
+    // du sha256 de son chemin.
+    let service = if dir == ".claude" { "Claude Code-credentials".to_string() } else {
+        let o = std::process::Command::new("sh").args(["-c", "printf %s \"$1\" | shasum -a 256", "sh", &format!("{home}/{dir}")]).output().ok()?;
+        format!("Claude Code-credentials-{}", String::from_utf8_lossy(&o.stdout).get(..8)?)
+    };
+    let o = std::process::Command::new("security").args(["find-generic-password", "-a", &std::env::var("USER").unwrap_or_default(), "-w", "-s", &service]).output().ok()?;
+    lire(String::from_utf8_lossy(&o.stdout).trim())
+}
+// Le jeton passe par l'entrée de curl, pas par sa ligne de commande (visible des autres programmes).
+fn appeler_usage(jeton: &str) -> Result<serde_json::Value, String> {
+    use std::io::Write;
+    let mut c = std::process::Command::new("curl")
+        .args(["-sS", "-m", "15", "-w", "\n%{http_code}", "-H", "@-", "-H", "anthropic-beta: oauth-2025-04-20", "-H", "Content-Type: application/json", "https://api.anthropic.com/api/oauth/usage"])
+        .stdin(std::process::Stdio::piped()).stdout(std::process::Stdio::piped()).stderr(std::process::Stdio::piped()).spawn().map_err(|e| e.to_string())?;
+    let _ = c.stdin.take().unwrap().write_all(format!("Authorization: Bearer {jeton}\n").as_bytes());
+    let o = c.wait_with_output().map_err(|e| e.to_string())?;
+    let t = String::from_utf8_lossy(&o.stdout);
+    let (corps, code) = t.rsplit_once('\n').unwrap_or(("", &t));
+    match code.trim() {
+        "200" => serde_json::from_str(corps).map_err(|e| e.to_string()),
+        "000" => Err(format!("pas de réseau ({})", String::from_utf8_lossy(&o.stderr).trim())),
+        c => Err(c.to_string()),
+    }
+}
+// Un relevé : l'heure, et pour chaque fenêtre le pourcentage utilisé et l'heure de remise à zéro. Les fenêtres par modèle (semaine) à part.
+fn releve(v: &serde_json::Value, t: u64) -> serde_json::Value {
+    let f = |w: &serde_json::Value| -> serde_json::Value {
+        match (w["utilization"].as_f64(), w["resets_at"].as_str().and_then(depuis_iso)) { (Some(p), r) => serde_json::json!([p, r]), _ => serde_json::Value::Null }
+    };
+    let mut modeles: Vec<serde_json::Value> = v["limits"].as_array().into_iter().flatten()
+        .filter_map(|l| Some(serde_json::json!([l["scope"]["model"]["display_name"].as_str()?, l["percent"].as_f64()?, l["resets_at"].as_str().and_then(depuis_iso)])))
+        .collect();
+    for (k, nom) in [("seven_day_opus", "Opus"), ("seven_day_sonnet", "Sonnet")] {
+        if let (serde_json::Value::Array(a), false) = (f(&v[k]), modeles.iter().any(|m| m[0] == nom)) { modeles.push(serde_json::json!([nom, a[0], a[1]])) }
+    }
+    serde_json::json!({"t": t, "cinq_h": f(&v["five_hour"]), "semaine": f(&v["seven_day"]), "modeles": modeles})
+}
+fn relever() {
+    let home = std::env::var("HOME").unwrap_or_default();
+    let t = secondes();
+    let mut vus: Vec<String> = Vec::new();
+    for dir in PROFILS {
+        if !Path::new(&format!("{home}/{dir}")).is_dir() { continue }
+        let erreur = |e: String| { ERREURS.lock().unwrap().get_or_insert_with(HashMap::new).insert(dir, e); };
+        let mut jeton = JETONS.lock().unwrap().get_or_insert_with(HashMap::new).get(dir).cloned();
+        let mut r = Err("401".to_string());
+        for essai in 0..2 {
+            // le jeton gardé a pu être renouvelé par Claude Code entre-temps : on le relit une fois
+            if essai == 1 || jeton.is_none() { jeton = lire_jeton(&home, dir); }
+            let Some(j) = &jeton else { break };
+            r = appeler_usage(j);
+            if !matches!(&r, Err(c) if c == "401") { break }
+        }
+        let Some(j) = jeton else { erreur("jeton".into()); continue };
+        JETONS.lock().unwrap().get_or_insert_with(HashMap::new).insert(dir, j);
+        let v = match r { Ok(v) => v, Err(e) => { erreur(e); continue } };
+        ERREURS.lock().unwrap().get_or_insert_with(HashMap::new).remove(dir);
+        let rl = releve(&v, t);
+        // deux profils connectés au même compte : un seul relevé
+        let cle = format!("{}{}", rl["cinq_h"], rl["semaine"]);
+        if vus.contains(&cle) { continue }
+        vus.push(cle);
+        let p = format!("{home}/.bidules/usage-{}.jsonl", dir.trim_start_matches('.'));
+        let _ = std::fs::create_dir_all(format!("{home}/.bidules"));
+        let garde: Vec<String> = std::fs::read_to_string(&p).unwrap_or_default().lines()
+            .filter(|l| serde_json::from_str::<serde_json::Value>(l).ok().and_then(|v| v["t"].as_u64()).map_or(false, |x| x + 8 * 86400 > t))
+            .map(String::from).chain([rl.to_string()]).collect();
+        let _ = std::fs::write(&p, garde.join("\n") + "\n");
+    }
+}
+#[derive(serde::Serialize)]
+struct Releves { profil: String, releves: Vec<serde_json::Value>, erreur: Option<String> }
+#[tauri::command(async)]
+fn usage() -> Vec<Releves> {
+    let home = std::env::var("HOME").unwrap_or_default();
+    let erreurs = ERREURS.lock().unwrap().clone().unwrap_or_default();
+    PROFILS.iter().filter(|d| Path::new(&format!("{home}/{d}")).is_dir()).map(|d| {
+        let releves = std::fs::read_to_string(format!("{home}/.bidules/usage-{}.jsonl", d.trim_start_matches('.'))).unwrap_or_default()
+            .lines().filter_map(|l| serde_json::from_str(l).ok()).collect();
+        Releves { profil: d.trim_start_matches('.').to_string(), releves, erreur: erreurs.get(d).cloned() }
+    }).collect()
+}
+
 fn main() {
     tauri::Builder::default()
-        .invoke_handler(tauri::generate_handler![log, quit, hide_panel, prompt_times, contexte, icone, session_active, haptique, hooks_etat, brancher_hooks, debrancher_hooks, sessions, limites, prompts_semaine, depenses, montrer_bidule, ouvrir_panneau, lire_choix, garder_choix, lire_etat, garder_etat, bonbon_poser, bonbon_retirer, bonbon_clic])
+        .invoke_handler(tauri::generate_handler![log, quit, hide_panel, prompt_times, contexte, icone, session_active, haptique, hooks_etat, brancher_hooks, debrancher_hooks, sessions, limites, usage, prompts_semaine, depenses, montrer_bidule, ouvrir_panneau, lire_choix, garder_choix, lire_etat, garder_etat, bonbon_poser, bonbon_retirer, bonbon_clic])
         .setup(|app| {
             #[cfg(target_os = "macos")]
             app.set_activation_policy(tauri::ActivationPolicy::Accessory);
@@ -785,6 +900,7 @@ fn main() {
 
             // Déjà branché : le script du hook est remis à jour à chaque lancement (une nouvelle version de l'app peut le changer).
             if hooks_etat() == "oui" { let _ = ecrire_hook_sh(&std::env::var("HOME").unwrap_or_default()); }
+            std::thread::spawn(|| loop { relever(); std::thread::sleep(Duration::from_secs(300)); });
             // Claude a fini (hook) : le fichier change d'heure, le Bidule est prévenu.
             let h4 = app.handle().clone();
             std::thread::spawn(move || {
