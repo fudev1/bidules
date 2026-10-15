@@ -92,6 +92,8 @@ main{flex:1;overflow:auto;padding:0 12px 12px}
 [class*="cr-"] :is(.sess,.graphe,.now){background:rgba(30,27,58,.58)}
 .cr-doux :is(.sess,.graphe,.now){box-shadow:inset 0 2px 5px rgba(0,0,0,.35)}
 .cr-profond :is(.sess,.graphe,.now){box-shadow:inset 0 7px 16px rgba(0,0,0,.65),inset 0 -2px 0 rgba(255,255,255,.18)}
+.cr-profond-mi :is(.sess,.graphe,.now){box-shadow:inset 0 5px 12px rgba(0,0,0,.58),inset 0 -2px 0 rgba(255,255,255,.16)}
+.cr-profond-23 :is(.sess,.graphe,.now){box-shadow:inset 0 5px 11px rgba(0,0,0,.45),inset 0 -1px 0 rgba(255,255,255,.14)}
 .cr-autour :is(.sess,.graphe,.now){box-shadow:inset 0 0 14px rgba(0,0,0,.6)}
 .cr-net :is(.sess,.graphe,.now){box-shadow:inset 0 4px 0 rgba(0,0,0,.4),inset 0 -2px 0 rgba(255,255,255,.16)}
 .cr-net2 :is(.sess,.graphe,.now){box-shadow:inset 3px 4px 0 rgba(0,0,0,.4),inset -2px -2px 0 rgba(255,255,255,.14)}
@@ -306,6 +308,7 @@ const CADRES = [["", "Actuel", "Le fond d'aujourd'hui."], ["c-fonce", "Plus fonc
   ["c-fonce-flou", "Plus foncé + flou", "Violet dense, les vagues floutées derrière."], ["c-noir-flou", "Vers le noir + flou", "Noir translucide, les vagues floutées derrière."],
   ["c-creux", "Creusé", "Plus foncé, avec une ombre à l'intérieur : comme si on rentrait dedans."]];
 const CREUX = [["cr-doux", "Creusé doux", "Une ombre légère, à peine enfoncé."], ["cr-profond", "Creusé profond", "Une ombre large et sombre : bien plus enfoncé."],
+  ["cr-profond-mi", "Profond, l'entre-deux", "Entre le creusé et le profond."], ["cr-profond-23", "Profond, un tiers de moins", "Le profond, avec une ombre un tiers plus courte et plus claire."],
   ["cr-autour", "Creusé tout autour", "L'ombre sur les quatre bords, comme une cuvette."], ["cr-net", "Creusé net", "Une ombre pleine sans flou, comme celles du pixel art."],
   ["cr-net2", "Creusé net en biais", "Ombre pleine en haut à gauche, lumière en bas à droite."], ["cr-violet", "Creusé violet", "L'ombre prend le violet foncé du panneau au lieu du noir."],
   ["cr-lumiere", "Creusé + lumière", "Une lueur sur le bord bas, dedans et dehors, comme gravé dans le panneau."], ["cr-noir", "Creusé vers le noir", "Le fond noir translucide, creusé."]];
