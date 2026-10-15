@@ -68,6 +68,9 @@ let style = "goutte", FR = {}, LOOK = {}, FRONT = new Set(), HALF = null, faceSe
 const nextAt = (prev, dur, now) => (now - prev > 60 ? now : prev) + dur;
 // Persos dessinés à la main dans Aseprite : on lit la feuille et ses balises (crawl, turn).
 const SHEETS = {limace:{png:"persos/limace/sheet.png", json:"persos/limace/sheet.json"}, candy:{png:"persos/candy/sheet.png", json:"persos/candy/sheet.json"}}, SHEET_DATA = {};
+// Évolution, premier essai : la limace avec trois cheveux, choisie dans le panneau et gardée sur ce Mac (hairStep, plus bas).
+let cheveux = false;
+try { cheveux = localStorage.getItem("bidule.cheveux") === "oui"; } catch (e) {}
 async function loadSheet(id) {
   const meta = await (await fetch(SHEETS[id].json)).json();
   const im = new Image(); im.src = SHEETS[id].png; await im.decode();
@@ -104,10 +107,10 @@ const isSheet = () => !!(SHEETS[style] && SHEET_DATA[style]);
 const BIG_W = 352, BIG_H = 420, CW2 = 176, CH2 = 210, ORX = 56, ORY = 146, HANG_G = [88, 40];
 const pull = {on:false, phase:null, src:null, g:[0, 0], d:[0, 0], vd:[0, 0], b:[0, 0], vb:[0, 0], pw:[0, 0], pv:[0, 0], aw:[0, 0], skip:0};
 const pullCanvas = document.getElementById("el"), pullCtx = pullCanvas.getContext("2d");
-function captureFrame() {
+function captureFrame(src) {          // src : l'image déjà remise dans le repère du sol (décollé d'un bord, edgeCapture)
   const cv = document.createElement("canvas"); cv.width = 64; cv.height = 64; const g = cv.getContext("2d");
-  if (img.style.scale === "-1 1") { g.translate(2 * (SHEET_DATA[style].axis + .5), 0); g.scale(-1, 1); }
-  g.drawImage(img, 0, 0, 64, 64);
+  if (src) g.drawImage(src, 0, 0);
+  else { if (img.style.scale === "-1 1") { g.translate(2 * (SHEET_DATA[style].axis + .5), 0); g.scale(-1, 1); } g.drawImage(img, 0, 0, 64, 64); }
   const px = g.getImageData(0, 0, 64, 64).data, mask = new Uint8Array(4096);
   let top = 64, bot = 0, x0 = 64, x1 = 0;
   for (let i = 0; i < 4096; i++) if (px[i * 4 + 3]) { mask[i] = 1; const X = i % 64, Y = (i - X) / 64; top = Math.min(top, Y); bot = Math.max(bot, Y); x0 = Math.min(x0, X); x1 = Math.max(x1, X); }
@@ -121,7 +124,8 @@ function captureFrame() {
   const count = new Map();
   for (let i = 0; i < 4096; i++) if (mask[i]) { const k = px[i * 4] + "," + px[i * 4 + 1] + "," + px[i * 4 + 2]; count.set(k, (count.get(k) || 0) + 1); }
   const cols = [...count.keys()].map(k => k.split(",").map(Number)), lum = c => c[0] * .3 + c[1] * .59 + c[2] * .11;
-  const ink = cols.reduce((a, b) => lum(b) < lum(a) ? b : a), light = cols.reduce((a, b) => lum(b) > lum(a) ? b : a);
+  // le reflet : la couleur la plus claire, sans le blanc (blanc de l'œil fatigué, dents) qui la remplacerait sinon
+  const tons = cols.filter(c => lum(c) < 250), ink = cols.reduce((a, b) => lum(b) < lum(a) ? b : a), light = (tons.length ? tons : cols).reduce((a, b) => lum(b) > lum(a) ? b : a);
   const byFreq = [...count.entries()].sort((a, b) => b[1] - a[1]).map(e => e[0].split(",").map(Number));
   const base = byFreq.find(c => c.join() !== ink.join()) || ink;
   const shade = byFreq.find(c => ![ink, light, base].some(k => k.join() === c.join())) || base;
@@ -150,7 +154,46 @@ function captureFrame() {
 // pour que l'image ne se montre jamais au mauvais endroit entre les deux (au pire un blanc très court).
 let winChain = Promise.resolve();
 const nextPaint = () => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
-function setBigWindow(on) { return winChain = winChain.then(() => resizeWin(on)).catch(e => say("fenetre: " + e)); }
+function setBigWindow(on) { return winChain = winChain.then(() => pull.side && pull.side !== "floor" ? edgeResize(on) : resizeWin(on)).catch(e => say("fenetre: " + e)); }
+// Décollé du plafond ou d'un mur : le même calcul qu'au sol, dans un repère où le bord est le sol. EDGE_ROT : du repère à l'écran,
+// [a, b, c, d] pour X = a u + b v, Y = c u + d v (le retour : u = a X + c Y, v = b X + d Y) ; EDGE_CSS : la même chose pour le grand canevas.
+const EDGE_ROT = {floor:[1, 0, 0, 1], ceiling:[1, 0, 0, -1], right:[0, 1, -1, 0], left:[0, -1, 1, 0]};
+const EDGE_CSS = {floor:"", ceiling:"scale(1, -1)", right:"rotate(-90deg)", left:"rotate(90deg)"};
+const edgeTo = (R, u, v) => [R[0] * u + R[1] * v, R[2] * u + R[3] * v], edgeFrom = (R, X, Y) => [R[0] * X + R[2] * Y, R[1] * X + R[3] * Y];
+// l'image affichée (retournée, tournée), relue pixel par pixel dans le repère du sol : chaque pixel du repère va chercher celui de l'écran qui lui correspond
+function edgeCapture(R, r, O) {
+  const D = SHEET_DATA[style], f = (D.bySrc || (D.bySrc = new Map(D.frames.map(f => [f.src, f])))).get(img.src); if (!f) return null;
+  const sp = f.cv.getContext("2d").getImageData(0, 0, 64, 64).data, cv = document.createElement("canvas"); cv.width = cv.height = 64;
+  const g = cv.getContext("2d"), out = g.createImageData(64, 64);
+  const sc = (img.style.scale || "1").trim().split(/\s+/).map(Number), sx = sc[0] < 0, sy = (sc.length > 1 ? sc[1] : sc[0]) < 0;
+  for (let v = 0; v < 64; v++) for (let u = 0; u < 64; u++) {
+    const [X, Y] = edgeTo(R, (u + .5 - 32) * 2, (v + .5 - 32) * 2), bx = Math.floor((O[0] + X - r.left) / 2), by = Math.floor((O[1] + Y - r.top) / 2);
+    if (bx < 0 || by < 0 || bx > 63 || by > 63) continue;
+    const i = ((sy ? 63 - by : by) * 64 + (sx ? 63 - bx : bx)) * 4, o = (v * 64 + u) * 4;
+    for (let k = 0; k < 4; k++) out.data[o + k] = sp[i + k];
+  }
+  g.putImageData(out, 0, 0); return cv;
+}
+// La grande fenêtre d'un bord : couchée pour un mur ; le canevas tourne autour du centre de la fenêtre. pull.win : sa position, calculée par pullStart.
+async function edgeResize(on) {
+  const {LogicalSize} = T.dpi, wall = pull.side === "left" || pull.side === "right", W = wall ? BIG_H : BIG_W, H = wall ? BIG_W : BIG_H;
+  const size = n => { for (const el of [document.documentElement, document.body]) { el.style.width = n ? W + "px" : ""; el.style.height = n ? H + "px" : ""; } };
+  want = null;
+  if (on) {
+    img.style.opacity = "0"; size(true);
+    Object.assign(pullCanvas.style, {left:(W - BIG_W) / 2 + "px", top:(H - BIG_H) / 2 + "px", transform:EDGE_CSS[pull.side]}); pullCanvas.hidden = false;
+    await nextPaint();
+    // macOS garde la fenêtre sous la barre de menus : au-delà, c'est le dessin qui monte dans la fenêtre (comme flush)
+    const [nx, ny] = pull.win, up = Math.max(0, Math.round(minY - ny));
+    document.body.style.translate = up ? `0 ${-up}px` : "";
+    await win.setPosition(new LogicalPosition(Math.round(nx), Math.round(ny) + up));
+    await win.setSize(new LogicalSize(W, H));
+  } else {
+    await win.setSize(new LogicalSize(WW, WH));
+    pullCanvas.hidden = true; Object.assign(pullCanvas.style, {left:"", top:"", transform:""});
+    size(false); want = [x, y]; await flush();
+  }
+}
 async function resizeWin(on) {
   const {LogicalSize} = T.dpi, size = n => { for (const el of [document.documentElement, document.body]) { el.style.width = n ? BIG_W + "px" : ""; el.style.height = n ? BIG_H + "px" : ""; } };
   want = null;
@@ -179,13 +222,26 @@ function haptic(motif) {
   const now = performance.now(); if (!hapticOn || now - (hapticAt[motif] || 0) < 60) return;
   hapticAt[motif] = now; T.core.invoke("haptique", {motif}).catch(() => {});
 }
-function pullStart(e) {
-  const S0 = captureFrame();
-  const gu = Math.max(S0.cx - 12, Math.min(S0.cx + 12, (drag.gx - 24) / 2)), gv = Math.max(S0.top, Math.min(S0.bot - 3, (drag.gy - 48) / 2));
-  Object.assign(pull, {on:true, ready:false, phase:"ground", src:S0, srcImg:img.src, g:[gu, gv], d:[0, 0], vd:[0, 0], cran:0});
+function pullStart(side = "floor") {
+  let S0, G;
+  if (side === "floor") { S0 = captureFrame(); G = [(drag.gx - 24) / 2, (drag.gy - 48) / 2]; }
+  else {
+    // l'image affichée et le point saisi, ramenés dans le repère où le bord est le sol ; la grande fenêtre est placée pour que rien ne saute
+    if (mode === "wall") wallShape(false);
+    const R = EDGE_ROT[side], r = img.getBoundingClientRect(), O = [(r.left + r.right) / 2, (r.top + r.bottom) / 2], src = edgeCapture(R, r, O);
+    if (!src) return false;
+    S0 = captureFrame(src); const [gu0, gv0] = edgeFrom(R, (drag.gx - O[0]) / 2, (drag.gy - O[1]) / 2); G = [32 + gu0, 32 + gv0];
+    const wall = side === "left" || side === "right", Wc = wall ? [BIG_H / 2, BIG_W / 2] : [BIG_W / 2, BIG_H / 2], [mx, my] = edgeTo(R, 0, 2 * (ORY - 73));
+    const up = Math.max(0, Math.round(minY - y));
+    pull.win = [x + O[0] - Wc[0] - mx, y + up + O[1] - Wc[1] - my];
+    pull.prev = {x, y, mode};
+  }
+  const gu = Math.max(S0.cx - 12, Math.min(S0.cx + 12, G[0])), gv = Math.max(S0.top, Math.min(S0.bot - 3, G[1]));
+  Object.assign(pull, {on:true, ready:false, phase:"ground", side, src:S0, srcImg:img.src, g:[gu, gv], d:[0, 0], vd:[0, 0], cran:0});
   // la bulle de pensée disparaît tout de suite, sans fondu : la fenêtre va s'agrandir vers le haut et la gauche, elle se retrouverait dans le coin
   pense.style.transition = "none"; pense.classList.add("off"); pense.offsetWidth; pense.style.transition = "";
   pullDraw(); setBigWindow(true).then(() => { pull.ready = true; });
+  return true;
 }
 // Position de la base (B) et du point tenu (G) dans le grand canevas, selon la phase.
 function pullGeom() {
@@ -298,6 +354,15 @@ function styleRender(out, faceAt) {
     put(X, Y, c);
   }
   for (const st of S0.faceStamps) { const [fx2, fy2] = faceAt(st.u, st.v); for (const [a2, b2] of st.px) put(Math.floor(fx2) + a2, Math.floor(fy2) + b2, S0.ink); }
+  // les cheveux, au sommet de la goutte étirée (le milieu de sa ligne du haut), dans la pose du ressort ; jamais sur le corps
+  if (cheveux && hair.px && style === "limace") {
+    let l = CW2, r = -1; for (let X = 0; X < CW2; X++) if (out[t0 * CW2 + X]) { l = Math.min(l, X); r = X; }
+    const ox = Math.floor((l + r + 1) / 2) - HAIR_RX, oy = t0 - HAIR_H;
+    for (let v = 0; v < HAIR_H; v++) for (let u = 0; u < HAIR_W; u++) {
+      const i = (v * hair.pw + hair.pose * HAIR_W + u) * 4, X = ox + u, Y = oy + v;
+      if (hair.px[i + 3] && X >= 0 && Y >= 0 && X < CW2 && Y < CH2 && !out[Y * CW2 + X]) put(X, Y, [hair.px[i], hair.px[i + 1], hair.px[i + 2]]);
+    }
+  }
   pullCtx.putImageData(imd, 0, 0);
 }
 const PULL_CRANS = [.3, .5, .65, .77, .86, .93];
@@ -312,9 +377,12 @@ function pullStep(dt) {
     if (f > 1) {
       // décollé : la fenêtre reprend sa taille et il est tenu comme dans tous les autres cas (la goutte qui se balance)
       say("il se decolle du sol"); bubble("Plop !", 900); haptic("palier");
-      x += (BIG_W - WW) / 2; y += BIG_H - WH; pull.phase = "closing"; pull.ready = false;
+      const edge = pull.side !== "floor";
+      if (edge) { ({x, y} = pull.prev); face(); faceSeq = null; ceilSw = null; corner = null; }          // d'un bord : il se remet à l'endroit, la souris le reprend par la tête
+      else { x += (BIG_W - WW) / 2; y += BIG_H - WH; }
+      pull.phase = "closing"; pull.ready = false;
       setBigWindow(false).then(() => {
-        pull.on = false; pull.phase = null; img.style.opacity = "";
+        pull.on = false; pull.phase = null; pull.side = null; img.style.opacity = "";
         if (drag) { mode = "held"; struggle(true); holdByHead(drag.lastX, drag.lastY); }
         else { vx = vy = 0; mode = "fly"; bounces = 0; angle = 0; spin = 0; if (isSheet()) sheetAnim(Date.now()); }
       });
@@ -346,11 +414,14 @@ function pullFinish() {
     const {B} = pullGeom(), S0 = pull.src;
     const nx = x + B[0] * 2 - (24 + (S0.cx + .5) * 2) - 0, ny = y + B[1] * 2 - (48 + (S0.bot + 1) * 2);
     x = nx + (BIG_W - WW) / 2 - (BIG_W - WW) / 2; y = ny;
-  } else { x += (BIG_W - WW) / 2; y += BIG_H - WH; }
+  } else if (pull.side !== "floor") ({x, y} = pull.prev);          // d'un bord : il retrouve sa place
+  else { x += (BIG_W - WW) / 2; y += BIG_H - WH; }
   // pull.on reste vrai tant que la fenêtre n'est pas revenue à sa taille : rien d'autre ne la déplace entre-temps
   const hung = pull.wasHang = pull.phase === "hang"; pull.phase = "closing"; pull.ready = false;
   // relâché sur place : on réaffiche l'image qu'il avait quand on l'a pris (pas celle de la prise en main)
-  return setBigWindow(false).then(() => { pull.on = false; pull.phase = null; if (!hung) {
+  const prev = pull.side !== "floor" && pull.prev;
+  return setBigWindow(false).then(() => { pull.on = false; pull.phase = null; pull.side = null; if (prev) { img.src = pull.srcImg; mode = prev.mode; pose(""); img.style.opacity = ""; return; }
+  if (!hung) {
     img.src = pull.srcImg; mode = "walk"; pose("walk"); img.style.opacity = "";
     // la souris est encore sur lui : il continue de la regarder au lieu de reprendre sa marche une image avant
     watching = true; idleUntil = Date.now() + 700; lookKey = "";
@@ -441,7 +512,7 @@ function sheetAnim(now) {
   if (sheetLoop.tag !== tag) sheetLoop = {tag, i:0, next:0};
   if (now >= sheetLoop.next) { const fr = T2[tag], k2 = sheetLoop.i % fr.length; img.src = fr[k2].src; sheetLoop.next = nextAt(sheetLoop.next, fr[k2].dur * (mode === "nausea" ? 1.6 : 1), now); sheetLoop.i++;
     // nausée au sol : la reptation en vert, plus lente ; il avance d'un pas à chaque image, comme à la marche (pas de glissade)
-    if (mode === "nausea" || mode === "ceiling") x += dir * 2 * (fr[k2].step || 0);          // collé en haut, il avance aussi pas à pas
+    if (mode === "nausea" || mode === "ceiling" && !drag) x += dir * 2 * (fr[k2].step || 0);          // collé en haut, il avance aussi pas à pas
   }
 }
 // Candy sautille en marchant, sauf ronchon ou vaseuse (elle garde la reptation) ; la marche ne change qu'en fin de cycle
@@ -741,6 +812,83 @@ function tick() {
   // premier lancement, pas encore de Bidule choisi : il attend, immobile, à sa place de départ (en haut), comme au lancement suivant
   if (!chosen) { lastT = performance.now(); return; }
   tickBody(); if (isSheet()) blinkStep(Date.now());
+  hairStep();
+}
+// Les cheveux (évolution, premier essai) : six poses dessinées (animations/cheveux/cheveux-poses.aseprite, exportées par tools/cheveux.py),
+// 32 × 20, la racine au milieu du bas ; images 0 à 4 : penchés à gauche fort, à gauche, droits, à droite, à droite fort ; 5 : ébouriffés.
+// Ils sont posés en direct sur l'image affichée, au sommet de la tête (juste au-dessus des yeux), sans jamais recouvrir le corps : img.src garde
+// l'image de la feuille (tout le reste du code la compare), seul l'affichage reçoit l'image coiffée. Un ressort leur donne de l'inertie : quand la
+// tête bouge (dans l'image, ou la fenêtre entière : marche, vol, glissade, tenu à la souris), ils restent en arrière puis la rattrapent.
+const HAIR_W = 32, HAIR_H = 20, HAIR_RX = 16, HAIR_N = 6;
+const hair = {px:null, a:0, v:0, pose:2, shock:0, last:null, cache:new Map()};
+const IMG_SRC = Object.getOwnPropertyDescriptor(HTMLImageElement.prototype, "src");
+let logicalSrc = "";
+Object.defineProperty(img, "src", {get() { return logicalSrc || IMG_SRC.get.call(img); }, set(v) { logicalSrc = v; hairPaint(); }});
+async function hairLoad() {
+  if (hair.px || hair.loading || !cheveux) return; hair.loading = true;
+  const im = new Image(); im.src = "persos/limace/cheveux-poses.png"; await im.decode();
+  const cv = document.createElement("canvas"); cv.width = im.width; cv.height = im.height; const g = cv.getContext("2d"); g.drawImage(im, 0, 0);
+  hair.px = g.getImageData(0, 0, im.width, im.height).data; hair.pw = im.width;
+}
+// le sommet de la tête d'une image de la feuille : au-dessus des yeux (l'encre loin du bord du corps), le milieu de la ligne du haut ; null sans corps
+function hairAnchor(f) {
+  if (f.hairAt !== undefined) return f.hairAt;
+  const d = f.cv.getContext("2d").getImageData(0, 0, 64, 64).data, A = i => d[i * 4 + 3] > 0, ink = i => A(i) && d[i * 4] + d[i * 4 + 1] + d[i * 4 + 2] < 30;
+  const inside = (X, Y) => X >= 0 && Y >= 0 && X < 64 && Y < 64 && A(Y * 64 + X);
+  const edge = (X, Y) => inside(X, Y) && [[1, 0], [-1, 0], [0, 1], [0, -1]].some(([a, b]) => !inside(X + a, Y + b));
+  let ex = 0, ey = 0, n = 0, top = 64;
+  for (let Y = 0; Y < 64; Y++) for (let X = 0; X < 64; X++) {
+    if (!inside(X, Y)) continue; top = Math.min(top, Y);
+    if (!ink(Y * 64 + X)) continue;
+    let near = false; for (let b = -1; b <= 1 && !near; b++) for (let a = -1; a <= 1; a++) if (edge(X + a, Y + b)) { near = true; break; }
+    if (!near) { ex += X; ey += Y; n++; }
+  }
+  if (top === 64) return f.hairAt = null;
+  let X, Y;
+  if (n) { X = Math.round(ex / n); Y = Math.round(ey / n); if (!inside(X, Y)) { let best = null; for (let x2 = 0; x2 < 64; x2++) if (inside(x2, Y) && (best === null || Math.abs(x2 - X) < Math.abs(best - X))) best = x2; if (best === null) return f.hairAt = null; X = best; } while (inside(X, Y - 1)) Y--; }
+  else { Y = top; let s2 = 0, c = 0; for (let x2 = 0; x2 < 64; x2++) if (inside(x2, Y)) { s2 += x2; c++; } X = Math.round(s2 / c); }
+  let a = X, b = X; while (inside(a - 1, Y)) a--; while (inside(b + 1, Y)) b++;
+  return f.hairAt = [(a + b + 1) / 2, Y];
+}
+// l'image coiffée (gardée par image et par pose) ; sans cheveux, ou si l'image n'est pas de la feuille : l'image elle-même
+function hairComposite(src, pose) {
+  if (!cheveux || !hair.px || style !== "limace" || !SHEET_DATA.limace) return src;
+  const D = SHEET_DATA.limace, f = (D.bySrc || (D.bySrc = new Map(D.frames.map(f => [f.src, f])))).get(src); if (!f) return src;
+  const key = src + "|" + pose; let out = hair.cache.get(key); if (out) return out;
+  const at = hairAnchor(f); if (!at) return src;
+  const cv = document.createElement("canvas"); cv.width = cv.height = 64; const g = cv.getContext("2d"); g.drawImage(f.cv, 0, 0);
+  const im = g.getImageData(0, 0, 64, 64), d = im.data, ox = Math.floor(at[0]) - HAIR_RX, oy = at[1] - HAIR_H;
+  for (let v = 0; v < HAIR_H; v++) for (let u = 0; u < HAIR_W; u++) {
+    const i = (v * hair.pw + pose * HAIR_W + u) * 4; if (!hair.px[i + 3]) continue;
+    const X = ox + u, Y = oy + v; if (X < 0 || Y < 0 || X > 63 || Y > 63) continue;
+    const o = (Y * 64 + X) * 4; if (d[o + 3]) continue;
+    for (let k = 0; k < 4; k++) d[o + k] = hair.px[i + k];
+  }
+  g.putImageData(im, 0, 0); out = cv.toDataURL();
+  if (hair.cache.size > 3000) hair.cache.clear();
+  hair.cache.set(key, out); return out;
+}
+function hairPaint() { const s2 = hairComposite(logicalSrc, hair.pose); if (IMG_SRC.get.call(img) !== s2) IMG_SRC.set.call(img, s2); }
+// le ressort : la vitesse de la tête, en pixels de l'image (le retournement de l'image compris), pousse les cheveux de l'autre côté ;
+// un choc (la vitesse change d'un coup : atterrissage, lancer, choc contre un bord) les ébouriffe un instant
+function hairStep() {
+  if (!cheveux || style !== "limace") return;
+  if (!hair.px) { hairLoad(); return; }
+  const now = performance.now(), D = SHEET_DATA.limace, f = D && D.bySrc && D.bySrc.get(logicalSrc), at = f && hairAnchor(f);
+  const sc = (img.style.scale || "1").trim().split(/\s+/).map(Number), sx = sc[0] < 0 ? -1 : 1;
+  // la fenêtre et la tête dans l'image, en pixels de l'image, dans le sens où l'image est dessinée ; tirée : le haut de la goutte
+  const wx = pull.on ? pull.d[0] : x / 2 * sx, wy = pull.on ? pull.d[1] : y / 2, ax = pull.on ? 0 : at ? at[0] : 32;
+  if (!hair.last || hair.last.pull !== pull.on) { hair.last = {t:now, wx, wy, ax, vx:0, vy:0, pull:pull.on}; return; }
+  const L = hair.last, dt = Math.min(.1, Math.max(.004, (now - L.t) / 1000));
+  const vx = (wx - L.wx) / dt, vy = (wy - L.wy) / dt;
+  if (Math.hypot(vx - L.vx, vy - L.vy) > 450) hair.shock = now + 260;          // un choc : seulement la fenêtre (les sauts d'une image à l'autre n'en sont pas)
+  // vitesse lissée (sur 0,1 s) : la tête qui saute de quelques pixels d'une image à l'autre fait une poussée, pas un à-coup
+  hair.vf = (hair.vf || 0) + (vx + (ax - L.ax) / dt - (hair.vf || 0)) * Math.min(1, dt / .1);
+  hair.last = {t:now, wx, wy, ax, vx, vy, pull:pull.on};
+  const target = Math.max(-2.4, Math.min(2.4, -hair.vf / 14));          // la tête va à droite : les cheveux penchent à gauche
+  hair.v += (60 * (target - hair.a) - 7 * hair.v) * dt; hair.a += hair.v * dt;
+  const pose = now < hair.shock ? 5 : Math.max(0, Math.min(4, Math.round(hair.a) + 2));
+  if (pose !== hair.pose) { hair.pose = pose; hairPaint(); }
 }
 function tickBody() {
   ticks++;
@@ -800,6 +948,7 @@ function tickBody() {
     push(); return;
   }
   const now = Date.now();
+  if (mode === "ceiling" && drag) { push(); return; }          // tenu au plafond, avant qu'on le tire : il ne bouge plus
   if (mode === "ceiling") {          // collé au haut de l'écran, à l'envers : il rampe (le pas est fait par sheetAnim), descend par le bord qu'il atteint, ou se décolle
     // le bord atteint, il s'arrête et finit son cycle : le demi-tour part de la première image de la reptation, comme au sol
     if (x < minX || x > maxX) { ceilingEdge = x < minX ? -1 : 1; x = Math.max(minX, Math.min(maxX, x)); }
@@ -813,6 +962,7 @@ function tickBody() {
   }
   if (mode === "ceilswing") { ceilSwingStep(now); push(); if (now > ceilingUntil + 20000) { ceilSw = null; unceil(true); } return; }          // il se balance au plafond
   if (mode === "corner") { cornerStep(now); push(); return; }          // il passe le coin du plafond au mur
+  if (mode === "wall" && drag) { push(); return; }          // tenu sur le mur, avant qu'on le tire : il ne glisse plus
   if (mode === "wall") {      // collé au bord de l'écran : il coule, de plus en plus vite, jusqu'au sol
     const impact = sheetOnce && /^choc-bord/.test(sheetOnce.tag);          // pendant l'écrasement il reste en place, ensuite il coule
     if (!impact && !wallStick) { wallV = Math.min(1, wallV + .01 * k); y += wallV * k; }
@@ -1164,12 +1314,15 @@ function clicked() {
 }
 img.addEventListener("pointerdown", e => {
   if (e.button !== 0 || pull.on) return;
-  if (mode === "ceiling" || mode === "corner" || mode === "ceilswing") { corner = null; ceilSw = null; unceil(false); mode = "fly"; }          // pris à la souris pendant qu'il rampe en haut : il se remet à l'endroit
+  // saisi au plafond ou sur un mur (pas pendant l'écrasement contre le bord) : il reste collé, et s'étire depuis ce bord si on tire (pullStart)
+  const pullable = isSheet() && !NO_PULL.has(style), edge = !pullable ? null : mode === "ceiling" ? "ceiling"
+    : mode === "wall" && !(sheetOnce && /^choc-bord/.test(sheetOnce.tag)) ? (wallSide < 0 ? "left" : "right") : null;
+  if (!edge && (mode === "ceiling" || mode === "corner" || mode === "ceilswing")) { corner = null; ceilSw = null; unceil(false); mode = "fly"; }          // pris à la souris pendant qu'il passe le coin ou se balance : il se remet à l'endroit
   img.setPointerCapture(e.pointerId);
-  drag = {sx:e.screenX, sy:e.screenY, x0:x, y0:y, gx:e.clientX, gy:e.clientY, moved:false, rev:[], sign:0, shaken:false, asleep:mode === "sleep"};
+  drag = {sx:e.screenX, sy:e.screenY, x0:x, y0:y, gx:e.clientX, gy:e.clientY, moved:false, rev:[], sign:0, shaken:false, asleep:mode === "sleep", edge};
   samples = [{t:performance.now(), x:e.screenX, y:e.screenY}];
   img.style.cursor = "grabbing"; haptic("clic");
-  if (mode === "fly" || mode === "wall" || mode === "wallland") {      // rattrapé en l'air (ou décroché du mur) : il se débat dès le clic, sans attendre que la souris bouge
+  if (!edge && (mode === "fly" || mode === "wall" || mode === "wallland")) {      // rattrapé en l'air (ou décroché du mur) : il se débat dès le clic, sans attendre que la souris bouge
     if (mode === "wall" || mode === "wallland") { x = Math.max(minX, Math.min(maxX, x)); drag.x0 = x; }
     if (mode === "wall" && wallStick) wallShape(false);
     drag.moved = true; drag.lastX = e.screenX; drag.lastY = e.screenY;
@@ -1182,14 +1335,15 @@ img.addEventListener("pointermove", e => {
   const dx = e.screenX - drag.sx, dy = e.screenY - drag.sy;
   if (!drag.moved && Math.abs(dx) + Math.abs(dy) > 3) {
     drag.moved = true;
-    if (mode === "wall") { x = Math.max(minX, Math.min(maxX, x)); drag.x0 = x; }          // décroché du mur : la fenêtre revient dans l'écran
-    if (isSheet() && !NO_PULL.has(style) && !drag.asleep && !["fly", "splat", "reform"].includes(mode) && y >= floorY - 4) pullStart();
+    if (mode === "wall" && !drag.edge) { x = Math.max(minX, Math.min(maxX, x)); drag.x0 = x; }          // décroché du mur : la fenêtre revient dans l'écran
+    if (drag.edge) { if (!pullStart(drag.edge) && mode === "ceiling") { unceil(false); mode = "fly"; } }          // tiré depuis le plafond ou un mur
+    else if (isSheet() && !NO_PULL.has(style) && !drag.asleep && !["fly", "splat", "reform"].includes(mode) && y >= floorY - 4) pullStart();
     if (drag.asleep) { mode = "carried"; pose(isSheet() ? "" : "dangle"); img.src = isSheet() ? FR.p1 : FR.dort; holdByHead(e.screenX, e.screenY); say("porte endormi"); }
     else { mode = "held"; struggle(true); if (isSheet() && !pull.on) holdByHead(e.screenX, e.screenY); disturb(); if (style === "candy") bubble("Hé !", 900); }
   }
   if (!drag.moved) return;
   drag.lastX = e.screenX; drag.lastY = e.screenY;
-  if (pull.on && pull.phase === "ground") { pull.d = [(e.screenX - drag.sx) / 2, (e.screenY - drag.sy) / 2]; return; }
+  if (pull.on && pull.phase === "ground") { pull.d = edgeFrom(EDGE_ROT[pull.side || "floor"], (e.screenX - drag.sx) / 2, (e.screenY - drag.sy) / 2); return; }
   if (drag.asleep) {
     const pv = samples[samples.length - 1], dtm = Math.max(8, performance.now() - pv.t);
     const speed = Math.hypot(e.screenX - pv.x, e.screenY - pv.y) / dtm * 1000;
@@ -1298,7 +1452,7 @@ try {
 let bidHidden = false;          // caché par un clic droit (main.rs : montrer_bidule)
 let chosen = false;          // un Bidule a été choisi (au premier lancement, pas encore)
 let claudeJ = null;          // la dernière jauge lue (contexte), envoyée au panneau
-function sendState() { T.event.emit("etat", {style:chosen ? style : null, partsBy, thumb:FR.normal, mood, moodMode, moodReason, cache:bidHidden, haptique:hapticOn}); T.event.emit("claude", claudeJ); }
+function sendState() { T.event.emit("etat", {style:chosen ? style : null, partsBy, cheveux, thumb:hairComposite(FR.normal, 2), mood, moodMode, moodReason, cache:bidHidden, haptique:hapticOn}); T.event.emit("claude", claudeJ); }
 function refreshSprite() {
   const cur = {sleep:"dort", carried:"dort", dizzy:"d1", nausea:"n1", pet:"content", laugh:"rire", angry:"fache",
     sulk:"fache", eat:"rire", ooh:"ooh", drowsy:"baille", waking:"baille", fly:"p1", held:"p1"}[mode];
@@ -1508,7 +1662,13 @@ function evolve(msg) {
     if (n > 9) { clearInterval(iv); img.style.filter = ""; img.src = after; sparkle(); bubble(msg, 1700); toWalk(); sendState(); }
   }, 130);
 }
-T.event.listen("evo", e => {
+T.event.listen("evo", async e => {
+  if (e.payload === "evo:cheveux" && style === "limace") {          // des cheveux, ou plus de cheveux : l'autre feuille, et le même éclat que pour une partie
+    cheveux = !cheveux; try { localStorage.setItem("bidule.cheveux", cheveux ? "oui" : "non"); } catch (err) {}
+    await hairLoad(); hair.a = hair.v = 0; hairPaint();
+    say(cheveux ? "evolution : des cheveux" : "evolution : plus de cheveux"); evolve(cheveux ? "Des cheveux !" : "Adieu les cheveux");
+    return;
+  }
   if (SHEETS[style]) { bubble("Pas encore de parties", 1300); return; }
   const id = e.payload, P = partsBy[style];
   if (id === "evo:reset") { partsBy[style] = style === "classique" ? {} : {}; say("retour a la forme de depart"); evolve("Retour au départ"); return; }

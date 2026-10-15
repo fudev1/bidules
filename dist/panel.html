@@ -150,7 +150,7 @@ main{flex:1;overflow:auto;padding:0 12px 12px}
   <nav class="tabs" role="tablist">
     <span class="pill instant" id="pill"></span>
     <button class="tab" role="tab" data-tab="piste" aria-selected="true">Piste</button>
-    <button class="tab" role="tab" data-tab="evo" aria-selected="false" disabled title="Bientôt">Évolution</button>
+    <button class="tab" role="tab" data-tab="evo" aria-selected="false">Évolution</button>
     <button class="tab" role="tab" data-tab="humeur" aria-selected="false">Humeur</button>
     <button class="tab lab" role="tab" data-tab="tests" aria-selected="false" title="Tests : des essais d'apparence" aria-label="Tests"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6M10 3v6l-5 9a2 2 0 0 0 1.8 3h10.4a2 2 0 0 0 1.8-3l-5-9V3"/><path d="M7.5 15h9"/></svg></button>
   </nav>
@@ -164,6 +164,7 @@ main{flex:1;overflow:auto;padding:0 12px 12px}
       <p class="hint" id="evoHint"></p>
       <div class="row"><button class="btn primary" id="random">Gagner une partie au hasard</button><button class="btn" id="reset">Revenir au départ</button></div>
       <div id="slots" class="slots"></div>
+      <div class="slot" id="evoCheveux" hidden><b>Tête</b><div class="chips"><button class="chip" id="cheveux">Cheveux</button></div></div>
     </section>
     <section class="pane" id="p-tests" hidden>
       <p class="hint">Des essais à comparer avant de choisir. Ils ne changent que l'apparence, et restent sur ce Mac.</p>
@@ -208,7 +209,11 @@ function render() {
   $("haptique").textContent = st.haptique === false ? "Coupé" : "Activé"; $("haptique").classList.toggle("on", st.haptique !== false);
   $("moods").innerHTML = MOODS.map(([id, name]) => `<button class="chip ${st.moodMode === id ? "on" : ""}" data-mood="${id}">${name}</button>`).join("");
   $("styles").innerHTML = STYLES.map(([id, name], i) => `<button class="st c${i % 4} ${id === st.style ? "on" : ""}" data-style="${id}" ${READY.has(id) ? "" : "disabled"}>${READY.has(id) ? (id === st.style && st.cache ? '<i class="soon">Caché</i>' : "") : '<i class="soon">Bientôt</i>'}<i class="spark"></i><span class="ground"><img class="mon" src="${render64(id, st.partsBy[id] || {}, READY.has(id) ? st.mood : null)}" alt=""></span><span class="nm">${name}</span></button>`).join("");
-  $("evoHint").textContent = noParts ? "Les parties arriveront avec les animations dessinées de ce Bidule." : "Un clic ajoute la partie, un second clic la retire. Une partie du même emplacement remplace l'ancienne.";
+  // la limace : un premier essai d'évolution, des cheveux ; les autres Bidules dessinés n'ont encore rien
+  const evoLimace = st.style === "limace";
+  $("evoHint").textContent = evoLimace ? "Premier essai d'évolution : un clic lui donne trois cheveux, un second les lui retire." : noParts ? "Les parties arriveront avec les animations dessinées de ce Bidule." : "Un clic ajoute la partie, un second clic la retire. Une partie du même emplacement remplace l'ancienne.";
+  $("evoCheveux").hidden = !evoLimace; $("slots").hidden = $("random").parentElement.hidden = noParts;
+  $("cheveux").classList.toggle("on", !!st.cheveux);
   $("random").disabled = $("reset").disabled = noParts;
   $("slots").innerHTML = SLOTS.map(([slot, label, opts]) => `<div class="slot"><b>${label}</b><div class="chips">${opts.map(([p, name]) =>
     `<button class="chip ${parts[slot] === p ? "on" : ""}" data-part="${slot}:${p}" ${noParts ? "disabled" : ""}>${name}</button>`).join("")}</div></div>`).join("");
@@ -348,6 +353,7 @@ document.addEventListener("click", e => {
   else if (b.dataset.mood) send("mood", b.dataset.mood);
   else if (b.id === "random") send("evo", "evo:random");
   else if (b.id === "reset") send("evo", "evo:reset");
+  else if (b.id === "cheveux") send("evo", "evo:cheveux");
   else if (b.id === "fini") T.core.invoke(finiEtat === "oui" ? "debrancher_hooks" : "brancher_hooks").then(renderFini, err => { $("finiTxt").textContent = "Pas pu le faire : " + err; });
   else if (b.id === "haptique") send("haptique", st.haptique === false);
   else if (b.id === "quit") { if (T) T.core.invoke("quit"); }
