@@ -108,6 +108,14 @@ main{flex:1;overflow:auto;padding:0 12px 12px}
 .courbe .vrai{stroke:var(--white);stroke-width:2.5}
 .courbe .proj{stroke-width:2;stroke-dasharray:3 4}.courbe .z0{stroke:var(--lime)}.courbe .z1{stroke:var(--yellow)}.courbe .z2{stroke:#ff8a3d}
 .prevision p b{color:var(--yellow)}
+/* au survol de la courbe : un trait et un point suivent la souris, la bulle donne l'heure et le pourcentage */
+.suivi{position:relative;touch-action:none}
+.suivi .cur{position:absolute;top:0;height:64px;width:1px;background:rgba(255,255,255,.6)}
+.suivi .pt{position:absolute;width:8px;height:8px;margin:-4px 0 0 -4px;border-radius:50%;background:var(--white)}
+.suivi .pt.prevu{background:var(--yellow)}
+.suivi .tip{position:absolute;bottom:calc(100% + 4px);background:#fff;color:var(--ink);border-radius:8px;padding:4px 7px;font-size:10.5px;line-height:1.3;white-space:nowrap;z-index:1}
+.suivi .cur,.suivi .pt,.suivi .tip{display:none;pointer-events:none}
+.suivi.on .cur,.suivi.on .pt,.suivi.on .tip{display:block}
 /* graphiques d'activité (onglet Claude) : une seule série, des barres fines posées sur la ligne de base, le chiffre au survol */
 .graphes{display:grid;grid-template-columns:3fr 2fr;gap:8px}
 .graphe{border-radius:12px;padding:9px 12px 8px;display:grid;gap:6px}
@@ -380,13 +388,37 @@ function fenetre(rel, k, duree, recent) {
   const fin = pente > 0 ? tD + (100 - pD) / pente : Infinity;
   return {pc, remise, debut, duree, pts, now, ecart: pc - (now - debut) / duree * 100, fin, finPc: pD + pente * (remise - tD), reste: (100 - pc) / Math.max(remise - now, 60)};
 }
+const courbesF = [];
 function courbe(f) {
-  const W = 300, H = 64, x = t => ((t - f.debut) / f.duree * W).toFixed(1), y = p => (H - Math.min(p, 100) / 100 * H).toFixed(1);
+  const i = courbesF.push(f) - 1, W = 300, H = 64, x = t => ((t - f.debut) / f.duree * W).toFixed(1), y = p => (H - Math.min(p, 100) / 100 * H).toFixed(1);
   const [tD, pD] = f.pts[f.pts.length - 1], tF = Math.min(f.fin, f.remise), pF = Math.min(100, f.finPc);
-  return `<svg class="courbe" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true">`
+  return `<div class="suivi" data-f="${i}"><svg class="courbe" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true">`
     + `<line class="reg" x1="0" y1="${H}" x2="${W}" y2="0"/><line class="mnt" x1="${x(f.now)}" y1="0" x2="${x(f.now)}" y2="${H}"/>`
     + (isFinite(f.fin) ? `<line class="proj z${zoneLim(pF)}" x1="${x(tD)}" y1="${y(pD)}" x2="${x(tF)}" y2="${y(pF)}"/>` : "")
-    + `<polyline class="vrai" points="${f.pts.map(p => x(p[0]) + "," + y(p[1])).join(" ")}"/></svg>`;
+    + `<polyline class="vrai" points="${f.pts.map(p => x(p[0]) + "," + y(p[1])).join(" ")}"/></svg><i class="cur"></i><i class="pt"></i><div class="tip"></div></div>`;
+}
+// Le pourcentage à l'heure t : entre deux relevés, sur la droite qui les joint ; après le dernier, sur la prévision.
+// Avant le premier relevé ou après la fin de la prévision, on s'arrête au bout de la courbe.
+function surCourbe(f, t) {
+  const P = f.pts, [tD, pD] = P[P.length - 1], tF = isFinite(f.fin) ? Math.min(f.fin, f.remise) : tD;
+  t = Math.max(P[0][0], Math.min(t, tF));
+  if (t > tD) return [t, pD + (Math.min(100, f.finPc) - pD) * (t - tD) / (tF - tD), true];
+  const j = P.findIndex(p => p[0] >= t), a = P[Math.max(0, j - 1)], b = P[j];
+  return [t, b[0] > a[0] ? a[1] + (b[1] - a[1]) * (t - a[0]) / (b[0] - a[0]) : b[1], false];
+}
+const moment = t => { const d = new Date(t * 1000);
+  return (d.toDateString() === new Date().toDateString() ? "" : d.toLocaleDateString("fr-FR", {weekday:"long"}) + " ") + `${d.getHours()} h ${String(d.getMinutes()).padStart(2, "0")}`; };
+function suivre(box) {
+  const f = courbesF[box.dataset.f], cur = box.querySelector(".cur"), pt = box.querySelector(".pt"), tip = box.querySelector(".tip");
+  box.addEventListener("pointermove", e => {
+    const W = box.clientWidth, H = 64, [t, p, prevu] = surCourbe(f, f.debut + (e.clientX - box.getBoundingClientRect().left) / W * f.duree);
+    const x = (t - f.debut) / f.duree * W, reg = (t - f.debut) / f.duree * 100;
+    cur.style.left = x + "px"; pt.style.left = x + "px"; pt.style.top = (H - Math.min(p, 100) / 100 * H) + "px"; pt.classList.toggle("prevu", prevu);
+    tip.innerHTML = `<b>${moment(t)}</b> : ${Math.round(p)} %${prevu ? " prévu" : ""}<br>rythme régulier : ${Math.round(reg)} %`;
+    box.classList.add("on");
+    tip.style.left = Math.max(0, Math.min(W - tip.offsetWidth, x - tip.offsetWidth / 2)) + "px";
+  });
+  box.addEventListener("pointerleave", () => box.classList.remove("on"));
 }
 function blocFenetre(nom, f, unite) {
   if (!f) return "";
@@ -404,6 +436,7 @@ async function renderLimites() {
   if (Date.now() - usageAt > 60000) { try { usageL = await T.core.invoke("usage"); usageAt = Date.now(); } catch (e) {} }
   const avec = usageL.filter(u => u.releves.length);
   if (avec.length) {
+    courbesF.length = 0;
     $("limites").innerHTML = avec.map(u => {
       const rel = u.releves, der = rel[rel.length - 1], vieux = Date.now() / 1000 - der.t > 20 * 60;
       return `<h3>Limites de ton abonnement${avec.length > 1 ? ` (${u.profil})` : ""}</h3>`
@@ -411,6 +444,7 @@ async function renderLimites() {
         + blocFenetre("Sur 5 h", fenetre(rel, "cinq_h", 5 * 3600, 3600), "h") + blocFenetre("Sur la semaine", fenetre(rel, "semaine", 7 * 86400, 86400), "j")
         + (der.modeles || []).map(([nom, pc, remise]) => blocFenetre(`${nom}, semaine`, {pc: remise && remise > Date.now() / 1000 ? pc : 0, remise: remise && remise > Date.now() / 1000 ? remise : 0})).join("");
     }).join("");
+    $("limites").querySelectorAll(".suivi").forEach(suivre);
     return;
   }
   let L = null; try { L = await T.core.invoke("limites"); } catch (e) {}
