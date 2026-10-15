@@ -20,15 +20,14 @@ button:disabled{cursor:default}
 .mon{image-rendering:pixelated;filter:drop-shadow(2px 0 0 #fff) drop-shadow(-2px 0 0 #fff) drop-shadow(0 2px 0 #fff) drop-shadow(0 -2px 0 #fff)}
 .ground{position:relative;display:grid;justify-items:center;isolation:isolate}
 .ground::after{content:"";position:absolute;bottom:-3px;width:62%;height:9px;border-radius:50%;background:rgba(30,27,58,.28);z-index:-1}
-header{position:relative;background:var(--plum) var(--waves);padding:8px 54px 8px 16px;display:grid;grid-template-columns:auto 1fr;align-items:center;gap:14px}
-.nom{display:grid;gap:3px;min-width:0}
+header{position:relative;background:var(--plum) var(--waves);padding:14px 20px 12px;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:14px}
+.nom{display:grid;gap:4px;min-width:0}
 .kicker{margin:0;font:400 11px/1 var(--display);letter-spacing:1.5px;color:var(--yellow)}
-h1{margin:0;font:400 24px/.95 var(--display);letter-spacing:1px;color:var(--yellow);text-shadow:3px 4px 0 var(--plum-deep)}
-.stage{grid-row:1}
-.stage img{width:56px;height:56px}
-.stage::after{height:8px}
-#sub{margin:0;font-size:11.5px;opacity:.9;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-#quit{position:absolute;top:50%;margin-top:-15px;right:14px;width:30px;height:30px;border-radius:50%;background:var(--pink);display:grid;place-items:center;box-shadow:0 3px 0 var(--plum-deep)}
+h1{margin:0;font:400 30px/.95 var(--display);letter-spacing:1px;color:var(--yellow);text-shadow:3px 4px 0 var(--plum-deep)}
+.stage img{width:104px;height:104px}
+.stage::after{height:12px}
+#sub{margin:0;font-size:11.5px;opacity:.9}
+#quit{position:absolute;top:10px;right:10px;width:30px;height:30px;border-radius:50%;background:var(--pink);display:grid;place-items:center;box-shadow:0 3px 0 var(--plum-deep)}
 #quit:hover{background:#ff4570}
 #quit:active{transform:translateY(2px);box-shadow:0 1px 0 var(--plum-deep)}
 #quit svg{width:16px;height:16px}
@@ -72,36 +71,17 @@ main{flex:1;overflow:auto;padding:0 12px 12px}
 .essais .chip small{display:block;font-weight:500;font-size:11px;opacity:.85;margin-top:4px;line-height:1.3}
 .essais h3{grid-column:1/-1;margin:4px 0 0;font:400 13px/1 var(--display);letter-spacing:.6px;color:var(--yellow)}
 
-/* ESSAI « État de Claude » (onglet Tests) : ce que fait Claude, depuis quand, et la jauge de contexte qui règle l'humeur */
 .ic{image-rendering:pixelated;display:block}
-.claude{margin:10px 12px 0;border-radius:16px;display:grid;align-items:center}
-.claude .etat{margin:0;font:400 14px/1.05 var(--display);letter-spacing:.6px}
-.claude .depuis{margin:3px 0 0;font-size:11px;opacity:.85}
 .jauge{display:grid;gap:4px}
 .jauge .barre{display:grid;grid-template-columns:repeat(20,1fr);gap:2px;height:10px}
 .jauge .barre i{border-radius:2px;background:rgba(255,255,255,.16)}
 .jauge .barre i.z0{background:var(--lime)}.jauge .barre i.z1{background:var(--yellow)}.jauge .barre i.z2{background:#ff8a3d}
 .jauge .barre i.seuil{box-shadow:-2px 0 0 rgba(255,255,255,.75)}
 .jauge small{display:flex;justify-content:space-between;font-size:10.5px;opacity:.85}
-.claude.a{grid-template-columns:auto 1fr 170px;gap:12px;padding:8px 12px;background:rgba(30,27,58,.25)}
-.claude.b{grid-template-columns:auto 1fr auto;gap:16px;padding:12px 16px;background:var(--plum) var(--waves);background-size:120px}
-.claude.b .etat{font-size:24px;color:var(--yellow);text-shadow:2px 3px 0 var(--plum-deep)}
-.claude.b .bulle{background:#fff;border-radius:14px;padding:8px;display:grid;place-items:center}
-.reservoir{display:grid;grid-template-columns:auto auto;gap:6px;align-items:stretch}
-.reservoir .tube{display:grid;grid-template-rows:repeat(20,1fr);gap:2px;width:26px;height:86px;padding:3px;border-radius:8px;background:rgba(0,0,0,.25)}
-.reservoir .tube i{border-radius:2px;background:rgba(255,255,255,.12)}
-.reservoir .tube i.z0{background:var(--lime)}.reservoir .tube i.z1{background:var(--yellow)}.reservoir .tube i.z2{background:#ff8a3d}
-.reservoir .zones{display:grid;grid-template-rows:4fr 3fr 3fr;font:400 10px/1 var(--display);letter-spacing:.4px;padding:3px 0}
-.reservoir .zones span{display:flex;align-items:center;opacity:.5}.reservoir .zones span.ici{opacity:1;color:var(--yellow)}
-.reservoir .chiffre{grid-column:1/-1;text-align:center;font-size:10.5px;opacity:.85}
-.anneau{position:absolute;left:50%;top:68%;width:112px;height:112px;transform:translate(-50%,-50%);z-index:-1}
-.vue-c .stage{margin:6px 0 18px}
-.vue-c .bulle-bd{top:74px}
-.bulle-bd{position:absolute;left:calc(50% + 66px);top:62px;max-width:170px;background:#fff;color:var(--ink);border-radius:14px;padding:8px 10px;text-align:left;display:grid;grid-template-columns:auto 1fr;gap:8px;align-items:center;box-shadow:0 3px 0 var(--plum-deep)}
+.bulle-bd{position:relative;justify-self:start;max-width:190px;margin-right:24px;background:#fff;color:var(--ink);border-radius:14px;padding:8px 10px;text-align:left;display:grid;grid-template-columns:auto 1fr;gap:8px;align-items:center;box-shadow:0 3px 0 var(--plum-deep)}
 .bulle-bd::before{content:"";position:absolute;left:-9px;bottom:12px;border:7px solid transparent;border-right:10px solid #fff;border-left:0}
 .bulle-bd b{font:400 12.5px/1.1 var(--display);letter-spacing:.4px;display:block}
 .bulle-bd small{font-size:10.5px;opacity:.75}
-.claude-off .claude,.claude-off .anneau,.claude-off .bulle-bd{display:none}
 
 /* Essais « verre » : plaques translucides et floutées, reflet de lumière en haut, liseré clair (pas de contour sombre) */
 .verre-a .panel,.verre-c .panel{margin:0;height:100vh;background-color:rgba(240,48,90,.4);-webkit-backdrop-filter:blur(24px) saturate(1.5);backdrop-filter:blur(24px) saturate(1.5);box-shadow:inset 0 0 0 1px rgba(255,255,255,.28)}
@@ -137,6 +117,18 @@ main{flex:1;overflow:auto;padding:0 12px 12px}
 .sess .barre i{border-radius:2px;background:rgba(255,255,255,.16)}
 .sess .barre i.z0{background:var(--lime)}.sess .barre i.z1{background:var(--yellow)}.sess .barre i.z2{background:#ff8a3d}
 .sess small{text-align:right;opacity:.85}
+/* graphiques d'activité (onglet Claude) : une seule série, des barres fines posées sur la ligne de base, le chiffre au survol */
+.graphes{display:grid;grid-template-columns:3fr 2fr;gap:8px}
+.graphe{background:rgba(30,27,58,.22);border-radius:12px;padding:9px 12px 8px;display:grid;gap:6px}
+.graphe h3{margin:0;font:400 13px/1 var(--display);letter-spacing:.6px;color:var(--yellow)}
+.graphe p{margin:0;font-size:11px;opacity:.85}
+.barres{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:2px;align-items:end;height:64px;border-bottom:1px solid rgba(255,255,255,.3)}
+.barres i{background:var(--lime);border-radius:3px 3px 0 0;min-height:0}
+.barres i.vide{background:none}
+.barres i:hover{background:var(--yellow)}
+.axe{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:2px;font-size:10px;opacity:.75;text-align:center;white-space:nowrap}
+.axe.heures{text-align:left}
+.axe b{font-weight:700;opacity:1}
 .fini{display:flex;align-items:center;gap:10px}
 .fini .hint{flex:1}
 .moods{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
@@ -147,8 +139,7 @@ main{flex:1;overflow:auto;padding:0 12px 12px}
 </style></head>
 <body>
 <div class="panel">
-  <header><button id="quit" aria-label="Éteindre le Bidule" title="Éteindre le Bidule"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round"><path d="M12 3v8"/><path d="M6.3 7.3a8 8 0 1 0 11.4 0"/></svg></button><div class="ground stage"><svg class="anneau" id="anneau" viewBox="0 0 128 128" hidden></svg><img id="thumb" class="mon" alt=""></div><div class="nom"><p class="kicker">Ton Bidule</p><h1 id="title">Bidule</h1><p id="sub"></p></div><div class="bulle-bd" id="bulleBD" hidden></div></header>
-  <section class="claude" id="claude" hidden></section>
+  <header><button id="quit" aria-label="Éteindre le Bidule" title="Éteindre le Bidule"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round"><path d="M12 3v8"/><path d="M6.3 7.3a8 8 0 1 0 11.4 0"/></svg></button><div class="nom"><p class="kicker">Ton Bidule</p><h1 id="title">Bidule</h1><p id="sub"></p></div><div class="ground stage"><img id="thumb" class="mon" alt=""></div><div class="bulle-bd" id="bulleBD"></div></header>
   <nav class="tabs" role="tablist">
     <span class="pill instant" id="pill"></span>
     <button class="tab" role="tab" data-tab="claude" aria-selected="false">Claude</button>
@@ -160,6 +151,7 @@ main{flex:1;overflow:auto;padding:0 12px 12px}
   <main>
     <section class="pane" id="p-claude" hidden>
       <div class="sessions" id="limites"></div>
+      <div class="graphes" id="graphes"></div>
       <div class="sessions" id="sessions"></div>
       <div class="now fini"><p class="hint" id="finiTxt"></p><button class="chip" id="fini" hidden>Brancher</button></div>
     </section>
@@ -234,10 +226,6 @@ addEventListener("resize", () => { $("pill").classList.add("instant"); placePill
 document.fonts && document.fonts.ready.then(() => { $("pill").classList.add("instant"); placePill(); });
 // ESSAI « État de Claude » : trois façons de montrer ce que fait Claude, depuis quand, et sa jauge de contexte (0-30 % joyeuse,
 // 30-60 % normale, au-delà fatiguée). La fenêtre du Bidule envoie la jauge (événement « claude ») ; on peut aussi la simuler.
-const VUES = [["", "Aucun", "Rien de plus que l'humeur sous le nom."],
-  ["a", "A - Bandeau", "Une ligne sous l'en-tête : ce que fait Claude, depuis quand, et une petite jauge."],
-  ["b", "B - Tableau de bord", "Une carte : l'état en gros, son icône, et un réservoir de contexte en pixels."],
-  ["c", "C - Bulle et anneau", "Le Bidule le dit dans une bulle de BD, un anneau autour de lui se remplit avec le contexte."]];
 const SIMS = [["", "Réel"], ["pense", "Réfléchit"], ["Bash", "Commande"], ["Edit", "Écrit"], ["Read", "Lit"], ["attend", "Attend"], ["fini", "A fini"], ["absent", "Pas de conversation"]];
 const PLEINS = [[15, "Contexte 15 %"], [45, "45 %"], [82, "82 %"]];
 const PANEL_ICONS = {        // en plus de celles de la bulle de pensée (pense.js)
@@ -245,8 +233,7 @@ const PANEL_ICONS = {        // en plus de celles de la bulle de pensée (pense.
   attend: [["...kk....", "...kk....", "...kk....", "...kk....", ".........", "...kk....", "...kk...."], [".........", "...kk....", "...kk....", "...kk....", "...kk....", ".........", "...kk...."]],
   absent: [["..kkkk...", ".k....k..", "......k..", "....kk...", "...k.....", ".........", "...k....."]]};
 const TITRES = {pense:"Réfléchit", lit:"Lit", ecrit:"Écrit", commande:"Lance une commande", cherche:"Cherche", web:"Va sur le web", agent:"Délègue", outil:"Bricole"};
-let vue = "", sim = "", simPc = 45, claudeEtat = null, etatDepuis = {cle:"", t:Date.now()}, icFrame = 0;
-try { vue = localStorage.getItem("bidule.vue") || ""; } catch (e) {}
+let sim = "", simPc = 45, claudeEtat = null, etatDepuis = {cle:"", t:Date.now()}, icFrame = 0;
 function claudeNow() {
   if (!sim) return claudeEtat;
   if (sim === "absent") return null;
@@ -260,8 +247,6 @@ function lireEtat(j) {
   return {cle:ic, icon:ic, titre:TITRES[ic], phrase:"Claude " + PENSE_LABEL[ic].replace(/^il /, "") + "."};
 }
 const zone = pc => pc < 30 ? 0 : pc < 60 ? 1 : 2;
-const ZONES = ["joyeuse", "normale", "fatiguée"];
-const kTok = n => n >= 1e6 ? (n / 1e6).toFixed(n % 1e6 ? 1 : 0).replace(".", ",") + " M" : Math.round(n / 1000) + " k";
 function depuisTxt() { const m = Math.floor((Date.now() - etatDepuis.t) / 60000); return m < 1 ? "à l'instant" : m < 60 ? `depuis ${m} min` : `depuis ${Math.floor(m / 60)} h ${String(m % 60).padStart(2, "0")}`; }
 function iconCanvas(name, scale) {
   const frames = PENSE_ICONS[name] || PANEL_ICONS[name], f = frames[icFrame % frames.length];
@@ -271,31 +256,34 @@ function iconCanvas(name, scale) {
   return c;
 }
 function barre(pc, n, cls, zf = zone) { const on = Math.round(pc / 100 * n); return Array.from({length:n}, (_, i) => { const p = (i + .5) / n * 100; return `<i class="${i < on ? "z" + zf(p) : ""}${cls && (i === n * .3 || i === n * .6) ? " seuil" : ""}"></i>`; }).join(""); }
+// Graphiques d'activité de l'onglet Claude, d'après les heures des prompts (jamais leur texte). Temps actif : les écarts de moins de
+// 20 min entre deux prompts (comme pour l'humeur), plus 5 min par reprise. Rien n'y récompense le volume : c'est un relevé.
+let semaine = [], semaineAt = 0;
+function hm(min) { min = Math.round(min); return min < 60 ? `${min} min` : `${Math.floor(min / 60)} h ${String(min % 60).padStart(2, "0")}`; }
+function actif(ts) { let m = 0; ts.forEach((t, i) => { const g = i ? t - ts[i - 1] : Infinity; m += g <= 1200 ? g / 60 : 5; }); return m; }
+function barres(vals, titres, max) { return `<div class="barres">${vals.map((v, i) => `<i class="${v ? "" : "vide"}" style="height:${v ? Math.max(4, v / max * 100) : 0}%" title="${titres[i]}"></i>`).join("")}</div>`; }
+async function renderGraphes() {
+  if (Date.now() - semaineAt > 60000) { try { semaine = (await T.core.invoke("prompts_semaine")).sort((a, b) => a - b); semaineAt = Date.now(); } catch (e) {} }
+  if (!semaine.length) { $("graphes").innerHTML = ""; return; }
+  const jour = d => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime() / 1000, auj = jour(new Date()), hNow = new Date().getHours();
+  const today = semaine.filter(t => t >= auj), parH = Array(24).fill(0);
+  today.forEach(t => parH[new Date(t * 1000).getHours()]++);
+  const jours = Array.from({length:7}, (_, k) => { const d = new Date(); d.setDate(d.getDate() - 6 + k); const a = jour(d); return {d, m:actif(semaine.filter(t => t >= a && t < a + 86400))}; });
+  const NOMS = ["di", "lu", "ma", "me", "je", "ve", "sa"];
+  $("graphes").innerHTML = `<div class="graphe"><h3>Aujourd'hui</h3><p>${today.length} prompt${today.length > 1 ? "s" : ""}, environ ${hm(actif(today))} d'activité</p>`
+    + barres(parH, parH.map((v, h) => `${h} h : ${v} prompt${v > 1 ? "s" : ""}`), Math.max(...parH, 1))
+    + `<div class="axe heures">${parH.map((_, h) => `<span>${h % 6 ? "" : h === hNow ? `<b>${h} h</b>` : h + " h"}</span>`).join("")}</div></div>`
+    + `<div class="graphe"><h3>7 derniers jours</h3><p>Temps d'activité par jour, environ</p>`
+    + barres(jours.map(j => j.m), jours.map(j => `${j.d.toLocaleDateString("fr-FR", {weekday:"long", day:"numeric"})} : ${hm(j.m)}`), Math.max(...jours.map(j => j.m), 1))
+    + `<div class="axe">${jours.map((j, k) => k === 6 ? "<b>auj.</b>" : `<span>${NOMS[j.d.getDay()]}</span>`).join("")}</div></div>`;
+}
+// La bulle du Bidule, dans l'en-tête : ce que fait Claude (toutes sessions confondues), depuis quand, et le contexte de la session en vue
 function renderClaude() {
-  const j = claudeNow(), e = lireEtat(j), pc = j ? Math.min(100, j.pourcent) : 0, C = $("claude"), A = $("anneau"), B = $("bulleBD");
+  const j = claudeNow(), e = lireEtat(j), B = $("bulleBD");
   if (e.cle !== etatDepuis.cle) etatDepuis = {cle:e.cle, t:Date.now()};
-  C.hidden = !(vue === "a" || vue === "b"); B.hidden = vue !== "c"; A.toggleAttribute("hidden", vue !== "c");          // A est un SVG : pas de propriété hidden
-  const chiffre = j ? `${kTok(j.tokens)} / ${kTok(j.fenetre)}${j.source === "terminal" ? " (terminal)" : ""}` : "";
-  if (vue === "a") {
-    C.className = "claude a";
-    C.innerHTML = `<span></span><div><p class="etat">${e.phrase}</p><p class="depuis">${depuisTxt()}</p></div>`
-      + (j ? `<div class="jauge"><div class="barre">${barre(pc, 20, true)}</div><small><span>Contexte ${Math.round(pc)} %</span><span>${ZONES[zone(pc)]}</span></small></div>` : "<div></div>");
-    C.firstChild.replaceWith(iconCanvas(e.icon, 3));
-  } else if (vue === "b") {
-    C.className = "claude b";
-    const n = 20, on = Math.round(pc / 100 * n);
-    const tube = Array.from({length:n}, (_, i) => { const k = n - 1 - i, p = (k + .5) / n * 100; return `<i class="${k < on ? "z" + zone(p) : ""}"></i>`; }).join("");
-    C.innerHTML = `<div class="bulle"></div><div><p class="etat">${e.titre}</p><p class="depuis">${e.phrase} ${depuisTxt().replace(/^./, c => c.toUpperCase())}.</p></div>`
-      + (j ? `<div class="reservoir"><div class="tube">${tube}</div><div class="zones">${["fatiguée", "normale", "joyeuse"].map((z, i) => `<span class="${zone(pc) === 2 - i ? "ici" : ""}">${z}</span>`).join("")}</div><div class="chiffre">${chiffre}</div></div>` : "");
-    C.querySelector(".bulle").append(iconCanvas(e.icon, 6));
-  } else if (vue === "c") {
-    const col = ["#a6d23a", "#ffd94a", "#ff8a3d"][zone(pc)];
-    A.innerHTML = `<circle cx="64" cy="64" r="56" fill="none" stroke="rgba(255,255,255,.14)" stroke-width="9"/>`
-      + (j ? `<circle cx="64" cy="64" r="56" fill="none" stroke="${col}" stroke-width="9" stroke-linecap="round" pathLength="100" stroke-dasharray="${Math.max(.5, pc)} 100" transform="rotate(-90 64 64)"/>` : "")
-      + [30, 60].map(t => { const a = (t / 100 * 360 - 90) * Math.PI / 180; return `<circle cx="${64 + 56 * Math.cos(a)}" cy="${64 + 56 * Math.sin(a)}" r="2.5" fill="#fff"/>`; }).join("");
-    B.innerHTML = `<span></span><div><b>${e.phrase}</b><small>${j ? `Contexte ${Math.round(pc)} %, ${depuisTxt()}` : depuisTxt()}</small></div>`;
-    B.firstChild.replaceWith(iconCanvas(e.icon, 3));
-  }
+  const n = j && j.sessions ? j.sessions.filter(x => x.etat === "attend").length : 0;
+  B.innerHTML = `<span></span><div><b>${n > 1 ? n + " sessions t'attendent." : e.phrase}</b><small>${j && j.tokens ? `Contexte ${Math.round(Math.min(100, j.pourcent))} %, ${depuisTxt()}` : depuisTxt()}</small></div>`;
+  B.firstChild.replaceWith(iconCanvas(e.icon, 3));
 }
 // Onglet Humeur : les sessions de Claude en cours (d'après les hooks), leur état et leur jauge de contexte
 const ETATS = {travaille:"travaille", attend:"t'attend", fini:"a fini"};
@@ -304,7 +292,7 @@ function renderSessions() {
   $("sessions").innerHTML = !L.length ? (finiEtat === "oui" ? `<h3>Sessions de Claude</h3><p class="hint">Aucune session en cours.</p>` : "") : "<h3>Sessions de Claude</h3>" + L.map(x => `<div class="sess"><b>${(x.projet || "Session").replace(/</g, "&lt;")}</b><span class="et ${x.etat}">${ETATS[x.etat] || x.etat}</span>`
     + (x.tokens ? `<div class="barre">${barre(Math.min(100, x.pourcent), 12)}</div><small>${Math.round(x.pourcent)} %</small>` : "<span></span><span></span>") + "</div>").join("");
 }
-if (T) T.event.listen("claude", e => { claudeEtat = e.payload; renderClaude(); renderSessions(); renderFiniTxt(); renderLimites(); });
+if (T) T.event.listen("claude", e => { claudeEtat = e.payload; renderClaude(); renderSessions(); renderFiniTxt(); renderLimites(); renderGraphes(); });
 // Les limites de l'abonnement (Pro, Max), d'après la barre d'état de Claude Code (main.rs : limites). Vert jusqu'à 70 %, orange après 90 %.
 const zoneLim = pc => pc < 70 ? 0 : pc < 90 ? 1 : 2;
 function dans(s) { const j = Math.floor(s / 86400), h = Math.floor(s % 86400 / 3600), m = Math.floor(s % 3600 / 60);
@@ -316,7 +304,7 @@ async function renderLimites() {
     : finiEtat !== "oui" ? "" : `<h3>Limites de ton abonnement</h3><p class="hint">${L && L.lancee ? "Claude Code ne les donne pas : seulement avec un abonnement Pro ou Max, après une réponse de Claude."
       : "Pas encore reçues. Elles passent par la barre d'état de Claude Code dans le terminal : elles arrivent après une réponse de Claude dans une session lancée avec claude."}</p>`;
 }
-setInterval(() => { icFrame++; if (vue) renderClaude(); }, 450);
+setInterval(() => { icFrame++; renderClaude(); }, 450);
 // Onglet Tests : des essais d'apparence, gardés dans ce navigateur (ce Mac) seulement.
 const ESSAIS = [["", "Aucun", "Le panneau habituel, en aplats."],
   ["verre-a", "A - Verre total", "Tout le panneau en verre teinté : le bureau se devine, flouté, derrière."],
@@ -332,10 +320,8 @@ function applyEssai() {
   const flou = essai === "verre-a" || essai === "verre-c";
   if (T) { const w = T.window.getCurrentWindow(); (flou ? w.setEffects({effects:["popover"], state:"active", radius:24}) : w.clearEffects()).catch(e => console.log("effets : " + e)); }
   $("essais").innerHTML = "<h3>Effet verre</h3>" + ESSAIS.map(([id, name, desc]) => `<button class="chip ${essai === id ? "on" : ""}" data-essai="${id}">${name}<small>${desc}</small></button>`).join("")
-    + "<h3>État de Claude</h3>" + VUES.map(([id, name, desc]) => `<button class="chip ${vue === id ? "on" : ""}" data-vue="${id}">${name}<small>${desc}</small></button>`).join("")
     + "<h3>Simuler Claude (pour voir chaque état)</h3>" + SIMS.map(([id, name]) => `<button class="chip ${sim === id ? "on" : ""}" data-sim="${id}">${name}</button>`).join("")
     + PLEINS.map(([pc, name]) => `<button class="chip ${simPc === pc ? "on" : ""}" data-simpc="${pc}">${name}</button>`).join("");
-  document.body.classList.toggle("claude-off", !vue); document.body.classList.toggle("vue-c", vue === "c");
   renderClaude();
 }
 applyEssai();
@@ -358,8 +344,7 @@ async function renderFini() {
 renderFini();
 document.addEventListener("click", e => {
   const b = e.target.closest("button"); if (!b || b.disabled) return;
-  if (b.dataset.tab) { document.querySelectorAll(".tab").forEach(t => t.setAttribute("aria-selected", t === b)); ["claude", "piste", "evo", "humeur", "tests"].forEach(k => $("p-" + k).hidden = k !== b.dataset.tab); placePill(); if (b.dataset.tab === "claude") renderFini(); }
-  else if (b.dataset.vue !== undefined) { vue = b.dataset.vue; try { localStorage.setItem("bidule.vue", vue); } catch (e) {} applyEssai(); }
+  if (b.dataset.tab) { document.querySelectorAll(".tab").forEach(t => t.setAttribute("aria-selected", t === b)); ["claude", "piste", "evo", "humeur", "tests"].forEach(k => $("p-" + k).hidden = k !== b.dataset.tab); placePill(); if (b.dataset.tab === "claude") { renderFini(); renderGraphes(); } }
   else if (b.dataset.sim !== undefined) { sim = b.dataset.sim; applyEssai(); }
   else if (b.dataset.simpc !== undefined) { simPc = +b.dataset.simpc; if (!sim) sim = "pense"; applyEssai(); }
   else if (b.dataset.essai !== undefined) { essai = b.dataset.essai; try { localStorage.setItem("bidule.essai", essai); } catch (e) {} applyEssai(); }

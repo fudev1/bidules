@@ -180,6 +180,20 @@ fn prompt_times() -> Vec<f64> {
     out
 }
 
+// Les heures des prompts des 7 derniers jours, pour les graphiques d'activité du panneau (onglet Claude).
+#[tauri::command(async)]
+fn prompts_semaine() -> Vec<f64> {
+    let home = std::env::var("HOME").unwrap_or_default();
+    let cutoff = SystemTime::now() - Duration::from_secs(7 * 86400);
+    let debut = cutoff.duration_since(SystemTime::UNIX_EPOCH).map_or(0.0, |d| d.as_secs_f64());
+    let mut out = Vec::new();
+    for root in [format!("{home}/.claude/projects"), format!("{home}/.claude-masana/projects")] {
+        collect(Path::new(&root), cutoff, &mut out);
+    }
+    out.retain(|&t| t >= debut);
+    out
+}
+
 // Jauge de contexte de la conversation en cours dans Claude Desktop (onglet Code). Desktop range chaque session dans
 // claude-code-sessions/…/local_*.json (id du journal, modèle, dernier focus) ; le journal est le même que celui de Claude Code,
 // dans ~/.claude/projects. On n'y lit que les quantités de tokens de la dernière réponse, jamais le texte ni le titre.
@@ -623,7 +637,7 @@ fn limites() -> Option<Limites> {
 
 fn main() {
     tauri::Builder::default()
-        .invoke_handler(tauri::generate_handler![log, quit, hide_panel, prompt_times, contexte, icone, session_active, haptique, hooks_etat, brancher_hooks, debrancher_hooks, sessions, limites, montrer_bidule, ouvrir_panneau, lire_choix, garder_choix, lire_etat, garder_etat, bonbon_poser, bonbon_retirer, bonbon_clic])
+        .invoke_handler(tauri::generate_handler![log, quit, hide_panel, prompt_times, contexte, icone, session_active, haptique, hooks_etat, brancher_hooks, debrancher_hooks, sessions, limites, prompts_semaine, montrer_bidule, ouvrir_panneau, lire_choix, garder_choix, lire_etat, garder_etat, bonbon_poser, bonbon_retirer, bonbon_clic])
         .setup(|app| {
             #[cfg(target_os = "macos")]
             app.set_activation_policy(tauri::ActivationPolicy::Accessory);
