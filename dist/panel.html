@@ -20,14 +20,15 @@ button:disabled{cursor:default}
 .mon{image-rendering:pixelated;filter:drop-shadow(2px 0 0 #fff) drop-shadow(-2px 0 0 #fff) drop-shadow(0 2px 0 #fff) drop-shadow(0 -2px 0 #fff)}
 .ground{position:relative;display:grid;justify-items:center;isolation:isolate}
 .ground::after{content:"";position:absolute;bottom:-3px;width:62%;height:9px;border-radius:50%;background:rgba(30,27,58,.28);z-index:-1}
-header{position:relative;background:var(--plum) var(--waves);padding:10px 14px 10px;text-align:center;display:grid;justify-items:center;gap:2px}
+header{position:relative;background:var(--plum) var(--waves);padding:8px 54px 8px 16px;display:grid;grid-template-columns:auto 1fr;align-items:center;gap:14px}
+.nom{display:grid;gap:3px;min-width:0}
 .kicker{margin:0;font:400 11px/1 var(--display);letter-spacing:1.5px;color:var(--yellow)}
-h1{margin:0;font:400 28px/.95 var(--display);letter-spacing:1px;color:var(--yellow);text-shadow:3px 4px 0 var(--plum-deep)}
-.stage{margin:-20px 0 4px}
-.stage img{width:96px;height:96px}
-.stage::after{height:12px}
-#sub{margin:0;font:400 11px/1 var(--display);letter-spacing:1.2px}
-#quit{position:absolute;top:10px;right:10px;width:30px;height:30px;border-radius:50%;background:var(--pink);display:grid;place-items:center;box-shadow:0 3px 0 var(--plum-deep)}
+h1{margin:0;font:400 24px/.95 var(--display);letter-spacing:1px;color:var(--yellow);text-shadow:3px 4px 0 var(--plum-deep)}
+.stage{grid-row:1}
+.stage img{width:56px;height:56px}
+.stage::after{height:8px}
+#sub{margin:0;font-size:11.5px;opacity:.9;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#quit{position:absolute;top:50%;margin-top:-15px;right:14px;width:30px;height:30px;border-radius:50%;background:var(--pink);display:grid;place-items:center;box-shadow:0 3px 0 var(--plum-deep)}
 #quit:hover{background:#ff4570}
 #quit:active{transform:translateY(2px);box-shadow:0 1px 0 var(--plum-deep)}
 #quit svg{width:16px;height:16px}
@@ -138,23 +139,30 @@ main{flex:1;overflow:auto;padding:0 12px 12px}
 .sess small{text-align:right;opacity:.85}
 .fini{display:flex;align-items:center;gap:10px}
 .fini .hint{flex:1}
-.moods{display:grid;grid-template-columns:repeat(2,1fr);gap:6px}
+.moods{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+#sub b{color:var(--yellow)}
 .moods .chip{border-radius:14px;text-align:left;padding:9px 12px}
 .now{background:rgba(30,27,58,.22);border-radius:14px;padding:10px 12px;font-size:12.5px}
 .now b{color:var(--yellow)}
 </style></head>
 <body>
 <div class="panel">
-  <header><button id="quit" aria-label="Éteindre le Bidule" title="Éteindre le Bidule"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round"><path d="M12 3v8"/><path d="M6.3 7.3a8 8 0 1 0 11.4 0"/></svg></button><p class="kicker">Ton Bidule</p><h1 id="title">Bidule</h1><div class="ground stage"><svg class="anneau" id="anneau" viewBox="0 0 128 128" hidden></svg><img id="thumb" class="mon" alt=""></div><p id="sub"></p><div class="bulle-bd" id="bulleBD" hidden></div></header>
+  <header><button id="quit" aria-label="Éteindre le Bidule" title="Éteindre le Bidule"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round"><path d="M12 3v8"/><path d="M6.3 7.3a8 8 0 1 0 11.4 0"/></svg></button><div class="ground stage"><svg class="anneau" id="anneau" viewBox="0 0 128 128" hidden></svg><img id="thumb" class="mon" alt=""></div><div class="nom"><p class="kicker">Ton Bidule</p><h1 id="title">Bidule</h1><p id="sub"></p></div><div class="bulle-bd" id="bulleBD" hidden></div></header>
   <section class="claude" id="claude" hidden></section>
   <nav class="tabs" role="tablist">
     <span class="pill instant" id="pill"></span>
+    <button class="tab" role="tab" data-tab="claude" aria-selected="false">Claude</button>
     <button class="tab" role="tab" data-tab="piste" aria-selected="true">Piste</button>
     <button class="tab" role="tab" data-tab="evo" aria-selected="false">Évolution</button>
     <button class="tab" role="tab" data-tab="humeur" aria-selected="false">Humeur</button>
     <button class="tab lab" role="tab" data-tab="tests" aria-selected="false" title="Tests : des essais d'apparence" aria-label="Tests"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6M10 3v6l-5 9a2 2 0 0 0 1.8 3h10.4a2 2 0 0 0 1.8-3l-5-9V3"/><path d="M7.5 15h9"/></svg></button>
   </nav>
   <main>
+    <section class="pane" id="p-claude" hidden>
+      <div class="sessions" id="limites"></div>
+      <div class="sessions" id="sessions"></div>
+      <div class="now fini"><p class="hint" id="finiTxt"></p><button class="chip" id="fini" hidden>Brancher</button></div>
+    </section>
     <section class="pane" id="p-piste">
       <p class="hint" id="pisteHint">Pour l'instant, seule la limace est prête. Les autres Bidules arriveront avec leurs animations redessinées.</p>
       <div class="styles" id="styles"></div>
@@ -171,12 +179,8 @@ main{flex:1;overflow:auto;padding:0 12px 12px}
       <div class="essais" id="essais"></div>
     </section>
     <section class="pane" id="p-humeur" hidden>
-      <p class="hint">L'humeur suit le rythme de ta journée, toutes sessions confondues : l'heure, le temps passé sans vraie pause, le nombre de sessions de Claude en même temps. Elle change lentement. Quand une session t'attend, il te le dit, quelle que soit la session affichée ; quand Claude a fini partout, il dort : c'est le signal pour y retourner. Jamais en lisant tes messages. Tu peux forcer l'humeur ici.</p>
-      <div class="now" id="moodNow"></div>
+      <p class="hint">Elle suit le rythme de ta journée, toutes sessions confondues : l'heure, le temps sans vraie pause, le nombre de sessions en même temps. Jamais en lisant tes messages. Tu peux la forcer ici.</p>
       <div class="moods" id="moods"></div>
-      <div class="sessions" id="sessions"></div>
-      <div class="sessions" id="limites"></div>
-      <div class="now fini"><p class="hint" id="finiTxt"></p><button class="chip" id="fini" hidden>Brancher</button></div>
     </section>
   </main>
 </div>
@@ -205,8 +209,7 @@ function render() {
   if (st.style) $("thumb").src = st.thumb || render64(st.style, parts);
   $("title").textContent = st.style ? STYLES.find(s => s[0] === st.style)[1] : "Choisis-le !";
   const ml = st.mood ? MOODS.find(m => m[0] === st.mood)[1] : "Normale";
-  $("sub").textContent = st.style ? "Humeur : " + ml : "";
-  $("moodNow").innerHTML = `Humeur actuelle : <b>${ml}</b>` + (st.moodReason ? ` (${st.moodMode === "auto" ? "devinée : " : ""}${st.moodReason})` : "");
+  $("sub").innerHTML = st.style ? `Humeur : <b>${ml}</b>` + (st.moodReason ? ` (${st.moodMode === "auto" ? "devinée : " : ""}${st.moodReason})` : "") : "";
   $("haptique").textContent = st.haptique === false ? "Coupé" : "Activé"; $("haptique").classList.toggle("on", st.haptique !== false);
   $("moods").innerHTML = MOODS.map(([id, name]) => `<button class="chip ${st.moodMode === id ? "on" : ""}" data-mood="${id}">${name}</button>`).join("");
   $("styles").innerHTML = STYLES.map(([id, name], i) => `<button class="st c${i % 4} ${id === st.style ? "on" : ""}" data-style="${id}" ${READY.has(id) ? "" : "disabled"}>${READY.has(id) ? (id === st.style && st.cache ? '<i class="soon">Caché</i>' : "") : '<i class="soon">Bientôt</i>'}<i class="spark"></i><span class="ground"><img class="mon" src="${render64(id, st.partsBy[id] || {}, READY.has(id) ? st.mood : null)}" alt=""></span><span class="nm">${name}</span></button>`).join("");
@@ -298,8 +301,8 @@ function renderClaude() {
 const ETATS = {travaille:"travaille", attend:"t'attend", fini:"a fini"};
 function renderSessions() {
   const L = (claudeEtat && claudeEtat.sessions || []).slice().sort((a, b) => (b.etat === "attend") - (a.etat === "attend") || a.depuis - b.depuis);
-  $("sessions").innerHTML = L.length ? "<h3>Sessions de Claude</h3>" + L.map(x => `<div class="sess"><b>${(x.projet || "Session").replace(/</g, "&lt;")}</b><span class="et ${x.etat}">${ETATS[x.etat] || x.etat}</span>`
-    + (x.tokens ? `<div class="barre">${barre(Math.min(100, x.pourcent), 12)}</div><small>${Math.round(x.pourcent)} %</small>` : "<span></span><span></span>") + "</div>").join("") : "";
+  $("sessions").innerHTML = !L.length ? (finiEtat === "oui" ? `<h3>Sessions de Claude</h3><p class="hint">Aucune session en cours.</p>` : "") : "<h3>Sessions de Claude</h3>" + L.map(x => `<div class="sess"><b>${(x.projet || "Session").replace(/</g, "&lt;")}</b><span class="et ${x.etat}">${ETATS[x.etat] || x.etat}</span>`
+    + (x.tokens ? `<div class="barre">${barre(Math.min(100, x.pourcent), 12)}</div><small>${Math.round(x.pourcent)} %</small>` : "<span></span><span></span>") + "</div>").join("");
 }
 if (T) T.event.listen("claude", e => { claudeEtat = e.payload; renderClaude(); renderSessions(); renderFiniTxt(); renderLimites(); });
 // Les limites de l'abonnement (Pro, Max), d'après la barre d'état de Claude Code (main.rs : limites). Vert jusqu'à 70 %, orange après 90 %.
@@ -354,7 +357,7 @@ async function renderFini() {
 renderFini();
 document.addEventListener("click", e => {
   const b = e.target.closest("button"); if (!b || b.disabled) return;
-  if (b.dataset.tab) { document.querySelectorAll(".tab").forEach(t => t.setAttribute("aria-selected", t === b)); ["piste", "evo", "humeur", "tests"].forEach(k => $("p-" + k).hidden = k !== b.dataset.tab); placePill(); if (b.dataset.tab === "humeur") renderFini(); }
+  if (b.dataset.tab) { document.querySelectorAll(".tab").forEach(t => t.setAttribute("aria-selected", t === b)); ["claude", "piste", "evo", "humeur", "tests"].forEach(k => $("p-" + k).hidden = k !== b.dataset.tab); placePill(); if (b.dataset.tab === "claude") renderFini(); }
   else if (b.dataset.vue !== undefined) { vue = b.dataset.vue; try { localStorage.setItem("bidule.vue", vue); } catch (e) {} applyEssai(); }
   else if (b.dataset.sim !== undefined) { sim = b.dataset.sim; applyEssai(); }
   else if (b.dataset.simpc !== undefined) { simPc = +b.dataset.simpc; if (!sim) sim = "pense"; applyEssai(); }
@@ -370,7 +373,9 @@ document.addEventListener("click", e => {
   else if (b.id === "quit") { if (T) T.core.invoke("quit"); }
 });
 document.addEventListener("keydown", e => { if (e.key === "Escape" && T) T.core.invoke("hide_panel"); });
-if (T) { T.event.listen("etat", e => { st = e.payload; render(); }); send("demande-etat"); }
+// le panneau s'ouvre sur l'onglet Claude dès qu'un Bidule est choisi (au premier lancement, sur la Piste pour le choisir)
+let ongletChoisi = false;
+if (T) { T.event.listen("etat", e => { st = e.payload; render(); if (st.style && !ongletChoisi) { ongletChoisi = true; document.querySelector('[data-tab="claude"]').click(); } }); send("demande-etat"); }
 render();
 </script>
 </body></html>
