@@ -392,6 +392,9 @@ HAND = [("endort", endort()), ("baille", hand("baille", "baille")), ("repos", ha
         ("vol-vert", dizzy(vert(SAUT[16:19]))), ("chute-legere-vert", dizzy(vert(SAUT[19:21]))), ("atterrissage-vert", dizzy(vert(SAUT[21:27]))), ("chute-vert", dizzy(vert(hand("chute", "chute", 0, 11)))),
         ("nausee", dizzy(vert(CRAWL))), ("mange", hand("eat", "mange")), ("rot", hand("rot", "rot")), ("caresse", hand("caresse", "caresse", 0, 5)), ("caresse-fin", hand("caresse", "caresse", 6, 8)), ("rire", hand("rire", "rire")), ("remis", hand("remis", "remis")), ("choc-bord", hand("choc-bord", "choc-bord")), ("coule", hand("coule", "coule")), ("coule-fin", hand("coule-fin", "coule-fin")), ("choc-bord-vert", dizzy(vert(hand("choc-bord", "choc-bord")))), ("coule-vert", dizzy(vert(hand("coule", "coule")))), ("coule-fin-vert", dizzy(vert(hand("coule-fin", "coule-fin")))),
         # chute : 0-1 = début, 2-11 = boucle ; 12-13 (la goutte qui descend dans l'image) sont sautées, c'est la fenêtre qui descend
+        # au plafond : il se décolle vers le bas, prend de l'élan (decolle-pendule), puis se balance en boucle (pendule-plafond) ; dessinées comme à l'écran,
+        # rangées ici retournées de haut en bas : l'app retourne l'image au plafond, comme pour crawl
+        ("decolle-pendule", [(f[::-1], d) for f, d in hand("decolle-pendule", "decolle-pendule", 0, 24)]), ("pendule-plafond", [(f[::-1], d) for f, d in hand("decolle-pendule", "decolle-pendule", 25, 40)]),
         ("chute", hand("chute", "chute", 0, 11)), ("ecrase", hand("chute", "chute", 14, 22))]
 for name, seq in HAND:
     start = len(out_frames); out_frames += seq; tags.append((name, start, len(out_frames) - 1))
@@ -407,7 +410,7 @@ for name, seq in ANIMS:
 
 # chaque animation dans chaque humeur (balise « nom@humeur »), et sa version alternée (« nom@humeur:cligne ») que l'app montre de temps en temps ;
 # seulement les animations où le visage neutre apparaît ; ni les versions vertes de la nausée, ni les morceaux d'attrape-boule, ni le réveil (remue :
-# l'œil qui s'entrouvre garde son air endormi), ni mange (le visage de l'humeur se poserait sur la bouche qui mâche).
+# l'œil qui s'entrouvre garde son air endormi), ni mange (le visage de l'humeur se poserait sur la bouche qui mâche), ni le balancement au plafond (images rangées à l'envers).
 # Chaque animation d'humeur a son fichier, animations/humeurs/<dossier>/<nom>.aseprite (balises « normal » et « cligne ») : s'il existe (exporté par
 # mise run publier), c'est lui qui compte, retouches comprises ; sinon, le visage est posé par le code. gen.py --fichiers écrit les fichiers qui
 # manquent (jamais par-dessus un fichier existant). Les morceaux du saut (vol, chute-legere, atterrissage, saut-face) sont pris dans saut@humeur.
@@ -422,7 +425,7 @@ written = []
 for h, (normal, alt) in HUMEURS.items():
     done = {}
     for name, a, b in list(tags):
-        if "-vert" in name or name in ("nausee", "secoue", "remue", "mange") or name in SOUS or name.startswith("attrape-boule-") or "@" in name: continue
+        if "-vert" in name or name in ("nausee", "secoue", "remue", "mange", "decolle-pendule", "pendule-plafond") or name in SOUS or name.startswith("attrape-boule-") or "@" in name: continue
         seq = out_frames[a:b + 1]; got = mood_file(h, name)
         if got is None:
             lg = LANGUE if h == "guilleret" else None; pt = name in LANGUE_PARTOUT
