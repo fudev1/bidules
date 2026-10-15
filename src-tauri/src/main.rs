@@ -9,7 +9,7 @@ use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant, SystemTime};
 use tauri::menu::{Menu, MenuItem};
 use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent};
-use tauri::{AppHandle, Emitter, Manager, PhysicalPosition, WebviewUrl, WebviewWindowBuilder, WindowEvent};
+use tauri::{AppHandle, Emitter, LogicalSize, Manager, PhysicalPosition, WebviewUrl, WebviewWindow, WebviewWindowBuilder, WindowEvent};
 
 #[tauri::command]
 fn log(msg: String) {
@@ -412,10 +412,22 @@ fn garder_etat(app: AppHandle, etat: String) {
     if std::fs::write(&tmp, etat).is_ok() { let _ = std::fs::rename(tmp, p); }
 }
 
+// Le panneau prend toute la hauteur de l'écran sous la barre de menus, mais jamais plus que le plus petit écran branché :
+// sur un grand écran externe, il garde la hauteur qu'il a sur l'écran du Mac.
+fn hauteur_panneau(app: &AppHandle, p: &WebviewWindow) {
+    let h = app.available_monitors().unwrap_or_default().iter()
+        .map(|m| m.work_area().size.height as f64 / m.scale_factor())
+        .fold(f64::INFINITY, f64::min);
+    if h.is_finite() {
+        let _ = p.set_size(LogicalSize::new(640.0, (h - 8.0).max(600.0)));
+    }
+}
+
 // Le panneau au milieu de l'écran (menu du clic droit sur le Bidule, menu de l'icône).
 #[tauri::command]
 fn ouvrir_panneau(app: AppHandle) {
     if let Some(p) = app.get_webview_window("panel") {
+        hauteur_panneau(&app, &p);
         let _ = p.center();
         let _ = p.show();
         let _ = p.set_focus();
@@ -884,6 +896,7 @@ fn main() {
                         if h3.lock().unwrap().elapsed() < Duration::from_millis(300) {
                             return;
                         }
+                        hauteur_panneau(app, &panel);
                         let scale = panel.scale_factor().unwrap_or(1.0);
                         let pos = rect.position.to_physical::<f64>(scale);
                         let size = rect.size.to_physical::<f64>(scale);
