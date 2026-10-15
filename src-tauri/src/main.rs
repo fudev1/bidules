@@ -456,16 +456,21 @@ const HOOKS: [(&str, Option<&str>, &str); 6] = [
     ("Stop", None, "fini"),
     ("SessionEnd", None, "fin"),
 ];
+// Un fichier partagé par les deux profils (lien symbolique) ne compte qu'une fois : sinon le second profil écraserait le premier.
 fn reglages_claude(home: &str) -> Vec<PathBuf> {
-    [".claude", ".claude-masana"].iter().map(|d| PathBuf::from(format!("{home}/{d}"))).filter(|d| d.is_dir()).map(|d| d.join("settings.json")).collect()
+    let mut vus = Vec::new();
+    [".claude", ".claude-masana"].iter().map(|d| PathBuf::from(format!("{home}/{d}"))).filter(|d| d.is_dir()).map(|d| d.join("settings.json"))
+        .filter(|p| { let c = std::fs::canonicalize(p).unwrap_or_else(|_| p.clone()); let neuf = !vus.contains(&c); vus.push(c); neuf }).collect()
 }
 // "oui" : les hooks de cette version sont posés partout ; "ancien" : il reste ceux d'une version précédente (à mettre à jour) ; "non" : aucun.
 #[tauri::command(async)]
 fn hooks_etat() -> &'static str {
     let home = std::env::var("HOME").unwrap_or_default();
-    let textes: Vec<String> = reglages_claude(&home).iter().map(|p| std::fs::read_to_string(p).unwrap_or_default()).collect();
-    let a_jour = |t: &String| t.contains("bidules/hook.sh") && t.contains("SessionEnd") && t.contains("bidules/ligne.sh");
-    if !textes.is_empty() && textes.iter().all(a_jour) && Path::new(&format!("{home}/.bidules/ligne.sh")).is_file() { "oui" }
+    let fichiers = reglages_claude(&home);
+    let textes: Vec<String> = fichiers.iter().map(|p| std::fs::read_to_string(p).unwrap_or_default()).collect();
+    // la barre d'état doit nommer le profil de son fichier (une version précédente pouvait mettre celui de l'autre profil)
+    let a_jour = |(t, p): (&String, &PathBuf)| t.contains("bidules/hook.sh") && t.contains("SessionEnd") && t.contains(&format!("ligne.sh\\\" {}\"", profil(p)));
+    if !textes.is_empty() && textes.iter().zip(&fichiers).all(a_jour) && Path::new(&format!("{home}/.bidules/ligne.sh")).is_file() { "oui" }
     else if textes.iter().any(|t| t.contains(".bidules")) { "ancien" } else { "non" }
 }
 fn ecrire_hook_sh(home: &str) -> Result<(), String> {
@@ -536,7 +541,7 @@ fn debrancher_hooks() -> Result<(), String> {
         std::fs::write(&p, serde_json::to_string_pretty(&v).unwrap() + "\n").map_err(|e| e.to_string())?;
         let _ = std::fs::remove_file(format!("{home}/.bidules/ligne-avant-{}", profil(&p)));
     }
-    for f in ["hook.sh", "ligne.sh", "limites.json"] { let _ = std::fs::remove_file(format!("{home}/.bidules/{f}")); }
+    for f in ["hook.sh", "ligne.sh", "limites.json", "ligne-lancee"] { let _ = std::fs::remove_file(format!("{home}/.bidules/{f}")); }
     let _ = std::fs::remove_dir_all(format!("{home}/.bidules/sessions"));
     Ok(())
 }
@@ -602,17 +607,18 @@ fn sessions() -> Vec<Session> {
 #[derive(serde::Serialize)]
 struct Limite { pourcent: f64, remise: u64 }
 #[derive(serde::Serialize)]
-struct Limites { cinq_h: Option<Limite>, semaine: Option<Limite> }
+struct Limites { cinq_h: Option<Limite>, semaine: Option<Limite>, lancee: bool }
 #[tauri::command(async)]
 fn limites() -> Option<Limites> {
     let home = std::env::var("HOME").unwrap_or_default();
-    let v: serde_json::Value = serde_json::from_str(&std::fs::read_to_string(format!("{home}/.bidules/limites.json")).ok()?).ok()?;
+    let lancee = Path::new(&format!("{home}/.bidules/ligne-lancee")).exists();
+    let v: serde_json::Value = std::fs::read_to_string(format!("{home}/.bidules/limites.json")).ok().and_then(|t| serde_json::from_str(&t).ok()).unwrap_or_default();
     let now = SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).ok()?.as_secs();
     let l = |k: &str| {
         let (pc, r) = (v[k]["used_percentage"].as_f64()?, v[k]["resets_at"].as_f64()? as u64);
         Some(if r <= now { Limite { pourcent: 0.0, remise: 0 } } else { Limite { pourcent: pc, remise: r - now } })
     };
-    Some(Limites { cinq_h: l("cinq_h"), semaine: l("semaine") })
+    Some(Limites { cinq_h: l("cinq_h"), semaine: l("semaine"), lancee })
 }
 
 fn main() {

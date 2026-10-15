@@ -4,6 +4,7 @@
 # à zéro), dans ~/.bidules/limites.json. Puis on lance la barre d'état qu'on avait avant le Bidule, s'il y en avait une : elle affiche la même chose.
 d="$HOME/.bidules"
 in=$(cat)
+: > "$d/ligne-lancee"
 j=$(printf '%s' "$in" | tr -d '\n\r')
 bloc() { printf '%s' "$j" | sed -n "s/.*\"$1\" *: *{\([^{}]*\)}.*/\1/p"; }
 c=$(bloc five_hour); s=$(bloc seven_day)

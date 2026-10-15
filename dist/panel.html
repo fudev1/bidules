@@ -313,7 +313,8 @@ async function renderLimites() {
   let L = null; try { L = await T.core.invoke("limites"); } catch (e) {}
   const ligne = (nom, l) => l ? `<div class="sess"><b>${nom}</b><span class="et">${l.remise ? "à zéro dans " + dans(l.remise) : "remise à zéro"}</span><div class="barre">${barre(Math.min(100, l.pourcent), 12, false, zoneLim)}</div><small>${Math.round(l.pourcent)} %</small></div>` : "";
   $("limites").innerHTML = L && (L.cinq_h || L.semaine) ? "<h3>Limites de ton abonnement</h3>" + ligne("Sur 5 h", L.cinq_h) + ligne("Sur la semaine", L.semaine)
-    : finiEtat === "oui" ? `<p class="hint">Les limites de ton abonnement (5 h, semaine) apparaîtront ici après la prochaine réponse de Claude. Seulement avec un abonnement Pro ou Max.</p>` : "";
+    : finiEtat !== "oui" ? "" : `<h3>Limites de ton abonnement</h3><p class="hint">${L && L.lancee ? "Claude Code ne les donne pas : seulement avec un abonnement Pro ou Max, après une réponse de Claude."
+      : "Pas encore reçues. Elles passent par la barre d'état de Claude Code dans le terminal : elles arrivent après une réponse de Claude dans une session lancée avec claude."}</p>`;
 }
 setInterval(() => { icFrame++; if (vue) renderClaude(); }, 450);
 // Onglet Tests : des essais d'apparence, gardés dans ce navigateur (ce Mac) seulement.
