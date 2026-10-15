@@ -1580,7 +1580,7 @@ async function autoMood() {
   if (!claudeIdle && mode === "sleep" && Date.now() - sleepSince > 3000) wakeUp(claudeWaits ? "attend" : "seul");   // Claude se remet au travail : il se réveille
 }
 function chooseMood(m) {
-  moodMode = m;
+  moodMode = m; garder();
   if (moodMode === "auto") { mood = null; autoMood(); }
   else { moodReason = "choisie à la main"; say("humeur choisie : " + moodMode); applyMood(moodMode); bubble(MOOD_LABEL[moodMode], 1200); }
 }
@@ -1599,7 +1599,7 @@ setInterval(async () => {
 const TRAY = document.createElement("canvas"), TRAY_IMG = {};
 TRAY.width = 64; TRAY.height = 36;
 let trayTag = "", trayI = 0, trayNext = 0, traySrc = "";
-T.event.listen("bidule-visible", e => { bidHidden = !e.payload; traySrc = ""; sendState(); });      // caché : l'icône reste au repos (main.rs)
+T.event.listen("bidule-visible", e => { bidHidden = !e.payload; traySrc = ""; garder(); sendState(); });      // caché : l'icône reste au repos (main.rs)
 setInterval(() => {
   const D = SHEET_DATA.limace, now = Date.now(); if (!D || bidHidden) return;
   const tag = claudeWaits ? "intrigue" : claudeIdle ? "dort" : "crawl";          // D.tags a déjà le visage de l'humeur (moodTags)
@@ -1622,6 +1622,15 @@ T.event.listen("bonbon-clic", e => {
   wanted.push(s); disturb(); say("clic sur un bonbon");
 });
 T.event.listen("demande-etat", sendState);
+// L'état gardé d'un lancement à l'autre (main.rs : etat.json) : l'humeur choisie, les parties, les cheveux, caché ou non, le toucher, et sa place
+// à l'écran (il revient au sol, au même endroit). Écrit une demi-seconde après chaque changement ; sa place, toutes les 5 s si elle a changé.
+let gardeT = 0, gardeX = null;
+function garder() {
+  clearTimeout(gardeT);
+  gardeT = setTimeout(() => { if (mode === "walk") gardeX = Math.round(x);
+    T.core.invoke("garder_etat", {etat:JSON.stringify({humeur:moodMode, parties:partsBy, cheveux, cache:bidHidden, haptique:hapticOn, x:gardeX})}).catch(e => say("etat : " + e)); }, 500);
+}
+setInterval(() => { if (chosen && mode === "walk" && Math.abs(Math.round(x) - gardeX) > 20) garder(); }, 5000);
 // Le Bidule choisi : chargé, affiché, et gardé pour le prochain lancement (main.rs : garder_choix).
 async function chooseStyle(s) {
   if (SHEETS[s] && !SHEET_DATA[s]) { try { await loadSheet(s); } catch (err) { say("perso : " + err); return; } }
@@ -1632,7 +1641,7 @@ async function chooseStyle(s) {
   sendState();
 }
 T.event.listen("style", e => chooseStyle(e.payload));
-T.event.listen("haptique", e => { hapticOn = !!e.payload; try { localStorage.setItem("bidule.haptique", hapticOn ? "oui" : "non"); } catch (err) {} sendState(); if (hapticOn) haptic("clic"); });
+T.event.listen("haptique", e => { hapticOn = !!e.payload; garder(); sendState(); if (hapticOn) haptic("clic"); });
 // Demi-tour : avec un perso dessiné, on joue son animation "turn" au lieu de retourner l'image.
 function turnTo(nd, ready) {
   if (nd === dir) return;
@@ -1664,14 +1673,14 @@ function evolve(msg) {
 }
 T.event.listen("evo", async e => {
   if (e.payload === "evo:cheveux" && style === "limace") {          // des cheveux, ou plus de cheveux : l'autre feuille, et le même éclat que pour une partie
-    cheveux = !cheveux; try { localStorage.setItem("bidule.cheveux", cheveux ? "oui" : "non"); } catch (err) {}
+    cheveux = !cheveux; garder();
     await hairLoad(); hair.a = hair.v = 0; hairPaint();
     say(cheveux ? "evolution : des cheveux" : "evolution : plus de cheveux"); evolve(cheveux ? "Des cheveux !" : "Adieu les cheveux");
     return;
   }
   if (SHEETS[style]) { bubble("Pas encore de parties", 1300); return; }
   const id = e.payload, P = partsBy[style];
-  if (id === "evo:reset") { partsBy[style] = style === "classique" ? {} : {}; say("retour a la forme de depart"); evolve("Retour au départ"); return; }
+  if (id === "evo:reset") { partsBy[style] = style === "classique" ? {} : {}; garder(); say("retour a la forme de depart"); evolve("Retour au départ"); return; }
   let key = id.startsWith("part:") ? id.slice(5) : null;
   if (id === "evo:random") {
     const free = Object.keys(PART_NAME).filter(k => P[k.split(":")[0]] !== k.split(":")[1]);
@@ -1679,6 +1688,7 @@ T.event.listen("evo", async e => {
   }
   if (!key) return;
   const [slot, part] = key.split(":");
+  garder();
   if (P[slot] === part) { delete P[slot]; say("partie retiree : " + key); evolve(`Adieu ${PART_NAME[key]}`); }
   else { const replaced = P[slot]; P[slot] = part; say("nouvelle partie : " + key); evolve(replaced ? `${PART_NAME[key]} à la place !` : `Nouvelle partie : ${PART_NAME[key]} !`); }
 });
@@ -1706,9 +1716,18 @@ img.addEventListener("contextmenu", async e => {
     setInterval(() => { try { tick(); } catch (e) { say("tick: " + e); } }, 16);
     say("demarre");
     // le Bidule choisi la dernière fois ; au premier lancement, rien ne s'affiche : le panneau s'ouvre pour en choisir un
-    let saved = null;
+    let saved = null, E = {};
     try { saved = await T.core.invoke("lire_choix"); } catch (e) { say("choix : " + e); }
+    try { E = JSON.parse(await T.core.invoke("lire_etat") || "{}") || {}; } catch (e) { say("etat : " + e); }
+    // ce qu'on avait choisi la dernière fois (les anciens réglages du navigateur, s'il n'y a pas encore d'état gardé)
+    if (E.parties) for (const k in E.parties) partsBy[k] = E.parties[k];
+    if (typeof E.cheveux === "boolean") cheveux = E.cheveux;
+    if (typeof E.haptique === "boolean") hapticOn = E.haptique;
+    // au sol, là où il était ; la fenêtre y va tout de suite (sinon elle attendrait son premier pas, en l'air à sa place de départ)
+    if (saved && typeof E.x === "number") { x = Math.max(minX, Math.min(maxX, E.x)); y = floorY; mode = "walk"; gardeX = Math.round(x); push(); }
     if (saved) await chooseStyle(saved); else T.core.invoke("ouvrir_panneau");
+    if (E.humeur && E.humeur !== "auto" && MOOD_LABEL[E.humeur]) { moodMode = E.humeur; moodReason = "choisie à la main"; applyMood(moodMode); }
+    if (saved && E.cache) T.core.invoke("montrer_bidule", {oui:false});
     autoMood();
   } catch (e) { say("init: " + e); }
 })();
