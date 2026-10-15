@@ -118,6 +118,26 @@ main{flex:1;overflow:auto;padding:0 12px 12px}
 #sub b{color:var(--yellow)}
 .moods .chip{border-radius:14px;text-align:left;padding:9px 12px}
 .now{border-radius:14px;padding:10px 12px;font-size:12.5px}
+/* coût équivalent API (onglet Claude) : barres empilées par modèle, une couleur par famille */
+.cout .tete{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.cout .somme{font:400 26px/1 var(--display);letter-spacing:.6px;color:var(--white)}
+.seg{display:flex;gap:3px}
+.seg button{font:600 11px/1 var(--text);background:rgba(255,255,255,.14);border-radius:999px;padding:5px 9px}
+.seg button[aria-pressed="true"]{background:var(--yellow);color:var(--ink)}
+.cout select{font:600 11px/1 var(--text);background:rgba(255,255,255,.14);color:inherit;border:0;border-radius:999px;padding:3px 6px}
+.cout select option{color:var(--ink)}
+.barres span{display:flex;flex-direction:column-reverse;min-height:0}
+.barres span b{min-height:1px}.barres span b:last-child{border-radius:3px 3px 0 0}
+.barres span:hover{filter:brightness(1.25)}
+.legende{display:flex;flex-wrap:wrap;gap:4px 10px;font-size:10.5px;opacity:.9}
+.legende i,.parts i.p{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:4px}
+.parts{display:grid;grid-template-columns:1fr 1fr;gap:4px 14px}
+.parts h4{margin:4px 0 0;font:400 12px/1 var(--display);letter-spacing:.5px;color:var(--yellow)}
+.parts section{display:grid;gap:5px;align-content:start}
+.parts div{display:grid;grid-template-columns:1fr auto;gap:2px 8px;font-size:11px;align-items:center}
+.parts div span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.parts div u{grid-column:1/-1;height:4px;border-radius:2px;background:rgba(255,255,255,.12);text-decoration:none;display:block}
+.parts div u i{display:block;height:100%;border-radius:2px}
 .now b{color:var(--yellow)}
 </style></head>
 <body>
@@ -135,6 +155,7 @@ main{flex:1;overflow:auto;padding:0 12px 12px}
     <section class="pane" id="p-claude" hidden>
       <div class="sessions" id="limites"></div>
       <div class="graphes" id="graphes"></div>
+      <div class="graphe cout" id="cout"></div>
       <div class="sessions" id="sessions"></div>
       <div class="now fini"><p class="hint" id="finiTxt"></p><button class="chip" id="fini" hidden>Brancher</button></div>
     </section>
@@ -260,6 +281,57 @@ async function renderGraphes() {
     + barres(jours.map(j => j.m), jours.map(j => `${j.d.toLocaleDateString("fr-FR", {weekday:"long", day:"numeric"})} : ${hm(j.m)}`), Math.max(...jours.map(j => j.m), 1))
     + `<div class="axe">${jours.map((j, k) => k === 6 ? "<b>auj.</b>" : `<span>${NOMS[j.d.getDay()]}</span>`).join("")}</div></div>`;
 }
+// Ce que l'abonnement a évité de payer (issue #48) : les tokens des journaux (main.rs : depenses) au prix de l'API.
+// Pas de record ni de classement : c'est un relevé, rien ne pousse à le faire monter. Claude Code efface ses journaux
+// au bout de 30 jours par défaut, d'où « depuis le … ».
+// $ par million de tokens : entrée, sortie, cache écrit pour 5 min, cache écrit pour 1 h, cache lu. Le premier qui correspond l'emporte.
+// Haiku 5.5 : prix pas encore publié, on prend celui de Haiku 4.5.
+const PRIX = [
+  [/fable-5-1/, 10, 50, 12.5, 20, .25], [/fable/, 10, 50, 12.5, 20, 1],
+  [/opus-5-5/, 4, 20, 5, 8, .2], [/opus-4-1|opus-4-2025|opus-3/, 15, 75, 18.75, 30, 1.5], [/opus/, 5, 25, 6.25, 10, .5],
+  [/sonnet-5-5/, 2, 10, 2.5, 4, .1], [/sonnet/, 3, 15, 3.75, 6, .3],
+  [/haiku-3-5/, .8, 4, 1, 1.6, .08], [/haiku-3/, .25, 1.25, .3, .5, .03], [/haiku/, 1, 5, 1.25, 2, .1],
+];
+const FAMILLES = ["fable", "opus", "sonnet", "haiku"], TEINTES = ["#ff8a3d", "#a6d23a", "#ffd94a", "#7fd1ff", "#c79bff", "#ffffff", "#5fd3a8"];
+const ABOS = [["", "à choisir"], ["20", "Pro, 20 $"], ["100", "Max 5×, 100 $"], ["200", "Max 20×, 200 $"]];
+let depenses = [], depensesAt = 0, coutPas = "jour";
+function prix(m, tk) { const p = PRIX.find(x => x[0].test(m)); return p ? tk.reduce((s, n, i) => s + n * p[i + 1], 0) / 1e6 : 0; }
+function nomModele(m) { return m.replace(/^claude-/, "").replace(/-\d{8}$/, "").replace(/-(\d+)-(\d+)/, " $1.$2").replace(/-(\d+)$/, " $1").replace(/^./, c => c.toUpperCase()); }
+function dollars(n) { return n.toLocaleString("fr-FR", {maximumFractionDigits:n < 10 ? 2 : 0}) + " $"; }
+function tokensTxt(n) { return n >= 1e9 ? (n / 1e9).toLocaleString("fr-FR", {maximumFractionDigits:1}) + " Md" : n >= 1e6 ? (n / 1e6).toLocaleString("fr-FR", {maximumFractionDigits:1}) + " M" : Math.round(n / 1e3) + " k"; }
+function abo() { try { return localStorage.getItem("abonnement") || ""; } catch (e) { return ""; } }
+// début de la période (jour, semaine commençant le lundi, mois) qui contient d, en heure locale
+function debut(d, pas) { d = new Date(d); d.setHours(0, 0, 0, 0); if (pas === "semaine") d.setDate(d.getDate() - (d.getDay() + 6) % 7); if (pas === "mois") d.setDate(1); return d; }
+function precedente(d, pas, k) { d = new Date(d); if (pas === "jour") d.setDate(d.getDate() - k); else if (pas === "semaine") d.setDate(d.getDate() - 7 * k); else d.setMonth(d.getMonth() - k); return d; }
+async function renderCout() {
+  if (Date.now() - depensesAt > 300000) { try { depenses = (await T.core.invoke("depenses")).map(x => ({...x, cout:prix(x.modele, x.tokens), tot:x.tokens.reduce((a, b) => a + b, 0)})); depensesAt = Date.now(); } catch (e) {} }
+  if (!depenses.length) { $("cout").hidden = true; return; }
+  $("cout").hidden = false;
+  const total = depenses.reduce((s, x) => s + x.cout, 0), toks = depenses.reduce((s, x) => s + x.tot, 0);
+  const premier = new Date(Math.min(...depenses.map(x => x.heure)) * 1000), mois = debut(new Date(), "mois").getTime() / 1000;
+  const ceMois = depenses.filter(x => x.heure >= mois).reduce((s, x) => s + x.cout, 0), a = abo();
+  const famille = m => (FAMILLES.findIndex(f => m.includes(f)) + 5) % 5;
+  const modeles = [...new Set(depenses.map(x => x.modele))].sort((x, y) => famille(x) - famille(y) || y.localeCompare(x)), couleur = m => TEINTES[modeles.indexOf(m) % TEINTES.length];
+  // pas plus de périodes que depuis le premier journal (6 au moins), pour ne pas aligner des mois vides
+  const fin = debut(new Date(), coutPas), depuis = Array.from({length:30}, (_, k) => precedente(fin, coutPas, k)).findIndex(d => d <= premier) + 1 || 30;
+  const n = Math.min({jour:30, semaine:12, mois:12}[coutPas], Math.max(depuis, 6));
+  const periodes = Array.from({length:n}, (_, k) => { const d = precedente(fin, coutPas, n - 1 - k); return {d, a:d.getTime() / 1000, b:precedente(d, coutPas, -1).getTime() / 1000, par:{}}; });
+  depenses.forEach(x => { const p = periodes.find(p => x.heure >= p.a && x.heure < p.b); if (p) p.par[x.modele] = (p.par[x.modele] || 0) + x.cout; });
+  periodes.forEach(p => p.tot = Object.values(p.par).reduce((s, v) => s + v, 0));
+  const max = Math.max(...periodes.map(p => p.tot), .01);
+  const etiq = p => coutPas === "mois" ? p.d.toLocaleDateString("fr-FR", {month:"short"}) : p.d.toLocaleDateString("fr-FR", {day:"numeric", month:"short"});
+  const parts = (cle, nom, coul) => { const m = {}; depenses.forEach(x => m[x[cle]] = (m[x[cle]] || 0) + x.cout); return Object.entries(m).sort((x, y) => y[1] - x[1]).slice(0, 5)
+    .map(([k, v]) => `<div><span title="${k.replace(/"/g, "")}">${nom(k).replace(/</g, "&lt;") || "?"}</span><b>${dollars(v)}</b><u><i style="width:${total ? v / total * 100 : 0}%;background:${coul(k)}"></i></u></div>`).join(""); };
+  $("cout").innerHTML = `<div class="tete"><h3>Ce que ton abonnement t'a évité de payer</h3><div class="seg">${["jour", "semaine", "mois"].map(k => `<button data-pas="${k}" aria-pressed="${k === coutPas}">${k[0].toUpperCase() + k.slice(1)}</button>`).join("")}</div></div>`
+    + `<div class="tete"><span class="somme">${dollars(total)}</span><p>au prix de l'API, depuis le ${premier.toLocaleDateString("fr-FR", {day:"numeric", month:"long"})} · ${tokensTxt(toks)} tokens (entrée, sortie et cache)</p></div>`
+    + `<p>Ce mois-ci : ${dollars(ceMois)} au prix de l'API. Ton abonnement, par mois : <select id="abo">${ABOS.map(([v, t]) => `<option value="${v}"${v === a ? " selected" : ""}>${t}</option>`).join("")}</select></p>`
+    + `<div class="barres">${periodes.map(p => `<span style="height:${p.tot / max * 100}%" title="${etiq(p)} : ${dollars(p.tot)}${modeles.filter(m => p.par[m]).map(m => `\n${nomModele(m)} : ${dollars(p.par[m])}`).join("")}">${modeles.filter(m => p.par[m]).map(m => `<b style="flex:${p.par[m]};background:${couleur(m)}"></b>`).join("")}</span>`).join("")}</div>`
+    + `<div class="axe">${periodes.map((p, k) => `<span>${k % (coutPas === "jour" ? 7 : 3) === (n - 1) % (coutPas === "jour" ? 7 : 3) ? etiq(p) : ""}</span>`).join("")}</div>`
+    + `<div class="legende">${modeles.map(m => `<span><i style="background:${couleur(m)}"></i>${nomModele(m)}</span>`).join("")}</div>`
+    + `<div class="parts"><h4>Par projet</h4><h4>Par modèle</h4><section>${parts("projet", k => k, () => "var(--white)")}</section><section>${parts("modele", nomModele, couleur)}</section></div>`;
+}
+$("cout").addEventListener("click", e => { const b = e.target.closest("[data-pas]"); if (b) { coutPas = b.dataset.pas; renderCout(); } });
+$("cout").addEventListener("change", e => { if (e.target.id === "abo") { try { localStorage.setItem("abonnement", e.target.value); } catch (err) {} } });
 // La bulle du Bidule, dans l'en-tête : ce que fait Claude (toutes sessions confondues), depuis quand, et le contexte de la session en vue
 function renderClaude() {
   const j = claudeNow(), e = lireEtat(j), B = $("bulleBD");
@@ -275,7 +347,7 @@ function renderSessions() {
   $("sessions").innerHTML = !L.length ? (finiEtat === "oui" ? `<h3>Sessions de Claude</h3><p class="hint">Aucune session en cours.</p>` : "") : "<h3>Sessions de Claude</h3>" + L.map(x => `<div class="sess"><b>${(x.projet || "Session").replace(/</g, "&lt;")}</b><span class="et ${x.etat}">${ETATS[x.etat] || x.etat}</span>`
     + (x.tokens ? `<div class="barre">${barre(Math.min(100, x.pourcent), 12)}</div><small>${Math.round(x.pourcent)} %</small>` : "<span></span><span></span>") + "</div>").join("");
 }
-if (T) T.event.listen("claude", e => { claudeEtat = e.payload; renderClaude(); renderSessions(); renderFiniTxt(); renderLimites(); renderGraphes(); });
+if (T) T.event.listen("claude", e => { claudeEtat = e.payload; renderClaude(); renderSessions(); renderFiniTxt(); renderLimites(); renderGraphes(); renderCout(); });
 // Les limites de l'abonnement (Pro, Max), d'après la barre d'état de Claude Code (main.rs : limites). Vert jusqu'à 70 %, orange après 90 %.
 const zoneLim = pc => pc < 70 ? 0 : pc < 90 ? 1 : 2;
 function dans(s) { const j = Math.floor(s / 86400), h = Math.floor(s % 86400 / 3600), m = Math.floor(s % 3600 / 60);
@@ -314,7 +386,7 @@ async function renderFini() {
 renderFini();
 document.addEventListener("click", e => {
   const b = e.target.closest("button"); if (!b || b.disabled) return;
-  if (b.dataset.tab) { document.querySelectorAll(".tab").forEach(t => t.setAttribute("aria-selected", t === b)); ["claude", "piste", "evo", "humeur", "tests"].forEach(k => $("p-" + k).hidden = k !== b.dataset.tab); placePill(); if (b.dataset.tab === "claude") { renderFini(); renderGraphes(); } }
+  if (b.dataset.tab) { document.querySelectorAll(".tab").forEach(t => t.setAttribute("aria-selected", t === b)); ["claude", "piste", "evo", "humeur", "tests"].forEach(k => $("p-" + k).hidden = k !== b.dataset.tab); placePill(); if (b.dataset.tab === "claude") { renderFini(); renderGraphes(); renderCout(); } }
   else if (b.dataset.sim !== undefined) { sim = b.dataset.sim; applyEssai(); }
   else if (b.dataset.simpc !== undefined) { simPc = +b.dataset.simpc; if (!sim) sim = "pense"; applyEssai(); }
   else if (b.dataset.style) { send("style", b.dataset.style); if (st.cache && T) T.core.invoke("montrer_bidule", {oui:true}); if (!st.style && T) T.core.invoke("hide_panel"); }      // premier choix : le panneau se ferme, le Bidule tombe sur le bureau      // caché : cliquer dessus le fait revenir

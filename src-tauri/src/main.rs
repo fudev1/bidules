@@ -635,9 +635,92 @@ fn limites() -> Option<Limites> {
     Some(Limites { cinq_h: l("cinq_h"), semaine: l("semaine"), lancee })
 }
 
+// Le coût qu'aurait eu Claude Code avec l'API (issue #48) : les tokens de chaque réponse, additionnés par heure, modèle et projet.
+// Les prix sont dans le panneau. Une réponse est écrite plusieurs fois dans le journal (une ligne par bloc), et une session reprise
+// recopie les anciennes : on ne la compte qu'une fois, d'après son id et celui de la requête. Seulement les métadonnées, jamais le texte.
+#[derive(Deserialize)]
+struct CoutLine {
+    #[serde(rename = "type")]
+    kind: Option<String>,
+    cwd: Option<String>,
+    timestamp: Option<String>,
+    #[serde(rename = "requestId")]
+    request_id: Option<String>,
+    message: Option<CoutMsg>,
+}
+#[derive(Deserialize)]
+struct CoutMsg {
+    id: Option<String>,
+    model: Option<String>,
+    usage: Option<CoutUsage>,
+}
+#[derive(Deserialize)]
+struct CoutUsage {
+    input_tokens: Option<u64>,
+    output_tokens: Option<u64>,
+    cache_creation_input_tokens: Option<u64>,
+    cache_read_input_tokens: Option<u64>,
+    cache_creation: Option<CacheEcrit>,
+}
+#[derive(Deserialize)]
+struct CacheEcrit {
+    ephemeral_1h_input_tokens: Option<u64>,
+}
+// (heure, modèle, projet, tokens : entrée, sortie, cache écrit pour 5 min, cache écrit pour 1 h, cache lu)
+type Reponse = (u64, String, String, [u64; 5]);
+static REPONSES: Mutex<Option<HashMap<PathBuf, (u64, SystemTime, HashMap<String, Reponse>)>>> = Mutex::new(None);
+
+fn lire_reponses(p: &Path) -> HashMap<String, Reponse> {
+    let mut out = HashMap::new();
+    let Ok(f) = std::fs::File::open(p) else { return out };
+    let mut projet = String::new();
+    for line in BufReader::new(f).lines().map_while(Result::ok) {
+        let Ok(l) = serde_json::from_str::<CoutLine>(&line) else { continue };
+        // le projet : le dossier où la session a commencé (un cd en cours de route ne change pas de projet)
+        if let (Some(d), true) = (&l.cwd, projet.is_empty()) { projet = Path::new(d).file_name().map_or(String::new(), |n| n.to_string_lossy().to_string()) }
+        if l.kind.as_deref() != Some("assistant") { continue }
+        let Some(m) = l.message else { continue };
+        let (Some(id), Some(u), Some(t)) = (m.id, m.usage, l.timestamp.as_deref().and_then(iso_to_epoch)) else { continue };
+        let modele = m.model.unwrap_or_default();
+        if modele.starts_with('<') { continue }
+        let h1 = u.cache_creation.and_then(|c| c.ephemeral_1h_input_tokens).unwrap_or(0);
+        let ecrit = u.cache_creation_input_tokens.unwrap_or(0);
+        let tk = [u.input_tokens.unwrap_or(0), u.output_tokens.unwrap_or(0), ecrit.saturating_sub(h1), h1, u.cache_read_input_tokens.unwrap_or(0)];
+        out.insert(format!("{id}/{}", l.request_id.unwrap_or_default()), (t as u64 / 3600 * 3600, modele, projet.clone(), tk));
+    }
+    out
+}
+
+#[derive(serde::Serialize)]
+struct Depense { heure: u64, modele: String, projet: String, tokens: [u64; 5] }
+#[tauri::command(async)]
+fn depenses() -> Vec<Depense> {
+    let home = std::env::var("HOME").unwrap_or_default();
+    let mut fichiers = Vec::new();
+    for root in [format!("{home}/.claude/projects"), format!("{home}/.claude-masana/projects")] {
+        walk(Path::new(&root), &mut |p| if p.extension().and_then(|x| x.to_str()) == Some("jsonl") { fichiers.push(p.to_path_buf()) });
+    }
+    let mut cache = REPONSES.lock().unwrap();
+    let cache = cache.get_or_insert_with(HashMap::new);
+    cache.retain(|p, _| fichiers.contains(p));
+    let mut vues: HashMap<&String, &Reponse> = HashMap::new();
+    for p in &fichiers {
+        let Ok(meta) = std::fs::metadata(p) else { continue };
+        let (len, mtime) = (meta.len(), meta.modified().unwrap_or(SystemTime::UNIX_EPOCH));
+        if cache.get(p).map_or(true, |c| c.0 != len || c.1 != mtime) { cache.insert(p.clone(), (len, mtime, lire_reponses(p))); }
+    }
+    for c in cache.values() { for (k, r) in &c.2 { vues.insert(k, r); } }
+    let mut somme: HashMap<(u64, &str, &str), [u64; 5]> = HashMap::new();
+    for (h, m, pr, tk) in vues.into_values() {
+        let s = somme.entry((*h, m, pr)).or_default();
+        for i in 0..5 { s[i] += tk[i] }
+    }
+    somme.into_iter().map(|((heure, m, pr), tokens)| Depense { heure, modele: m.to_string(), projet: pr.to_string(), tokens }).collect()
+}
+
 fn main() {
     tauri::Builder::default()
-        .invoke_handler(tauri::generate_handler![log, quit, hide_panel, prompt_times, contexte, icone, session_active, haptique, hooks_etat, brancher_hooks, debrancher_hooks, sessions, limites, prompts_semaine, montrer_bidule, ouvrir_panneau, lire_choix, garder_choix, lire_etat, garder_etat, bonbon_poser, bonbon_retirer, bonbon_clic])
+        .invoke_handler(tauri::generate_handler![log, quit, hide_panel, prompt_times, contexte, icone, session_active, haptique, hooks_etat, brancher_hooks, debrancher_hooks, sessions, limites, prompts_semaine, depenses, montrer_bidule, ouvrir_panneau, lire_choix, garder_choix, lire_etat, garder_etat, bonbon_poser, bonbon_retirer, bonbon_clic])
         .setup(|app| {
             #[cfg(target_os = "macos")]
             app.set_activation_policy(tauri::ActivationPolicy::Accessory);
