@@ -88,6 +88,16 @@ main{flex:1;overflow:auto;padding:0 12px 12px}
 .c-noir :is(.sess,.graphe,.now),.c-noir-flou :is(.sess,.graphe,.now){background:rgba(0,0,0,.42)}
 .c-fonce-flou :is(.sess,.graphe,.now),.c-noir-flou :is(.sess,.graphe,.now){-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
 .c-creux :is(.sess,.graphe,.now){box-shadow:inset 0 3px 8px rgba(0,0,0,.5),inset 0 -1px 0 rgba(255,255,255,.14)}
+/* variantes du creusé : l'ombre plus ou moins douce, profonde, nette (comme les ombres pleines du pixel art), colorée, et la lumière du bord bas */
+[class*="cr-"] :is(.sess,.graphe,.now){background:rgba(30,27,58,.58)}
+.cr-doux :is(.sess,.graphe,.now){box-shadow:inset 0 2px 5px rgba(0,0,0,.35)}
+.cr-profond :is(.sess,.graphe,.now){box-shadow:inset 0 7px 16px rgba(0,0,0,.65),inset 0 -2px 0 rgba(255,255,255,.18)}
+.cr-autour :is(.sess,.graphe,.now){box-shadow:inset 0 0 14px rgba(0,0,0,.6)}
+.cr-net :is(.sess,.graphe,.now){box-shadow:inset 0 4px 0 rgba(0,0,0,.4),inset 0 -2px 0 rgba(255,255,255,.16)}
+.cr-net2 :is(.sess,.graphe,.now){box-shadow:inset 3px 4px 0 rgba(0,0,0,.4),inset -2px -2px 0 rgba(255,255,255,.14)}
+.cr-violet :is(.sess,.graphe,.now){background:rgba(30,27,58,.5);box-shadow:inset 0 4px 10px var(--plum-deep),inset 0 -1px 0 rgba(255,255,255,.14)}
+.cr-lumiere :is(.sess,.graphe,.now){box-shadow:inset 0 4px 10px rgba(0,0,0,.55),inset 0 -3px 4px rgba(255,255,255,.18),0 1px 0 rgba(255,255,255,.3)}
+.cr-noir :is(.sess,.graphe,.now){background:rgba(0,0,0,.45);box-shadow:inset 0 4px 10px rgba(0,0,0,.6),inset 0 -1px 0 rgba(255,255,255,.14)}
 /* reflet blanc de plaque de verre sur les onglets et la pastille jaune (sans transparence ni flou) */
 .tabs{box-shadow:inset 0 1px 0 rgba(255,255,255,.22)}
 .tabs .pill{background-image:linear-gradient(180deg,rgba(255,255,255,.55),rgba(255,255,255,0) 60%);box-shadow:inset 0 1.5px 0 rgba(255,255,255,.9),inset 0 -1px 0 rgba(255,255,255,.25),0 2px 8px rgba(30,27,58,.25)}
@@ -295,11 +305,16 @@ setInterval(() => { icFrame++; renderClaude(); }, 450);
 const CADRES = [["", "Actuel", "Le fond d'aujourd'hui."], ["c-fonce", "Plus foncé", "Le même violet, plus dense."], ["c-noir", "Vers le noir", "Un fond noir translucide."],
   ["c-fonce-flou", "Plus foncé + flou", "Violet dense, les vagues floutées derrière."], ["c-noir-flou", "Vers le noir + flou", "Noir translucide, les vagues floutées derrière."],
   ["c-creux", "Creusé", "Plus foncé, avec une ombre à l'intérieur : comme si on rentrait dedans."]];
+const CREUX = [["cr-doux", "Creusé doux", "Une ombre légère, à peine enfoncé."], ["cr-profond", "Creusé profond", "Une ombre large et sombre : bien plus enfoncé."],
+  ["cr-autour", "Creusé tout autour", "L'ombre sur les quatre bords, comme une cuvette."], ["cr-net", "Creusé net", "Une ombre pleine sans flou, comme celles du pixel art."],
+  ["cr-net2", "Creusé net en biais", "Ombre pleine en haut à gauche, lumière en bas à droite."], ["cr-violet", "Creusé violet", "L'ombre prend le violet foncé du panneau au lieu du noir."],
+  ["cr-lumiere", "Creusé + lumière", "Une lueur sur le bord bas, dedans et dehors, comme gravé dans le panneau."], ["cr-noir", "Creusé vers le noir", "Le fond noir translucide, creusé."]];
 let cadre = "";
 try { cadre = localStorage.getItem("bidule.cadre") || ""; } catch (e) {}
 function applyEssai() {
   document.body.className = cadre;
   $("essais").innerHTML = "<h3>Cadres</h3>" + CADRES.map(([id, name, desc]) => `<button class="chip ${cadre === id ? "on" : ""}" data-cadre="${id}">${name}<small>${desc}</small></button>`).join("")
+    + "<h3>Creusé</h3>" + CREUX.map(([id, name, desc]) => `<button class="chip ${cadre === id ? "on" : ""}" data-cadre="${id}">${name}<small>${desc}</small></button>`).join("")
     + "<h3>Simuler Claude (pour voir chaque état)</h3>" + SIMS.map(([id, name]) => `<button class="chip ${sim === id ? "on" : ""}" data-sim="${id}">${name}</button>`).join("")
     + PLEINS.map(([pc, name]) => `<button class="chip ${simPc === pc ? "on" : ""}" data-simpc="${pc}">${name}</button>`).join("");
   renderClaude();
