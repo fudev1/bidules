@@ -1723,7 +1723,8 @@ img.addEventListener("contextmenu", async e => {
     if (E.parties) for (const k in E.parties) partsBy[k] = E.parties[k];
     if (typeof E.cheveux === "boolean") cheveux = E.cheveux;
     if (typeof E.haptique === "boolean") hapticOn = E.haptique;
-    if (saved && typeof E.x === "number") { x = Math.max(minX, Math.min(maxX, E.x)); y = floorY; mode = "walk"; gardeX = Math.round(x); }          // au sol, là où il était
+    // au sol, là où il était ; la fenêtre y va tout de suite (sinon elle attendrait son premier pas, en l'air à sa place de départ)
+    if (saved && typeof E.x === "number") { x = Math.max(minX, Math.min(maxX, E.x)); y = floorY; mode = "walk"; gardeX = Math.round(x); push(); }
     if (saved) await chooseStyle(saved); else T.core.invoke("ouvrir_panneau");
     if (E.humeur && E.humeur !== "auto" && MOOD_LABEL[E.humeur]) { moodMode = E.humeur; moodReason = "choisie à la main"; applyMood(moodMode); }
     if (saved && E.cache) T.core.invoke("montrer_bidule", {oui:false});
