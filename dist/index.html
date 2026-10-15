@@ -1016,7 +1016,7 @@ function swingArms(d, B, ms) {
   // le bras de l'instant, en plein, par-dessus l'éventail
   for (let side = 0; side < 2; side++) swingArm(d, A, side, sx, sy, rad(now), null, -1);
 }
-function swingStart() { Object.assign(swing, {on:true, b:[0, SW_L], vb:[0, 160], pw:[x, y], pv:[0, 0], aw:[0, 0], skip:2}); }
+function swingStart() { Object.assign(swing, {on:true, b:[0, SW_L], vb:[0, 160], pw:[x, y], pv:[0, 0], aw:[0, 0], skip:2, t:0}); }
 function swingStep(dt) {
   dt = Math.min(.05, Math.max(.008, dt));
   if (swing.skip) { swing.skip--; swing.pw = [x, y]; swing.pv = [0, 0]; }
@@ -1024,21 +1024,38 @@ function swingStep(dt) {
     const vw = [(x - swing.pw[0]) / dt / 2, (y - swing.pw[1]) / dt / 2];
     swing.aw = swing.aw.map((a, k) => a * .5 + (vw[k] - swing.pv[k]) / dt * .5); swing.pw = [x, y]; swing.pv = vw;
   }
-  const b = swing.b, vb = swing.vb, len = Math.hypot(b[0], b[1]) || 1, f = 110 * (SW_L - len) / len;
-  const ax = f * b[0] - 6 * vb[0] - Math.max(-4000, Math.min(4000, swing.aw[0]));
-  const ay = 900 + f * b[1] - 6 * vb[1] - Math.max(-4000, Math.min(4000, swing.aw[1]));
+  // la peau est élastique et résiste de plus en plus : au-delà de l'étirement de repos (le poids), le ressort se durcit vite ; secouée fort,
+  // la boule tire sur la peau, qui la renvoie d'un coup sec au lieu de cogner une butée
+  const b = swing.b, vb = swing.vb, len = Math.hypot(b[0], b[1]) || 1, ext = len - SW_L, dur = 1 + (Math.max(0, ext - SW_SAG) / SW_DUR) ** 2 + (Math.max(0, -ext) / 4) ** 2;          // et quand elle remonte jusqu'à la main
+  const f = -110 * ext * dur / len;
+  const ax = f * b[0] - SW_AMORTI * vb[0] - Math.max(-SW_AMAX, Math.min(SW_AMAX, swing.aw[0]));
+  const ay = 900 + f * b[1] - SW_AMORTI * vb[1] - Math.max(-SW_AMAX, Math.min(SW_AMAX, swing.aw[1]));
   vb[0] += ax * dt; vb[1] += ay * dt; b[0] += vb[0] * dt; b[1] += vb[1] * dt;
   if (b[1] < 3) { b[1] = 3; vb[1] = Math.max(0, vb[1]); }
-  const l2 = Math.hypot(b[0], b[1]), lmax = 63 - SW_R - SW_G[1] - 1;                  // la boule reste dans l'image
+  // pas de butée : la boule va aussi loin que la peau le permet, et le dessin ramène cet étirement dans l'image (swingVis) ; une limite large, par sécurité
+  const l2 = Math.hypot(b[0], b[1]), lmax = SW_LMAX * 4;
   if (l2 > lmax) { swing.b = b.map(v => v * lmax / l2); swing.vb = vb.map(v => v * .5); }
-  const side = 31 - SW_R - 1; if (Math.abs(swing.b[0]) > side) { swing.b[0] = Math.sign(swing.b[0]) * side; swing.vb[0] *= .5; }
+  if (Math.abs(swing.b[0]) > lmax / 2) { swing.b[0] = Math.sign(swing.b[0]) * lmax / 2; swing.vb[0] *= .5; }
+  const t = swingTension(); if (t > .7 && swing.t <= .7) haptic("cran"); swing.t = t;          // peau bien tendue : un cran sous le doigt
+}
+// tension de la peau : 0 au repos (la boule pend de son poids), 1 tout au bout, négative quand la boule remonte vers la main
+const SW_AMORTI = 8, SW_AMAX = 12000, SW_DUR = 10, SW_SAG = 900 / 110, SW_LMAX = 63 - SW_R - SW_G[1] - 1;
+function swingTension() { const l = Math.hypot(swing.b[0], swing.b[1]), rest = SW_L + SW_SAG; return Math.tanh((l - rest) / (l > rest ? SW_LMAX - rest : rest - 3)); }
+// où la boule est dessinée : l'étirement est ramené dans l'image en douceur ; plus on secoue fort, plus la peau se tend, sans jamais cogner le bord
+function swingVis() {
+  const b = swing.b, l = Math.hypot(b[0], b[1]) || 1, rest = SW_L + SW_SAG, t = swingTension(), v = rest + t * (t > 0 ? SW_LMAX - rest : rest - 3);
+  const side = 31 - SW_R - 1, s = (31 - SW_R - 1) * Math.tanh(b[0] * v / l / side);
+  return [s, Math.max(3, b[1] * v / l)];
 }
 function swingDraw() {
-  const B = [SW_G[0] + swing.b[0], SW_G[1] + swing.b[1]], mask = new Uint8Array(4096), dx = B[0] - SW_G[0], dy = B[1] - SW_G[1], L2 = dx * dx + dy * dy || 1;
+  const bv = swingVis(), B = [SW_G[0] + bv[0], SW_G[1] + bv[1]], mask = new Uint8Array(4096), dx = B[0] - SW_G[0], dy = B[1] - SW_G[1], L2 = dx * dx + dy * dy || 1;
+  // peau tendue : la boule s'allonge dans l'axe du cou et le cou s'amincit ; quand elle remonte, elle s'écrase un peu (plus large, plus courte)
+  const ten = swingTension(), el = 1 + .12 * ten, neck = 1 - .45 * Math.max(0, ten), L = Math.sqrt(L2), ux = dx / L, uy = dy / L;
   for (let Y = 0; Y < 64; Y++) for (let X = 0; X < 64; X++) {      // la boule, et le cône de la pointe à son centre (maskDrop)
-    const px = X + .5, py = Y + .5; let inside = Math.hypot(px - B[0], py - B[1]) <= SW_R;
+    const px = X + .5, py = Y + .5, pu = (px - B[0]) * ux + (py - B[1]) * uy, pv = (px - B[0]) * uy - (py - B[1]) * ux;
+    let inside = (pu / (SW_R * el)) ** 2 + (pv * el / SW_R) ** 2 <= 1;
     if (!inside) { const t = Math.max(0, Math.min(1, ((px - SW_G[0]) * dx + (py - SW_G[1]) * dy) / L2));
-      inside = Math.hypot(px - SW_G[0] - t * dx, py - SW_G[1] - t * dy) <= (1.4 + (SW_R * 1.9 - 1.4) * t) / 2; }
+      inside = Math.hypot(px - SW_G[0] - t * dx, py - SW_G[1] - t * dy) <= (1.4 + (SW_R * 1.9 - 1.4) * t) / 2 * (neck + (1 - neck) * t * t); }          // le cou s'amincit sur sa longueur, pas contre la boule
     if (inside) mask[Y * 64 + X] = 1;
   }
   const at = (X, Y) => X >= 0 && Y >= 0 && X < 64 && Y < 64 && mask[Y * 64 + X] === 1;
