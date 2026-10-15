@@ -62,7 +62,7 @@ main{flex:1;overflow:auto;padding:0 12px 12px}
 .slot{display:grid;grid-template-columns:64px 1fr;gap:8px;align-items:center}
 .slot b{font:400 12px/1 var(--display);letter-spacing:.6px;color:var(--yellow)}
 .row{display:flex;gap:8px;flex-wrap:wrap}
-/* Onglet Tests : un bouton rond en pointillés au bout des onglets, pour des essais d'apparence */
+/* Onglet Tests : un bouton rond en pointillés au bout des onglets */
 .tab.lab{flex:none;width:30px;padding:0;display:grid;place-items:center;border:2px dashed rgba(255,255,255,.6)}
 .tab.lab svg{width:15px;height:15px}
 .tab.lab[aria-selected="true"]{border-color:transparent}
@@ -83,28 +83,9 @@ main{flex:1;overflow:auto;padding:0 12px 12px}
 .bulle-bd b{font:400 12.5px/1.1 var(--display);letter-spacing:.4px;display:block}
 .bulle-bd small{font-size:10.5px;opacity:.75}
 
-/* Essais « verre » : plaques translucides et floutées, reflet de lumière en haut, liseré clair (pas de contour sombre) */
-.verre-a .panel,.verre-c .panel{margin:0;height:100vh;background-color:rgba(240,48,90,.4);-webkit-backdrop-filter:blur(24px) saturate(1.5);backdrop-filter:blur(24px) saturate(1.5);box-shadow:inset 0 0 0 1px rgba(255,255,255,.28)}
-.verre-a header{background-color:rgba(61,31,85,.5)}
-.verre-a .st,.verre-a .tabs,.verre-a .now,.verre-a .chip:not(.on),.verre-a #quit,
-.verre-b .st,.verre-b .tabs,.verre-b .now,.verre-b .chip:not(.on),
-.verre-c .st,.verre-c .tabs,.verre-c .now,.verre-c .chip:not(.on){
-  -webkit-backdrop-filter:blur(12px) saturate(1.6);backdrop-filter:blur(12px) saturate(1.6);
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.6),inset 0 -1px 0 rgba(255,255,255,.15),inset 0 0 0 1px rgba(255,255,255,.18),0 4px 14px rgba(30,27,58,.18)}
-.verre-a .st,.verre-b .st,.verre-c .st{background-image:linear-gradient(180deg,rgba(255,255,255,.3),rgba(255,255,255,0) 45%),var(--waves)}
-.verre-a .st{background-color:rgba(61,31,85,.45)}.verre-a .st.c1{background-color:rgba(166,210,58,.5)}.verre-a .st.c2{background-color:rgba(255,217,74,.5)}.verre-a .st.c3{background-color:rgba(179,23,63,.45)}
-.verre-b .st,.verre-c .st{background-color:rgba(255,255,255,.16);color:var(--white)}
-.verre-b .st.c1,.verre-c .st.c1{background-color:rgba(166,210,58,.35)}.verre-b .st.c2,.verre-c .st.c2{background-color:rgba(255,217,74,.35)}
-.verre-a .st:disabled,.verre-b .st:disabled,.verre-c .st:disabled{background-color:rgba(255,255,255,.08);color:rgba(255,255,255,.6)}
-.verre-a .tabs,.verre-b .tabs,.verre-c .tabs{background-color:rgba(255,255,255,.12)}
-.verre-a .pill,.verre-b .pill,.verre-c .pill{box-shadow:inset 0 1px 0 rgba(255,255,255,.8),0 2px 8px rgba(30,27,58,.2)}
-/* D : le panneau habituel, seul le reflet blanc des plaques de verre sur les onglets (sans transparence ni flou) */
-.verre-d .tabs,.verre-e .tabs{box-shadow:inset 0 1px 0 rgba(255,255,255,.22)}
-.verre-d .pill,.verre-e .pill{background-image:linear-gradient(180deg,rgba(255,255,255,.55),rgba(255,255,255,0) 60%);box-shadow:inset 0 1.5px 0 rgba(255,255,255,.9),inset 0 -1px 0 rgba(255,255,255,.25),0 2px 8px rgba(30,27,58,.25)}
-/* E : comme D, et le même reflet sur les autres boutons (pleins : un reflet marqué ; translucides : un liseré plus discret) */
-.verre-e .chip.on,.verre-e .btn.primary,.verre-e .st.on .nm,.verre-e #quit{background-image:linear-gradient(180deg,rgba(255,255,255,.55),rgba(255,255,255,0) 60%);box-shadow:inset 0 1.5px 0 rgba(255,255,255,.9),inset 0 -1px 0 rgba(255,255,255,.25),0 2px 8px rgba(30,27,58,.25)}
-.verre-e .chip:not(.on),.verre-e .btn:not(.primary),.verre-e .now{box-shadow:inset 0 1px 0 rgba(255,255,255,.35)}
-.verre-e .st:not(:disabled){box-shadow:inset 0 1px 0 rgba(255,255,255,.3),0 2px 8px rgba(30,27,58,.15)}
+/* reflet blanc de plaque de verre sur les onglets et la pastille jaune (sans transparence ni flou) */
+.tabs{box-shadow:inset 0 1px 0 rgba(255,255,255,.22)}
+.tabs .pill{background-image:linear-gradient(180deg,rgba(255,255,255,.55),rgba(255,255,255,0) 60%);box-shadow:inset 0 1.5px 0 rgba(255,255,255,.9),inset 0 -1px 0 rgba(255,255,255,.25),0 2px 8px rgba(30,27,58,.25)}
 
 .btn{font:400 13px/1 var(--display);letter-spacing:.6px;border-radius:14px;padding:10px 14px 8px;background:rgba(255,255,255,.18)}
 .btn.primary{background:var(--yellow);color:var(--ink)}
@@ -146,7 +127,7 @@ main{flex:1;overflow:auto;padding:0 12px 12px}
     <button class="tab" role="tab" data-tab="piste" aria-selected="true">Piste</button>
     <button class="tab" role="tab" data-tab="evo" aria-selected="false">Évolution</button>
     <button class="tab" role="tab" data-tab="humeur" aria-selected="false">Humeur</button>
-    <button class="tab lab" role="tab" data-tab="tests" aria-selected="false" title="Tests : des essais d'apparence" aria-label="Tests"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6M10 3v6l-5 9a2 2 0 0 0 1.8 3h10.4a2 2 0 0 0 1.8-3l-5-9V3"/><path d="M7.5 15h9"/></svg></button>
+    <button class="tab lab" role="tab" data-tab="tests" aria-selected="false" title="Tests : simuler Claude" aria-label="Tests"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6M10 3v6l-5 9a2 2 0 0 0 1.8 3h10.4a2 2 0 0 0 1.8-3l-5-9V3"/><path d="M7.5 15h9"/></svg></button>
   </nav>
   <main>
     <section class="pane" id="p-claude" hidden>
@@ -167,7 +148,7 @@ main{flex:1;overflow:auto;padding:0 12px 12px}
       <div class="slot" id="evoCheveux" hidden><b>Tête</b><div class="chips"><button class="chip" id="cheveux">Cheveux</button></div></div>
     </section>
     <section class="pane" id="p-tests" hidden>
-      <p class="hint">Des essais à comparer avant de choisir. Ils ne changent que l'apparence, et restent sur ce Mac.</p>
+      <p class="hint">Pour voir chaque état de Claude dans la bulle, sans attendre qu'il arrive.</p>
       <div class="essais" id="essais"></div>
     </section>
     <section class="pane" id="p-humeur" hidden>
@@ -305,21 +286,9 @@ async function renderLimites() {
       : "Pas encore reçues. Elles passent par la barre d'état de Claude Code dans le terminal : elles arrivent après une réponse de Claude dans une session lancée avec claude."}</p>`;
 }
 setInterval(() => { icFrame++; renderClaude(); }, 450);
-// Onglet Tests : des essais d'apparence, gardés dans ce navigateur (ce Mac) seulement.
-const ESSAIS = [["", "Aucun", "Le panneau habituel, en aplats."],
-  ["verre-a", "A - Verre total", "Tout le panneau en verre teinté : le bureau se devine, flouté, derrière."],
-  ["verre-b", "B - Tuiles en verre", "Le fond reste plein ; tuiles, onglets et boutons deviennent des plaques de verre."],
-  ["verre-c", "C - Mélange", "Le panneau en verre sur le bureau flouté, et des tuiles en verre clair."],
-  ["verre-d", "D - Reflet sur les onglets", "Le panneau habituel ; seuls les onglets prennent un reflet blanc qui les fait ressortir."],
-  ["verre-e", "E - Reflet sur tous les boutons", "Comme D, et le même reflet sur les autres boutons : humeurs, arrêt, nom du Bidule choisi."]];
-let essai = "";
-try { essai = localStorage.getItem("bidule.essai") || ""; } catch (e) {}
+// Onglet Tests : simuler chaque état de Claude, pour voir la bulle
 function applyEssai() {
-  document.body.className = essai;
-  // A et C : le flou natif de macOS sous la fenêtre, pour voir le bureau à travers le panneau
-  const flou = essai === "verre-a" || essai === "verre-c";
-  if (T) { const w = T.window.getCurrentWindow(); (flou ? w.setEffects({effects:["popover"], state:"active", radius:24}) : w.clearEffects()).catch(e => console.log("effets : " + e)); }
-  $("essais").innerHTML = "<h3>Effet verre</h3>" + ESSAIS.map(([id, name, desc]) => `<button class="chip ${essai === id ? "on" : ""}" data-essai="${id}">${name}<small>${desc}</small></button>`).join("")
+  $("essais").innerHTML = ""
     + "<h3>Simuler Claude (pour voir chaque état)</h3>" + SIMS.map(([id, name]) => `<button class="chip ${sim === id ? "on" : ""}" data-sim="${id}">${name}</button>`).join("")
     + PLEINS.map(([pc, name]) => `<button class="chip ${simPc === pc ? "on" : ""}" data-simpc="${pc}">${name}</button>`).join("");
   renderClaude();
@@ -347,7 +316,6 @@ document.addEventListener("click", e => {
   if (b.dataset.tab) { document.querySelectorAll(".tab").forEach(t => t.setAttribute("aria-selected", t === b)); ["claude", "piste", "evo", "humeur", "tests"].forEach(k => $("p-" + k).hidden = k !== b.dataset.tab); placePill(); if (b.dataset.tab === "claude") { renderFini(); renderGraphes(); } }
   else if (b.dataset.sim !== undefined) { sim = b.dataset.sim; applyEssai(); }
   else if (b.dataset.simpc !== undefined) { simPc = +b.dataset.simpc; if (!sim) sim = "pense"; applyEssai(); }
-  else if (b.dataset.essai !== undefined) { essai = b.dataset.essai; try { localStorage.setItem("bidule.essai", essai); } catch (e) {} applyEssai(); }
   else if (b.dataset.style) { send("style", b.dataset.style); if (st.cache && T) T.core.invoke("montrer_bidule", {oui:true}); if (!st.style && T) T.core.invoke("hide_panel"); }      // premier choix : le panneau se ferme, le Bidule tombe sur le bureau      // caché : cliquer dessus le fait revenir
   else if (b.dataset.part) send("evo", "part:" + b.dataset.part);
   else if (b.dataset.mood) send("mood", b.dataset.mood);
