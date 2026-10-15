@@ -14,4 +14,4 @@ serde_json = { version = "1", features = ["preserve_order"] }
 # Pour garder l'icône de la barre de menus en surbrillance quand le panneau est ouvert (les mêmes versions que Tauri utilise déjà).
 [target.'cfg(target_os = "macos")'.dependencies]
 objc2 = "0.6"
-objc2-app-kit = { version = "0.3", default-features = false, features = ["std", "NSStatusItem", "NSStatusBarButton", "NSButton", "NSControl", "NSView", "NSResponder"] }
+objc2-app-kit = { version = "0.3", default-features = false, features = ["std", "NSStatusItem", "NSStatusBarButton", "NSButton", "NSControl", "NSView", "NSResponder", "NSHapticFeedback"] }

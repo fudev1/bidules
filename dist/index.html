@@ -170,10 +170,19 @@ async function resizeWin(on) {
     size(false);
   }
 }
+// Retour haptique du trackpad Force Touch du Mac (main.rs : haptique) : "clic", "cran" ou "palier". Coupé dans le panneau (onglet Piste).
+// Au plus un de chaque sorte toutes les 60 ms : le trackpad ne bourdonne pas quand les occasions s'enchaînent.
+let hapticOn = true;
+const hapticAt = {};
+try { hapticOn = localStorage.getItem("bidule.haptique") !== "non"; } catch (e) {}
+function haptic(motif) {
+  const now = performance.now(); if (!hapticOn || now - (hapticAt[motif] || 0) < 60) return;
+  hapticAt[motif] = now; T.core.invoke("haptique", {motif}).catch(() => {});
+}
 function pullStart(e) {
   const S0 = captureFrame();
   const gu = Math.max(S0.cx - 12, Math.min(S0.cx + 12, (drag.gx - 24) / 2)), gv = Math.max(S0.top, Math.min(S0.bot - 3, (drag.gy - 48) / 2));
-  Object.assign(pull, {on:true, ready:false, phase:"ground", src:S0, srcImg:img.src, g:[gu, gv], d:[0, 0], vd:[0, 0]});
+  Object.assign(pull, {on:true, ready:false, phase:"ground", src:S0, srcImg:img.src, g:[gu, gv], d:[0, 0], vd:[0, 0], cran:0});
   // la bulle de pensée disparaît tout de suite, sans fondu : la fenêtre va s'agrandir vers le haut et la gauche, elle se retrouverait dans le coin
   pense.style.transition = "none"; pense.classList.add("off"); pense.offsetWidth; pense.style.transition = "";
   pullDraw(); setBigWindow(true).then(() => { pull.ready = true; });
@@ -291,14 +300,18 @@ function styleRender(out, faceAt) {
   for (const st of S0.faceStamps) { const [fx2, fy2] = faceAt(st.u, st.v); for (const [a2, b2] of st.px) put(Math.floor(fx2) + a2, Math.floor(fy2) + b2, S0.ink); }
   pullCtx.putImageData(imd, 0, 0);
 }
+const PULL_CRANS = [.3, .5, .65, .77, .86, .93];
 function pullStep(dt) {
   dt = Math.min(.05, Math.max(.008, dt));
   const S0 = pull.src, hs = Math.max(2, S0.bot + 1 - pull.g[1]);
   if (pull.phase === "ground") {
-    // il décolle quand on a tiré assez loin
-    if (Math.hypot(pull.d[0], pull.d[1]) > (S0.bot + 1 - S0.top) * 2.4) {
+    // il décolle quand on a tiré assez loin ; en chemin, des crans de plus en plus serrés à mesure que le fil s'étire
+    const f = Math.hypot(pull.d[0], pull.d[1]) / ((S0.bot + 1 - S0.top) * 2.4), cran = PULL_CRANS.filter(c => f >= c).length;
+    if (cran > pull.cran) haptic("cran");
+    pull.cran = cran;
+    if (f > 1) {
       // décollé : la fenêtre reprend sa taille et il est tenu comme dans tous les autres cas (la goutte qui se balance)
-      say("il se decolle du sol"); bubble("Plop !", 900);
+      say("il se decolle du sol"); bubble("Plop !", 900); haptic("palier");
       x += (BIG_W - WW) / 2; y += BIG_H - WH; pull.phase = "closing"; pull.ready = false;
       setBigWindow(false).then(() => {
         pull.on = false; pull.phase = null; img.style.opacity = "";
@@ -584,7 +597,7 @@ function fallAsleep() { mode = "sleep"; img.src = FR.dort; pose("breathe"); slee
 function wakeUp(why) {
   mode = "waking"; reactUntil = Date.now() + (isSheet() && tagDur("baille") || 1100); img.src = FR.baille; pose(isSheet() ? "" : "shake"); wake = 0; calm = 0;
   if (isSheet()) playOnce("baille");          // dessiné : il se réveille avec son bâillement, une fois, sans tremblement
-  bubble(why === "seul" ? "*s'étire*" : why === "fini" ? "À toi !" : "Hein ?", why === "fini" ? 1800 : 1000); say(`il se reveille (${why})`);
+  bubble(why === "seul" ? "*s'étire*" : why === "fini" ? "À toi !" : why === "attend" ? waitTxt() : "Hein ?", why === "fini" || why === "attend" ? 1800 : 1000); say(`il se reveille (${why})`);
 }
 function react(m, ms, frame, cls = "") { mode = m; reactUntil = Date.now() + ms; img.src = frame; pose(cls); img.style.rotate = "0deg"; watching = false; lookKey = ""; }
 function toWalk() { mode = "walk"; img.src = FR.normal; pose("walk"); }
@@ -761,14 +774,17 @@ function tickBody() {
       angle += spin * k + (Math.max(-20, Math.min(20, vx * .8)) * (1 - near) - angle) * Math.min(1, (.1 + .3 * near) * k);
       spin *= Math.pow(.88, k); angle = Math.max(-60, Math.min(60, angle));
     } else angle += vx * 1.2 * k;
-    if (x < minX) { if (hitWall(-1)) { push(); return; } x = minX; vx = -vx * (BOUNCY.has(style) ? .7 : .25); squash("wall"); }
-    if (x > maxX) { if (hitWall(1)) { push(); return; } x = maxX; vx = -vx * (BOUNCY.has(style) ? .7 : .25); squash("wall"); }
+    // lancé, il cogne : un coup du trackpad à chaque choc (on le sent si le doigt y est encore, et on l'entend)
+    if (x < minX) { haptic(Math.abs(vx) > 12 ? "palier" : "clic"); if (hitWall(-1)) { push(); return; } x = minX; vx = -vx * (BOUNCY.has(style) ? .7 : .25); squash("wall"); }
+    if (x > maxX) { haptic(Math.abs(vx) > 12 ? "palier" : "clic"); if (hitWall(1)) { push(); return; } x = maxX; vx = -vx * (BOUNCY.has(style) ? .7 : .25); squash("wall"); }
     if (y < minY - headroom()) {          // plafond : le haut du dessin touche le haut de l'écran, pas celui de la fenêtre
+      haptic(vy < -10 ? "palier" : "clic");
       if (isSheet() && style !== "candy" && !nausea && vy < -10) { cling(); push(); return; }          // assez d'élan : il s'y colle, à l'envers
       y = minY - headroom(); vy = -vy * 0.4;
     }
     if (y >= floorY) {
       y = floorY; const impact = Math.abs(vy); maxImpact = Math.max(maxImpact, impact);
+      if (impact > 4) haptic(impact > 14 ? "palier" : "clic");
       if (impact > (isSheet() ? 10 : 7) && bounces < (isSheet() ? 3 : 4) && (!isSheet() || BOUNCY.has(style))) {
         if (isSheet() && bigFall()) crashed = true;
         if (isSheet()) {
@@ -1117,7 +1133,7 @@ img.addEventListener("pointerdown", e => {
   img.setPointerCapture(e.pointerId);
   drag = {sx:e.screenX, sy:e.screenY, x0:x, y0:y, gx:e.clientX, gy:e.clientY, moved:false, rev:[], sign:0, shaken:false, asleep:mode === "sleep"};
   samples = [{t:performance.now(), x:e.screenX, y:e.screenY}];
-  img.style.cursor = "grabbing";
+  img.style.cursor = "grabbing"; haptic("clic");
   if (mode === "fly" || mode === "wall" || mode === "wallland") {      // rattrapé en l'air (ou décroché du mur) : il se débat dès le clic, sans attendre que la souris bouge
     if (mode === "wall" || mode === "wallland") { x = Math.max(minX, Math.min(maxX, x)); drag.x0 = x; }
     if (mode === "wall" && wallStick) wallShape(false);
@@ -1150,7 +1166,7 @@ img.addEventListener("pointermove", e => {
   if (Math.abs(ddx) > 6) {
     const sg = Math.sign(ddx), t = performance.now();
     if (drag.sign && sg !== drag.sign) {
-      drag.rev = drag.rev.filter(r => t - r < 1200); drag.rev.push(t);
+      drag.rev = drag.rev.filter(r => t - r < 1200); drag.rev.push(t); haptic("clic");
       if (drag.asleep && drag.rev.length >= 3) { drag.asleep = false; mode = "held"; struggle(true); holdByHead(); bubble("Hein ?!", 900); say("reveille : secoue"); calm = 0; wake = 0; }
       if (drag.rev.length >= 5 && !drag.shaken) {
         drag.shaken = true; say("il se fait secouer"); bubble("Ouaaah !", 1100);
@@ -1162,6 +1178,9 @@ img.addEventListener("pointermove", e => {
   if (drag.shaken && performance.now() > nextDrop) { drop(); drop(); nextDrop = performance.now() + 80; }
   samples.push({t:performance.now(), x:e.screenX, y:e.screenY}); if (samples.length > 8) samples.shift();
   x = drag.x0 + dx; y = drag.y0 + dy; push();
+  const dehors = x < minX || x > maxX || y > floorY;          // tenu, il bute contre un bord de l'écran (ou le bas) : un cran en y arrivant
+  if (dehors && !drag.dehors) haptic("cran");
+  drag.dehors = dehors;
 });
 img.addEventListener("pointerup", async () => {
   if (!drag) return;
@@ -1194,7 +1213,7 @@ async function watchCursor() {
     const ddx = cx - pet.last;
     if (Math.abs(ddx) >= 3) {
       const sg = Math.sign(ddx), t = Date.now();
-      if (pet.dir && sg !== pet.dir) { pet.flips = pet.flips.filter(f => t - f < 1200); pet.flips.push(t); }
+      if (pet.dir && sg !== pet.dir) { pet.flips = pet.flips.filter(f => t - f < 1200); pet.flips.push(t); haptic("cran"); }          // caressé : un cran à chaque aller-retour, comme un ronron
       pet.dir = sg;
     }
     if (pet.flips.length >= 2 && mode === "sleep") {
@@ -1244,7 +1263,7 @@ try {
 let bidHidden = false;          // caché par un clic droit (main.rs : montrer_bidule)
 let chosen = false;          // un Bidule a été choisi (au premier lancement, pas encore)
 let claudeJ = null;          // la dernière jauge lue (contexte), envoyée au panneau
-function sendState() { T.event.emit("etat", {style:chosen ? style : null, partsBy, thumb:FR.normal, mood, moodMode, moodReason, cache:bidHidden}); T.event.emit("claude", claudeJ); }
+function sendState() { T.event.emit("etat", {style:chosen ? style : null, partsBy, thumb:FR.normal, mood, moodMode, moodReason, cache:bidHidden, haptique:hapticOn}); T.event.emit("claude", claudeJ); }
 function refreshSprite() {
   const cur = {sleep:"dort", carried:"dort", dizzy:"d1", nausea:"n1", pet:"content", laugh:"rire", angry:"fache",
     sulk:"fache", eat:"rire", ooh:"ooh", drowsy:"baille", waking:"baille", fly:"p1", held:"p1"}[mode];
@@ -1269,8 +1288,6 @@ function moodExtra() {
 function applyMood(m) {
   mood = m; document.body.dataset.mood = m || ""; for (const id in SHEET_DATA) moodTags(id); buildFrames(style); lookKey = ""; refreshSprite(); sendState();
 }
-// Humeur d'après la jauge de contexte de la conversation en cours (Claude Desktop, sinon le terminal) : 0-30 % joyeux, 30-60 % normal, 60-100 % fatigué.
-// L'app ne reçoit que des quantités de tokens. Sans conversation en cours, l'humeur est devinée d'après le rythme.
 // --- Bulle de pensée : il rumine ce que fait Claude, d'après le nom de l'outil en cours (jamais le texte). Pixel art, 28 × 18, affichée × 2.
 // Chaque icône a 2 images de 9 × 7, alternées. Les pastilles du bas montent vers sa tête.
 const PENSE_BODY = ["...kkkkkkkkkkkkkkkkkkkkk...", "..kwwwwwwwwwwwwwwwwwwwwwk..", ".kwwwwwwwwwwwwwwwwwwwwwwwk.", "kwwwwwwwwwwwwwwwwwwwwwwwwwk",
@@ -1314,45 +1331,64 @@ T.event.listen("claude-fini", () => {
   bubble("À toi !", 1800);
   if (mode === "walk" && isSheet() && !sheetOnce) { idleUntil = Date.now() + 3000; playOnce(FRONT.has(img.src) ? "saut-face" : "saut"); }
 });
-const CONTEXT_MOODS = [[30, "guilleret"], [60, null], [Infinity, "vaseux"]];
-async function contextMood() {
-  let j = null;
-  try { j = await T.core.invoke("contexte"); } catch (e) { say("contexte: " + e); }
-  noConversation = !j; activity = j ? j.activite : null; claudeIdle = !activity; claudeWaits = !!(j && j.attend);
-  claudeJ = j; T.event.emit("claude", j);          // le panneau montre l'état de Claude (onglet Tests, essais « État de Claude »)
-  if (!j) return null;
-  const pc = Math.round(j.pourcent);
-  return [CONTEXT_MOODS.find(([max]) => j.pourcent < max)[1], `contexte à ${pc} %${j.source === "terminal" ? " (terminal)" : ""}`];
+// L'état de Claude, toutes sessions confondues (main.rs : sessions, d'après les hooks de Claude Code) : il suffit qu'une session attende
+// pour qu'il le montre, même si on regarde une autre session. Sans hooks branchés, on retombe sur la session en cours (contexte).
+let waiting = 0, working = 0, lastCall = 0;
+async function claudeState() {
+  let s = [], j = null;
+  try { [s, j] = await Promise.all([T.core.invoke("sessions"), T.core.invoke("contexte")]); } catch (e) { say("etat de Claude: " + e); }
+  s = s || [];
+  if (s.length) {
+    waiting = s.filter(x => x.etat === "attend").length; working = s.filter(x => x.etat === "travaille").length;
+    noConversation = false; claudeWaits = waiting > 0; claudeIdle = !waiting && !working;
+    activity = working ? (j && j.activite && j.activite !== "pense" ? j.activite : "pense") : null;          // la bulle : l'outil de la session en vue, sinon il pense
+  } else {
+    noConversation = !j; activity = j ? j.activite : null; claudeIdle = !activity; claudeWaits = !!(j && j.attend);
+    waiting = claudeWaits ? 1 : 0; working = activity ? 1 : 0;
+  }
+  // une session t'attend : il te le dit tout de suite (réveillé s'il dormait), puis te le rappelle toutes les 30 s ; il ne s'endort pas
+  const now = Date.now();
+  if (waiting) {
+    calm = 0;
+    if (now - lastCall > 30000) { lastCall = now; if (mode === "sleep" || mode === "drowsy") wakeUp("attend"); else bubble(waitTxt(), 1800); }
+  } else lastCall = 0;
+  claudeJ = (s.length || j) ? {...(j || {}), attend:claudeWaits, activite:activity, sessions:s} : null;
+  T.event.emit("claude", claudeJ);          // le panneau montre les sessions et leur jauge de contexte
 }
-// Humeur devinée d'après le rythme : l'app ne reçoit que les heures des prompts, jamais leur texte.
+const waitTxt = () => waiting > 1 ? `${waiting} sessions t'attendent !` : "Une session t'attend !";
+// Humeur générale, d'après le rythme de toute la journée (toutes sessions confondues) : l'heure, le temps passé sans vraie pause, le nombre
+// de sessions en parallèle et de prompts. L'app ne reçoit que les heures des prompts, jamais leur texte.
 let promptsCache = [], promptsAt = 0;          // les heures des prompts : relues au plus une fois par minute
 async function guessMood() {
-  const c = await contextMood();
-  if (c) return c;
   let times = [];
   if (Date.now() - promptsAt > 60000) { try { promptsCache = await T.core.invoke("prompt_times"); promptsAt = Date.now(); } catch (e) { say("prompt_times: " + e); } }
   times = promptsCache.slice();
   times.sort((a, b) => a - b);
   const now = Date.now() / 1000, h = new Date().getHours(), lastT = times.length ? times[times.length - 1] : null;
-  const last10 = times.filter(t => now - t < 600).length;
+  const last10 = times.filter(t => now - t < 600).length, busy = waiting + working;
   let start = lastT;
   for (let i = times.length - 1; i > 0; i--) { if (times[i] - times[i - 1] > 1200) break; start = times[i - 1]; }
   const sessionH = lastT && now - lastT < 1200 ? (lastT - start) / 3600 : 0;
   if (h >= 20 || h < 7) return ["vaseux", "il est tard"];
   if (sessionH >= 3) return ["vaseux", `tu travailles depuis ${Math.floor(sessionH)} h sans vraie pause`];
+  if (busy >= 4) return ["stresse", `${busy} sessions de Claude en même temps`];
   if (last10 > 10) return ["stresse", `${last10} prompts en 10 minutes`];
   if (!lastT || now - lastT > 2700) return ["lune", lastT ? `pas de prompt depuis ${Math.round((now - lastT) / 60)} min` : "pas de prompt récent"];
   return ["guilleret", "rythme régulier"];
 }
+// l'humeur change lentement : la nouvelle doit tenir une minute avant d'être prise (sauf la toute première)
+const MOOD_HOLD = 60000;
+let moodNext = null, moodNextSince = 0;
 async function autoMood() {
+  await claudeState();
   // l'humeur choisie à la main ne change pas, mais la bulle et le sommeil suivent toujours Claude
-  if (moodMode !== "auto") await contextMood();
-  else {
-    const [m, why] = await guessMood();
-    moodReason = noConversation ? "aucune conversation en cours, il dort" : claudeIdle ? why + ", Claude attend, il dort" : why;
-    if (m !== mood) { say(`humeur devinee : ${m} (${why})`); applyMood(m); } else sendState();
+  if (moodMode === "auto") {
+    const [m, why] = await guessMood(), now = Date.now();
+    moodReason = noConversation ? why + ", aucune session en cours, il dort" : claudeIdle ? why + ", Claude a fini partout, il dort" : why;
+    if (m !== moodNext) { moodNext = m; moodNextSince = now; }
+    if (m !== mood && (mood === null || now - moodNextSince >= MOOD_HOLD)) { say(`humeur devinee : ${m} (${why})`); applyMood(m); } else sendState();
   }
-  if (!claudeIdle && mode === "sleep" && Date.now() - sleepSince > 3000) wakeUp("seul");   // Claude se remet au travail : il se réveille
+  if (!claudeIdle && mode === "sleep" && Date.now() - sleepSince > 3000) wakeUp(claudeWaits ? "attend" : "seul");   // Claude se remet au travail : il se réveille
 }
 function chooseMood(m) {
   moodMode = m;
@@ -1360,7 +1396,7 @@ function chooseMood(m) {
   else { moodReason = "choisie à la main"; say("humeur choisie : " + moodMode); applyMood(moodMode); bubble(MOOD_LABEL[moodMode], 1200); }
 }
 T.event.listen("mood", e => chooseMood(e.payload));
-setInterval(autoMood, 3000);
+setInterval(autoMood, 1500);
 // On change de session dans Claude Desktop : on relit tout de suite son état, sans attendre les 3 s.
 let lastSession;
 setInterval(async () => {
@@ -1407,6 +1443,7 @@ async function chooseStyle(s) {
   sendState();
 }
 T.event.listen("style", e => chooseStyle(e.payload));
+T.event.listen("haptique", e => { hapticOn = !!e.payload; try { localStorage.setItem("bidule.haptique", hapticOn ? "oui" : "non"); } catch (err) {} sendState(); if (hapticOn) haptic("clic"); });
 // Demi-tour : avec un perso dessiné, on joue son animation "turn" au lieu de retourner l'image.
 function turnTo(nd, ready) {
   if (nd === dir) return;

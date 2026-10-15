@@ -127,6 +127,15 @@ main{flex:1;overflow:auto;padding:0 12px 12px}
 
 .btn{font:400 13px/1 var(--display);letter-spacing:.6px;border-radius:14px;padding:10px 14px 8px;background:rgba(255,255,255,.18)}
 .btn.primary{background:var(--yellow);color:var(--ink)}
+.sessions{display:grid;gap:5px}
+.sessions h3{margin:2px 0 0;font:400 13px/1 var(--display);letter-spacing:.6px;color:var(--yellow)}
+.sess{display:grid;grid-template-columns:1fr auto 100px 34px;align-items:center;gap:10px;background:rgba(30,27,58,.22);border-radius:12px;padding:7px 12px;font-size:12px}
+.sess b{font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sess .et{opacity:.9}.sess .et.attend{color:var(--yellow);font-weight:700}
+.sess .barre{display:grid;grid-template-columns:repeat(12,1fr);gap:2px;height:8px}
+.sess .barre i{border-radius:2px;background:rgba(255,255,255,.16)}
+.sess .barre i.z0{background:var(--lime)}.sess .barre i.z1{background:var(--yellow)}.sess .barre i.z2{background:#ff8a3d}
+.sess small{text-align:right;opacity:.85}
 .fini{display:flex;align-items:center;gap:10px}
 .fini .hint{flex:1}
 .moods{display:grid;grid-template-columns:repeat(2,1fr);gap:6px}
@@ -149,6 +158,7 @@ main{flex:1;overflow:auto;padding:0 12px 12px}
     <section class="pane" id="p-piste">
       <p class="hint" id="pisteHint">Pour l'instant, seule la limace est prête. Les autres Bidules arriveront avec leurs animations redessinées.</p>
       <div class="styles" id="styles"></div>
+      <div class="now fini"><p class="hint">Au toucher : sur le trackpad du Mac, tu le sens quand tu l'attrapes, le tires, le secoues ou le caresses, et quand il cogne un bord.</p><button class="chip" id="haptique">Activé</button></div>
     </section>
     <section class="pane" id="p-evo" hidden>
       <p class="hint" id="evoHint"></p>
@@ -160,9 +170,10 @@ main{flex:1;overflow:auto;padding:0 12px 12px}
       <div class="essais" id="essais"></div>
     </section>
     <section class="pane" id="p-humeur" hidden>
-      <p class="hint">L'humeur suit la jauge de contexte de ta conversation Claude en cours : joyeuse jusqu'à 30 %, normale jusqu'à 60 %, fatiguée au-delà. Quand Claude ne fait rien (réponse finie, ou pas de conversation), il dort : c'est le signal pour y retourner. Jamais en lisant tes messages. Tu peux la forcer ici.</p>
+      <p class="hint">L'humeur suit le rythme de ta journée, toutes sessions confondues : l'heure, le temps passé sans vraie pause, le nombre de sessions de Claude en même temps. Elle change lentement. Quand une session t'attend, il te le dit, quelle que soit la session affichée ; quand Claude a fini partout, il dort : c'est le signal pour y retourner. Jamais en lisant tes messages. Tu peux forcer l'humeur ici.</p>
       <div class="now" id="moodNow"></div>
       <div class="moods" id="moods"></div>
+      <div class="sessions" id="sessions"></div>
       <div class="now fini"><p class="hint" id="finiTxt"></p><button class="chip" id="fini" hidden>Brancher</button></div>
     </section>
   </main>
@@ -194,6 +205,7 @@ function render() {
   const ml = st.mood ? MOODS.find(m => m[0] === st.mood)[1] : "Normale";
   $("sub").textContent = st.style ? "Humeur : " + ml : "";
   $("moodNow").innerHTML = `Humeur actuelle : <b>${ml}</b>` + (st.moodReason ? ` (${st.moodMode === "auto" ? "devinée : " : ""}${st.moodReason})` : "");
+  $("haptique").textContent = st.haptique === false ? "Coupé" : "Activé"; $("haptique").classList.toggle("on", st.haptique !== false);
   $("moods").innerHTML = MOODS.map(([id, name]) => `<button class="chip ${st.moodMode === id ? "on" : ""}" data-mood="${id}">${name}</button>`).join("");
   $("styles").innerHTML = STYLES.map(([id, name], i) => `<button class="st c${i % 4} ${id === st.style ? "on" : ""}" data-style="${id}" ${READY.has(id) ? "" : "disabled"}>${READY.has(id) ? (id === st.style && st.cache ? '<i class="soon">Caché</i>' : "") : '<i class="soon">Bientôt</i>'}<i class="spark"></i><span class="ground"><img class="mon" src="${render64(id, st.partsBy[id] || {}, READY.has(id) ? st.mood : null)}" alt=""></span><span class="nm">${name}</span></button>`).join("");
   $("evoHint").textContent = noParts ? "Les parties arriveront avec les animations dessinées de ce Bidule." : "Un clic ajoute la partie, un second clic la retire. Une partie du même emplacement remplace l'ancienne.";
@@ -276,7 +288,14 @@ function renderClaude() {
     B.firstChild.replaceWith(iconCanvas(e.icon, 3));
   }
 }
-if (T) T.event.listen("claude", e => { claudeEtat = e.payload; renderClaude(); });
+// Onglet Humeur : les sessions de Claude en cours (d'après les hooks), leur état et leur jauge de contexte
+const ETATS = {travaille:"travaille", attend:"t'attend", fini:"a fini"};
+function renderSessions() {
+  const L = (claudeEtat && claudeEtat.sessions || []).slice().sort((a, b) => (b.etat === "attend") - (a.etat === "attend") || a.depuis - b.depuis);
+  $("sessions").innerHTML = L.length ? "<h3>Sessions de Claude</h3>" + L.map(x => `<div class="sess"><b>${(x.projet || "Session").replace(/</g, "&lt;")}</b><span class="et ${x.etat}">${ETATS[x.etat] || x.etat}</span>`
+    + (x.tokens ? `<div class="barre">${barre(Math.min(100, x.pourcent), 12)}</div><small>${Math.round(x.pourcent)} %</small>` : "<span></span><span></span>") + "</div>").join("") : "";
+}
+if (T) T.event.listen("claude", e => { claudeEtat = e.payload; renderClaude(); renderSessions(); renderFiniTxt(); });
 setInterval(() => { icFrame++; if (vue) renderClaude(); }, 450);
 // Onglet Tests : des essais d'apparence, gardés dans ce navigateur (ce Mac) seulement.
 const ESSAIS = [["", "Aucun", "Le panneau habituel, en aplats."],
@@ -301,13 +320,20 @@ function applyEssai() {
 }
 applyEssai();
 placePill();
-// Prévenir quand Claude a fini : un hook de Claude Code (main.rs), branché ici d'un clic
+// Suivre les sessions de Claude : des hooks de Claude Code (main.rs), branchés ou débranchés d'un clic. Les sessions ouvertes les prennent
+// d'elles-mêmes ; si Claude travaille sans qu'aucune session ne donne de nouvelles, on propose de les relancer.
+let finiEtat = "non";
+function renderFiniTxt() {
+  const muet = finiEtat === "oui" && claudeEtat && claudeEtat.activite && !(claudeEtat.sessions || []).length;
+  $("finiTxt").textContent = finiEtat === "oui" ? (muet ? "Branché, mais les sessions déjà ouvertes ne donnent pas encore de nouvelles. Si ça dure, relance-les : ferme et rouvre la session dans Claude, ou relance claude dans le terminal."
+      : "Branché : il suit toutes tes sessions de Claude, te prévient quand l'une t'attend et quand Claude a fini.")
+    : finiEtat === "ancien" ? "Une ancienne version est branchée : mets-la à jour pour qu'il suive toutes tes sessions."
+    : "Il peut suivre toutes tes sessions de Claude : te prévenir quand l'une t'attend, et quand Claude a fini. Pour ça, on ajoute de petits hooks aux réglages de Claude Code ; ils ne lisent rien de tes messages.";
+  $("fini").textContent = {oui:"Débrancher", ancien:"Mettre à jour", non:"Brancher"}[finiEtat];
+}
 async function renderFini() {
   if (!T) return;
-  const ok = await T.core.invoke("hooks_branches");
-  $("finiTxt").textContent = ok ? "Branché : il te prévient dès que Claude a fini de répondre."
-    : "Il peut te prévenir dès que Claude a fini de répondre. Pour ça, on ajoute un petit hook aux réglages de Claude Code ; il ne lit rien de tes messages.";
-  $("fini").hidden = ok;
+  finiEtat = await T.core.invoke("hooks_etat"); $("fini").hidden = false; renderFiniTxt();
 }
 renderFini();
 document.addEventListener("click", e => {
@@ -322,7 +348,8 @@ document.addEventListener("click", e => {
   else if (b.dataset.mood) send("mood", b.dataset.mood);
   else if (b.id === "random") send("evo", "evo:random");
   else if (b.id === "reset") send("evo", "evo:reset");
-  else if (b.id === "fini") T.core.invoke("brancher_hooks").then(renderFini, err => { $("finiTxt").textContent = "Pas pu brancher : " + err; });
+  else if (b.id === "fini") T.core.invoke(finiEtat === "oui" ? "debrancher_hooks" : "brancher_hooks").then(renderFini, err => { $("finiTxt").textContent = "Pas pu le faire : " + err; });
+  else if (b.id === "haptique") send("haptique", st.haptique === false);
   else if (b.id === "quit") { if (T) T.core.invoke("quit"); }
 });
 document.addEventListener("keydown", e => { if (e.key === "Escape" && T) T.core.invoke("hide_panel"); });
