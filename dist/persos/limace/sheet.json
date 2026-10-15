@@ -2779,7 +2779,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 70
+   "duration": 160
   },
   "limace 309.aseprite": {
    "frame": {
@@ -2788,7 +2788,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 70
+   "duration": 90
   },
   "limace 310.aseprite": {
    "frame": {
@@ -2797,7 +2797,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 80
+   "duration": 140
   },
   "limace 311.aseprite": {
    "frame": {
@@ -2806,7 +2806,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 80
+   "duration": 70
   },
   "limace 312.aseprite": {
    "frame": {
@@ -2815,7 +2815,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 80
+   "duration": 70
   },
   "limace 313.aseprite": {
    "frame": {
@@ -2824,7 +2824,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 80
+   "duration": 70
   },
   "limace 314.aseprite": {
    "frame": {
@@ -2842,7 +2842,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 80
+   "duration": 120
   },
   "limace 316.aseprite": {
    "frame": {
@@ -2851,7 +2851,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 80
+   "duration": 160
   },
   "limace 317.aseprite": {
    "frame": {
@@ -2860,7 +2860,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 80
+   "duration": 70
   },
   "limace 318.aseprite": {
    "frame": {
@@ -2869,7 +2869,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 80
+   "duration": 70
   },
   "limace 319.aseprite": {
    "frame": {
@@ -2878,7 +2878,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 80
+   "duration": 70
   },
   "limace 320.aseprite": {
    "frame": {
@@ -2887,7 +2887,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 50
+   "duration": 70
   },
   "limace 321.aseprite": {
    "frame": {
@@ -2896,7 +2896,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 60
+   "duration": 70
   },
   "limace 322.aseprite": {
    "frame": {
@@ -2914,7 +2914,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 80
+   "duration": 70
   },
   "limace 324.aseprite": {
    "frame": {
@@ -2923,7 +2923,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 90
+   "duration": 70
   },
   "limace 325.aseprite": {
    "frame": {
@@ -2932,7 +2932,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 100
+   "duration": 70
   },
   "limace 326.aseprite": {
    "frame": {
@@ -2941,7 +2941,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 120
+   "duration": 70
   },
   "limace 327.aseprite": {
    "frame": {
@@ -2950,7 +2950,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 200
+   "duration": 70
   },
   "limace 328.aseprite": {
    "frame": {
@@ -2959,7 +2959,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 600
+   "duration": 70
   },
   "limace 329.aseprite": {
    "frame": {
@@ -2968,7 +2968,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 140
+   "duration": 70
   },
   "limace 330.aseprite": {
    "frame": {
@@ -2977,7 +2977,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 140
+   "duration": 70
   },
   "limace 331.aseprite": {
    "frame": {
@@ -2986,7 +2986,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 140
+   "duration": 70
   },
   "limace 332.aseprite": {
    "frame": {
@@ -2995,7 +2995,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 140
+   "duration": 70
   },
   "limace 333.aseprite": {
    "frame": {
@@ -3004,7 +3004,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 100
+   "duration": 70
   },
   "limace 334.aseprite": {
    "frame": {
@@ -3013,7 +3013,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 100
+   "duration": 70
   },
   "limace 335.aseprite": {
    "frame": {
@@ -3022,7 +3022,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 400
+   "duration": 70
   },
   "limace 336.aseprite": {
    "frame": {
@@ -3031,7 +3031,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 1500
+   "duration": 70
   },
   "limace 337.aseprite": {
    "frame": {
@@ -3040,7 +3040,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 90
+   "duration": 70
   },
   "limace 338.aseprite": {
    "frame": {
@@ -3049,7 +3049,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 90
+   "duration": 70
   },
   "limace 339.aseprite": {
    "frame": {
@@ -3058,7 +3058,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 90
+   "duration": 70
   },
   "limace 340.aseprite": {
    "frame": {
@@ -3067,7 +3067,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 90
+   "duration": 70
   },
   "limace 341.aseprite": {
    "frame": {
@@ -3076,7 +3076,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 90
+   "duration": 70
   },
   "limace 342.aseprite": {
    "frame": {
@@ -3085,7 +3085,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 90
+   "duration": 70
   },
   "limace 343.aseprite": {
    "frame": {
@@ -3094,7 +3094,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 90
+   "duration": 70
   },
   "limace 344.aseprite": {
    "frame": {
@@ -3103,7 +3103,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 90
+   "duration": 70
   },
   "limace 345.aseprite": {
    "frame": {
@@ -3112,7 +3112,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 90
+   "duration": 70
   },
   "limace 346.aseprite": {
    "frame": {
@@ -3121,7 +3121,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 90
+   "duration": 70
   },
   "limace 347.aseprite": {
    "frame": {
@@ -3130,7 +3130,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 90
+   "duration": 70
   },
   "limace 348.aseprite": {
    "frame": {
@@ -3139,7 +3139,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 90
+   "duration": 70
   },
   "limace 349.aseprite": {
    "frame": {
@@ -3148,7 +3148,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 90
+   "duration": 70
   },
   "limace 350.aseprite": {
    "frame": {
@@ -3157,7 +3157,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 90
+   "duration": 70
   },
   "limace 351.aseprite": {
    "frame": {
@@ -3166,7 +3166,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 90
+   "duration": 80
   },
   "limace 352.aseprite": {
    "frame": {
@@ -3175,7 +3175,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 90
+   "duration": 80
   },
   "limace 353.aseprite": {
    "frame": {
@@ -3184,7 +3184,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 90
+   "duration": 80
   },
   "limace 354.aseprite": {
    "frame": {
@@ -3193,7 +3193,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 90
+   "duration": 80
   },
   "limace 355.aseprite": {
    "frame": {
@@ -3202,7 +3202,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 90
+   "duration": 80
   },
   "limace 356.aseprite": {
    "frame": {
@@ -3211,7 +3211,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 90
+   "duration": 80
   },
   "limace 357.aseprite": {
    "frame": {
@@ -3220,7 +3220,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 90
+   "duration": 80
   },
   "limace 358.aseprite": {
    "frame": {
@@ -3229,7 +3229,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 90
+   "duration": 80
   },
   "limace 359.aseprite": {
    "frame": {
@@ -3238,7 +3238,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 90
+   "duration": 80
   },
   "limace 360.aseprite": {
    "frame": {
@@ -3247,7 +3247,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 90
+   "duration": 80
   },
   "limace 361.aseprite": {
    "frame": {
@@ -3256,7 +3256,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 80
+   "duration": 50
   },
   "limace 362.aseprite": {
    "frame": {
@@ -3274,7 +3274,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 60
+   "duration": 70
   },
   "limace 364.aseprite": {
    "frame": {
@@ -3283,7 +3283,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 70
+   "duration": 80
   },
   "limace 365.aseprite": {
    "frame": {
@@ -3292,7 +3292,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 60
+   "duration": 90
   },
   "limace 366.aseprite": {
    "frame": {
@@ -3301,7 +3301,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 60
+   "duration": 100
   },
   "limace 367.aseprite": {
    "frame": {
@@ -3310,7 +3310,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 160
+   "duration": 120
   },
   "limace 368.aseprite": {
    "frame": {
@@ -3319,7 +3319,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 60
+   "duration": 200
   },
   "limace 369.aseprite": {
    "frame": {
@@ -3328,7 +3328,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 60
+   "duration": 600
   },
   "limace 370.aseprite": {
    "frame": {
@@ -3337,7 +3337,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 70
+   "duration": 140
   },
   "limace 371.aseprite": {
    "frame": {
@@ -3346,7 +3346,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 60
+   "duration": 140
   },
   "limace 372.aseprite": {
    "frame": {
@@ -3355,7 +3355,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 60
+   "duration": 140
   },
   "limace 373.aseprite": {
    "frame": {
@@ -3364,7 +3364,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 120
+   "duration": 140
   },
   "limace 374.aseprite": {
    "frame": {
@@ -3373,7 +3373,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 80
+   "duration": 100
   },
   "limace 375.aseprite": {
    "frame": {
@@ -3382,7 +3382,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 60
+   "duration": 100
   },
   "limace 376.aseprite": {
    "frame": {
@@ -3391,7 +3391,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 60
+   "duration": 400
   },
   "limace 377.aseprite": {
    "frame": {
@@ -3400,7 +3400,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 70
+   "duration": 1500
   },
   "limace 378.aseprite": {
    "frame": {
@@ -3409,7 +3409,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 60
+   "duration": 90
   },
   "limace 379.aseprite": {
    "frame": {
@@ -3418,7 +3418,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 60
+   "duration": 90
   },
   "limace 380.aseprite": {
    "frame": {
@@ -3427,7 +3427,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 160
+   "duration": 90
   },
   "limace 381.aseprite": {
    "frame": {
@@ -3436,7 +3436,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 60
+   "duration": 90
   },
   "limace 382.aseprite": {
    "frame": {
@@ -3445,7 +3445,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 60
+   "duration": 90
   },
   "limace 383.aseprite": {
    "frame": {
@@ -3454,7 +3454,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 70
+   "duration": 90
   },
   "limace 384.aseprite": {
    "frame": {
@@ -3463,7 +3463,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 60
+   "duration": 90
   },
   "limace 385.aseprite": {
    "frame": {
@@ -3472,7 +3472,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 60
+   "duration": 90
   },
   "limace 386.aseprite": {
    "frame": {
@@ -3481,7 +3481,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 120
+   "duration": 90
   },
   "limace 387.aseprite": {
    "frame": {
@@ -3490,7 +3490,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 80
+   "duration": 90
   },
   "limace 388.aseprite": {
    "frame": {
@@ -3499,7 +3499,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 60
+   "duration": 90
   },
   "limace 389.aseprite": {
    "frame": {
@@ -3508,7 +3508,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 60
+   "duration": 90
   },
   "limace 390.aseprite": {
    "frame": {
@@ -3517,7 +3517,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 70
+   "duration": 90
   },
   "limace 391.aseprite": {
    "frame": {
@@ -3526,7 +3526,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 60
+   "duration": 90
   },
   "limace 392.aseprite": {
    "frame": {
@@ -3535,7 +3535,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 60
+   "duration": 90
   },
   "limace 393.aseprite": {
    "frame": {
@@ -3544,7 +3544,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 110
+   "duration": 90
   },
   "limace 394.aseprite": {
    "frame": {
@@ -3553,7 +3553,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 70
+   "duration": 90
   },
   "limace 395.aseprite": {
    "frame": {
@@ -3562,7 +3562,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 70
+   "duration": 90
   },
   "limace 396.aseprite": {
    "frame": {
@@ -3571,7 +3571,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 150
+   "duration": 90
   },
   "limace 397.aseprite": {
    "frame": {
@@ -3580,7 +3580,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 50
+   "duration": 90
   },
   "limace 398.aseprite": {
    "frame": {
@@ -3589,7 +3589,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 50
+   "duration": 90
   },
   "limace 399.aseprite": {
    "frame": {
@@ -3598,7 +3598,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 60
+   "duration": 90
   },
   "limace 400.aseprite": {
    "frame": {
@@ -3607,7 +3607,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 60
+   "duration": 90
   },
   "limace 401.aseprite": {
    "frame": {
@@ -3616,7 +3616,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 50
+   "duration": 90
   },
   "limace 402.aseprite": {
    "frame": {
@@ -3625,7 +3625,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 60
+   "duration": 80
   },
   "limace 403.aseprite": {
    "frame": {
@@ -3634,7 +3634,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 150
+   "duration": 60
   },
   "limace 404.aseprite": {
    "frame": {
@@ -3643,7 +3643,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 150
+   "duration": 60
   },
   "limace 405.aseprite": {
    "frame": {
@@ -3652,7 +3652,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 90
+   "duration": 70
   },
   "limace 406.aseprite": {
    "frame": {
@@ -3670,7 +3670,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 40
+   "duration": 60
   },
   "limace 408.aseprite": {
    "frame": {
@@ -3679,7 +3679,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 60
+   "duration": 160
   },
   "limace 409.aseprite": {
    "frame": {
@@ -3688,7 +3688,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 90
+   "duration": 60
   },
   "limace 410.aseprite": {
    "frame": {
@@ -3697,7 +3697,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 80
+   "duration": 60
   },
   "limace 411.aseprite": {
    "frame": {
@@ -3715,7 +3715,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 80
+   "duration": 60
   },
   "limace 413.aseprite": {
    "frame": {
@@ -3724,7 +3724,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 80
+   "duration": 60
   },
   "limace 414.aseprite": {
    "frame": {
@@ -3733,7 +3733,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 150
+   "duration": 120
   },
   "limace 415.aseprite": {
    "frame": {
@@ -3796,7 +3796,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 110
+   "duration": 160
   },
   "limace 422.aseprite": {
    "frame": {
@@ -3805,7 +3805,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 80
+   "duration": 60
   },
   "limace 423.aseprite": {
    "frame": {
@@ -3823,7 +3823,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 60
+   "duration": 70
   },
   "limace 425.aseprite": {
    "frame": {
@@ -3832,7 +3832,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 70
+   "duration": 60
   },
   "limace 426.aseprite": {
    "frame": {
@@ -3850,7 +3850,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 60
+   "duration": 120
   },
   "limace 428.aseprite": {
    "frame": {
@@ -3859,7 +3859,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 110
+   "duration": 80
   },
   "limace 429.aseprite": {
    "frame": {
@@ -3868,7 +3868,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 70
+   "duration": 60
   },
   "limace 430.aseprite": {
    "frame": {
@@ -3877,7 +3877,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 70
+   "duration": 60
   },
   "limace 431.aseprite": {
    "frame": {
@@ -3886,7 +3886,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 150
+   "duration": 70
   },
   "limace 432.aseprite": {
    "frame": {
@@ -3895,7 +3895,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 50
+   "duration": 60
   },
   "limace 433.aseprite": {
    "frame": {
@@ -3904,7 +3904,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 50
+   "duration": 60
   },
   "limace 434.aseprite": {
    "frame": {
@@ -3913,7 +3913,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 60
+   "duration": 110
   },
   "limace 435.aseprite": {
    "frame": {
@@ -3922,7 +3922,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 60
+   "duration": 70
   },
   "limace 436.aseprite": {
    "frame": {
@@ -3931,7 +3931,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 50
+   "duration": 70
   },
   "limace 437.aseprite": {
    "frame": {
@@ -3940,7 +3940,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 60
+   "duration": 150
   },
   "limace 438.aseprite": {
    "frame": {
@@ -3949,7 +3949,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 150
+   "duration": 50
   },
   "limace 439.aseprite": {
    "frame": {
@@ -3958,7 +3958,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 150
+   "duration": 50
   },
   "limace 440.aseprite": {
    "frame": {
@@ -3967,7 +3967,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 90
+   "duration": 60
   },
   "limace 441.aseprite": {
    "frame": {
@@ -3985,7 +3985,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 40
+   "duration": 50
   },
   "limace 443.aseprite": {
    "frame": {
@@ -4003,7 +4003,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 90
+   "duration": 150
   },
   "limace 445.aseprite": {
    "frame": {
@@ -4012,7 +4012,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 80
+   "duration": 150
   },
   "limace 446.aseprite": {
    "frame": {
@@ -4021,7 +4021,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 70
+   "duration": 90
   },
   "limace 447.aseprite": {
    "frame": {
@@ -4030,7 +4030,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 80
+   "duration": 60
   },
   "limace 448.aseprite": {
    "frame": {
@@ -4039,7 +4039,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 80
+   "duration": 40
   },
   "limace 449.aseprite": {
    "frame": {
@@ -4048,7 +4048,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 150
+   "duration": 60
   },
   "limace 450.aseprite": {
    "frame": {
@@ -4057,7 +4057,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 80
+   "duration": 90
   },
   "limace 451.aseprite": {
    "frame": {
@@ -4066,7 +4066,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 60
+   "duration": 80
   },
   "limace 452.aseprite": {
    "frame": {
@@ -4075,7 +4075,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 60
+   "duration": 70
   },
   "limace 453.aseprite": {
    "frame": {
@@ -4084,7 +4084,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 70
+   "duration": 80
   },
   "limace 454.aseprite": {
    "frame": {
@@ -4093,7 +4093,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 60
+   "duration": 80
   },
   "limace 455.aseprite": {
    "frame": {
@@ -4102,7 +4102,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 60
+   "duration": 150
   },
   "limace 456.aseprite": {
    "frame": {
@@ -4111,7 +4111,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 110
+   "duration": 80
   },
   "limace 457.aseprite": {
    "frame": {
@@ -4120,7 +4120,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 150
+   "duration": 60
   },
   "limace 458.aseprite": {
    "frame": {
@@ -4129,7 +4129,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 100
+   "duration": 60
   },
   "limace 459.aseprite": {
    "frame": {
@@ -4138,7 +4138,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 110
+   "duration": 70
   },
   "limace 460.aseprite": {
    "frame": {
@@ -4147,7 +4147,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 120
+   "duration": 60
   },
   "limace 461.aseprite": {
    "frame": {
@@ -4156,7 +4156,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 140
+   "duration": 60
   },
   "limace 462.aseprite": {
    "frame": {
@@ -4165,7 +4165,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 500
+   "duration": 110
   },
   "limace 463.aseprite": {
    "frame": {
@@ -4174,7 +4174,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 350
+   "duration": 80
   },
   "limace 464.aseprite": {
    "frame": {
@@ -4183,7 +4183,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 130
+   "duration": 60
   },
   "limace 465.aseprite": {
    "frame": {
@@ -4192,7 +4192,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 180
+   "duration": 60
   },
   "limace 466.aseprite": {
    "frame": {
@@ -4201,7 +4201,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 150
+   "duration": 70
   },
   "limace 467.aseprite": {
    "frame": {
@@ -4210,7 +4210,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 150
+   "duration": 60
   },
   "limace 468.aseprite": {
    "frame": {
@@ -4219,7 +4219,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 100
+   "duration": 60
   },
   "limace 469.aseprite": {
    "frame": {
@@ -4237,7 +4237,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 120
+   "duration": 70
   },
   "limace 471.aseprite": {
    "frame": {
@@ -4246,7 +4246,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 140
+   "duration": 70
   },
   "limace 472.aseprite": {
    "frame": {
@@ -4255,7 +4255,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 500
+   "duration": 150
   },
   "limace 473.aseprite": {
    "frame": {
@@ -4264,7 +4264,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 350
+   "duration": 50
   },
   "limace 474.aseprite": {
    "frame": {
@@ -4273,7 +4273,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 130
+   "duration": 50
   },
   "limace 475.aseprite": {
    "frame": {
@@ -4282,7 +4282,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 180
+   "duration": 60
   },
   "limace 476.aseprite": {
    "frame": {
@@ -4291,7 +4291,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 150
+   "duration": 60
   },
   "limace 477.aseprite": {
    "frame": {
@@ -4300,7 +4300,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 900
+   "duration": 50
   },
   "limace 478.aseprite": {
    "frame": {
@@ -4318,7 +4318,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 90
+   "duration": 150
   },
   "limace 480.aseprite": {
    "frame": {
@@ -4327,7 +4327,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 60
+   "duration": 150
   },
   "limace 481.aseprite": {
    "frame": {
@@ -4336,7 +4336,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 140
+   "duration": 90
   },
   "limace 482.aseprite": {
    "frame": {
@@ -4354,7 +4354,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 90
+   "duration": 40
   },
   "limace 484.aseprite": {
    "frame": {
@@ -4372,7 +4372,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 900
+   "duration": 90
   },
   "limace 486.aseprite": {
    "frame": {
@@ -4381,7 +4381,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 60
+   "duration": 80
   },
   "limace 487.aseprite": {
    "frame": {
@@ -4390,7 +4390,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 90
+   "duration": 70
   },
   "limace 488.aseprite": {
    "frame": {
@@ -4399,7 +4399,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 60
+   "duration": 80
   },
   "limace 489.aseprite": {
    "frame": {
@@ -4408,7 +4408,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 140
+   "duration": 80
   },
   "limace 490.aseprite": {
    "frame": {
@@ -4417,7 +4417,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 60
+   "duration": 150
   },
   "limace 491.aseprite": {
    "frame": {
@@ -4426,7 +4426,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 90
+   "duration": 80
   },
   "limace 492.aseprite": {
    "frame": {
@@ -4444,7 +4444,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 400
+   "duration": 60
   },
   "limace 494.aseprite": {
    "frame": {
@@ -4453,7 +4453,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 400
+   "duration": 70
   },
   "limace 495.aseprite": {
    "frame": {
@@ -4462,7 +4462,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 400
+   "duration": 60
   },
   "limace 496.aseprite": {
    "frame": {
@@ -4471,7 +4471,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 400
+   "duration": 60
   },
   "limace 497.aseprite": {
    "frame": {
@@ -4480,7 +4480,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 400
+   "duration": 110
   },
   "limace 498.aseprite": {
    "frame": {
@@ -4489,7 +4489,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 400
+   "duration": 150
   },
   "limace 499.aseprite": {
    "frame": {
@@ -4498,7 +4498,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 400
+   "duration": 100
   },
   "limace 500.aseprite": {
    "frame": {
@@ -4507,7 +4507,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 400
+   "duration": 110
   },
   "limace 501.aseprite": {
    "frame": {
@@ -4516,7 +4516,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 400
+   "duration": 120
   },
   "limace 502.aseprite": {
    "frame": {
@@ -4525,7 +4525,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 400
+   "duration": 140
   },
   "limace 503.aseprite": {
    "frame": {
@@ -4534,7 +4534,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 400
+   "duration": 500
   },
   "limace 504.aseprite": {
    "frame": {
@@ -4543,7 +4543,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 400
+   "duration": 350
   },
   "limace 505.aseprite": {
    "frame": {
@@ -4552,7 +4552,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 90
+   "duration": 130
   },
   "limace 506.aseprite": {
    "frame": {
@@ -4561,7 +4561,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 90
+   "duration": 180
   },
   "limace 507.aseprite": {
    "frame": {
@@ -4570,7 +4570,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 80
+   "duration": 150
   },
   "limace 508.aseprite": {
    "frame": {
@@ -4579,7 +4579,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 80
+   "duration": 150
   },
   "limace 509.aseprite": {
    "frame": {
@@ -4588,7 +4588,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 90
+   "duration": 100
   },
   "limace 510.aseprite": {
    "frame": {
@@ -4597,7 +4597,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 80
+   "duration": 110
   },
   "limace 511.aseprite": {
    "frame": {
@@ -4606,7 +4606,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 80
+   "duration": 120
   },
   "limace 512.aseprite": {
    "frame": {
@@ -4615,7 +4615,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 100
+   "duration": 140
   },
   "limace 513.aseprite": {
    "frame": {
@@ -4624,7 +4624,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 90
+   "duration": 500
   },
   "limace 514.aseprite": {
    "frame": {
@@ -4633,7 +4633,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 90
+   "duration": 350
   },
   "limace 515.aseprite": {
    "frame": {
@@ -4642,7 +4642,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 80
+   "duration": 130
   },
   "limace 516.aseprite": {
    "frame": {
@@ -4651,7 +4651,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 80
+   "duration": 180
   },
   "limace 517.aseprite": {
    "frame": {
@@ -4660,7 +4660,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 90
+   "duration": 150
   },
   "limace 518.aseprite": {
    "frame": {
@@ -4669,7 +4669,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 80
+   "duration": 900
   },
   "limace 519.aseprite": {
    "frame": {
@@ -4678,7 +4678,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 80
+   "duration": 60
   },
   "limace 520.aseprite": {
    "frame": {
@@ -4687,7 +4687,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 100
+   "duration": 90
   },
   "limace 521.aseprite": {
    "frame": {
@@ -4696,7 +4696,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 150
+   "duration": 60
   },
   "limace 522.aseprite": {
    "frame": {
@@ -4705,7 +4705,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 90
+   "duration": 140
   },
   "limace 523.aseprite": {
    "frame": {
@@ -4714,7 +4714,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 100
+   "duration": 60
   },
   "limace 524.aseprite": {
    "frame": {
@@ -4723,7 +4723,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 130
+   "duration": 90
   },
   "limace 525.aseprite": {
    "frame": {
@@ -4732,7 +4732,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 130
+   "duration": 60
   },
   "limace 526.aseprite": {
    "frame": {
@@ -4741,7 +4741,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 140
+   "duration": 900
   },
   "limace 527.aseprite": {
    "frame": {
@@ -4750,7 +4750,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 120
+   "duration": 60
   },
   "limace 528.aseprite": {
    "frame": {
@@ -4759,7 +4759,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 100
+   "duration": 90
   },
   "limace 529.aseprite": {
    "frame": {
@@ -4768,7 +4768,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 150
+   "duration": 60
   },
   "limace 530.aseprite": {
    "frame": {
@@ -4777,7 +4777,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 150
+   "duration": 140
   },
   "limace 531.aseprite": {
    "frame": {
@@ -4786,7 +4786,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 90
+   "duration": 60
   },
   "limace 532.aseprite": {
    "frame": {
@@ -4795,7 +4795,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 100
+   "duration": 90
   },
   "limace 533.aseprite": {
    "frame": {
@@ -4804,7 +4804,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 130
+   "duration": 60
   },
   "limace 534.aseprite": {
    "frame": {
@@ -4813,7 +4813,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 130
+   "duration": 400
   },
   "limace 535.aseprite": {
    "frame": {
@@ -4822,7 +4822,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 140
+   "duration": 400
   },
   "limace 536.aseprite": {
    "frame": {
@@ -4831,7 +4831,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 120
+   "duration": 400
   },
   "limace 537.aseprite": {
    "frame": {
@@ -4840,7 +4840,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 100
+   "duration": 400
   },
   "limace 538.aseprite": {
    "frame": {
@@ -4849,7 +4849,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 150
+   "duration": 400
   },
   "limace 539.aseprite": {
    "frame": {
@@ -4858,7 +4858,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 160
+   "duration": 400
   },
   "limace 540.aseprite": {
    "frame": {
@@ -4867,7 +4867,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 90
+   "duration": 400
   },
   "limace 541.aseprite": {
    "frame": {
@@ -4876,7 +4876,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 240
+   "duration": 400
   },
   "limace 542.aseprite": {
    "frame": {
@@ -4885,7 +4885,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 160
+   "duration": 400
   },
   "limace 543.aseprite": {
    "frame": {
@@ -4894,7 +4894,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 90
+   "duration": 400
   },
   "limace 544.aseprite": {
    "frame": {
@@ -4903,7 +4903,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 240
+   "duration": 400
   },
   "limace 545.aseprite": {
    "frame": {
@@ -4912,7 +4912,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 160
+   "duration": 400
   },
   "limace 546.aseprite": {
    "frame": {
@@ -4921,7 +4921,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 70
+   "duration": 90
   },
   "limace 547.aseprite": {
    "frame": {
@@ -4930,7 +4930,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 70
+   "duration": 90
   },
   "limace 548.aseprite": {
    "frame": {
@@ -4939,7 +4939,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 70
+   "duration": 80
   },
   "limace 549.aseprite": {
    "frame": {
@@ -4948,7 +4948,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 70
+   "duration": 80
   },
   "limace 550.aseprite": {
    "frame": {
@@ -4957,7 +4957,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 70
+   "duration": 90
   },
   "limace 551.aseprite": {
    "frame": {
@@ -4966,7 +4966,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 70
+   "duration": 80
   },
   "limace 552.aseprite": {
    "frame": {
@@ -4975,7 +4975,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 70
+   "duration": 80
   },
   "limace 553.aseprite": {
    "frame": {
@@ -4984,7 +4984,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 70
+   "duration": 100
   },
   "limace 554.aseprite": {
    "frame": {
@@ -4993,7 +4993,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 70
+   "duration": 90
   },
   "limace 555.aseprite": {
    "frame": {
@@ -5002,7 +5002,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 80
+   "duration": 90
   },
   "limace 556.aseprite": {
    "frame": {
@@ -5011,7 +5011,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 90
+   "duration": 80
   },
   "limace 557.aseprite": {
    "frame": {
@@ -5020,7 +5020,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 100
+   "duration": 80
   },
   "limace 558.aseprite": {
    "frame": {
@@ -5029,7 +5029,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 110
+   "duration": 90
   },
   "limace 559.aseprite": {
    "frame": {
@@ -5038,7 +5038,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 200
+   "duration": 80
   },
   "limace 560.aseprite": {
    "frame": {
@@ -5047,7 +5047,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 160
+   "duration": 80
   },
   "limace 561.aseprite": {
    "frame": {
@@ -5056,7 +5056,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 70
+   "duration": 100
   },
   "limace 562.aseprite": {
    "frame": {
@@ -5065,7 +5065,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 70
+   "duration": 150
   },
   "limace 563.aseprite": {
    "frame": {
@@ -5074,7 +5074,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 70
+   "duration": 90
   },
   "limace 564.aseprite": {
    "frame": {
@@ -5083,7 +5083,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 70
+   "duration": 100
   },
   "limace 565.aseprite": {
    "frame": {
@@ -5092,7 +5092,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 70
+   "duration": 130
   },
   "limace 566.aseprite": {
    "frame": {
@@ -5101,7 +5101,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 70
+   "duration": 130
   },
   "limace 567.aseprite": {
    "frame": {
@@ -5110,7 +5110,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 70
+   "duration": 140
   },
   "limace 568.aseprite": {
    "frame": {
@@ -5119,7 +5119,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 70
+   "duration": 120
   },
   "limace 569.aseprite": {
    "frame": {
@@ -5128,7 +5128,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 70
+   "duration": 100
   },
   "limace 570.aseprite": {
    "frame": {
@@ -5137,7 +5137,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 80
+   "duration": 150
   },
   "limace 571.aseprite": {
    "frame": {
@@ -5146,7 +5146,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 90
+   "duration": 150
   },
   "limace 572.aseprite": {
    "frame": {
@@ -5155,7 +5155,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 100
+   "duration": 90
   },
   "limace 573.aseprite": {
    "frame": {
@@ -5164,7 +5164,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 110
+   "duration": 100
   },
   "limace 574.aseprite": {
    "frame": {
@@ -5173,7 +5173,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 200
+   "duration": 130
   },
   "limace 575.aseprite": {
    "frame": {
@@ -5182,7 +5182,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 140
+   "duration": 130
   },
   "limace 576.aseprite": {
    "frame": {
@@ -5200,7 +5200,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 140
+   "duration": 120
   },
   "limace 578.aseprite": {
    "frame": {
@@ -5209,7 +5209,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 140
+   "duration": 100
   },
   "limace 579.aseprite": {
    "frame": {
@@ -5218,7 +5218,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 140
+   "duration": 150
   },
   "limace 580.aseprite": {
    "frame": {
@@ -5227,7 +5227,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 140
+   "duration": 160
   },
   "limace 581.aseprite": {
    "frame": {
@@ -5236,7 +5236,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 140
+   "duration": 90
   },
   "limace 582.aseprite": {
    "frame": {
@@ -5245,7 +5245,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 140
+   "duration": 240
   },
   "limace 583.aseprite": {
    "frame": {
@@ -5254,7 +5254,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 140
+   "duration": 160
   },
   "limace 584.aseprite": {
    "frame": {
@@ -5263,7 +5263,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 140
+   "duration": 90
   },
   "limace 585.aseprite": {
    "frame": {
@@ -5272,7 +5272,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 140
+   "duration": 240
   },
   "limace 586.aseprite": {
    "frame": {
@@ -5281,7 +5281,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 140
+   "duration": 160
   },
   "limace 587.aseprite": {
    "frame": {
@@ -5290,7 +5290,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 140
+   "duration": 70
   },
   "limace 588.aseprite": {
    "frame": {
@@ -5299,7 +5299,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 140
+   "duration": 70
   },
   "limace 589.aseprite": {
    "frame": {
@@ -5308,7 +5308,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 140
+   "duration": 70
   },
   "limace 590.aseprite": {
    "frame": {
@@ -5317,7 +5317,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 140
+   "duration": 70
   },
   "limace 591.aseprite": {
    "frame": {
@@ -5326,7 +5326,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 100
+   "duration": 70
   },
   "limace 592.aseprite": {
    "frame": {
@@ -5335,7 +5335,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 55
+   "duration": 70
   },
   "limace 593.aseprite": {
    "frame": {
@@ -5344,7 +5344,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 55
+   "duration": 70
   },
   "limace 594.aseprite": {
    "frame": {
@@ -5353,7 +5353,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 55
+   "duration": 70
   },
   "limace 595.aseprite": {
    "frame": {
@@ -5371,7 +5371,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 55
+   "duration": 80
   },
   "limace 597.aseprite": {
    "frame": {
@@ -5380,7 +5380,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 70
+   "duration": 90
   },
   "limace 598.aseprite": {
    "frame": {
@@ -5389,7 +5389,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 55
+   "duration": 100
   },
   "limace 599.aseprite": {
    "frame": {
@@ -5398,7 +5398,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 70
+   "duration": 110
   },
   "limace 600.aseprite": {
    "frame": {
@@ -5407,7 +5407,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 55
+   "duration": 200
   },
   "limace 601.aseprite": {
    "frame": {
@@ -5416,7 +5416,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 70
+   "duration": 160
   },
   "limace 602.aseprite": {
    "frame": {
@@ -5425,7 +5425,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 55
+   "duration": 70
   },
   "limace 603.aseprite": {
    "frame": {
@@ -5443,7 +5443,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 55
+   "duration": 70
   },
   "limace 605.aseprite": {
    "frame": {
@@ -5461,7 +5461,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 60
+   "duration": 70
   },
   "limace 607.aseprite": {
    "frame": {
@@ -5470,7 +5470,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 60
+   "duration": 70
   },
   "limace 608.aseprite": {
    "frame": {
@@ -5479,7 +5479,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 90
+   "duration": 70
   },
   "limace 609.aseprite": {
    "frame": {
@@ -5488,7 +5488,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 110
+   "duration": 70
   },
   "limace 610.aseprite": {
    "frame": {
@@ -5497,7 +5497,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 130
+   "duration": 70
   },
   "limace 611.aseprite": {
    "frame": {
@@ -5506,7 +5506,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 70
+   "duration": 80
   },
   "limace 612.aseprite": {
    "frame": {
@@ -5515,7 +5515,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 70
+   "duration": 90
   },
   "limace 613.aseprite": {
    "frame": {
@@ -5524,7 +5524,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 70
+   "duration": 100
   },
   "limace 614.aseprite": {
    "frame": {
@@ -5533,7 +5533,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 70
+   "duration": 110
   },
   "limace 615.aseprite": {
    "frame": {
@@ -5542,7 +5542,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 90
+   "duration": 200
   },
   "limace 616.aseprite": {
    "frame": {
@@ -5551,7 +5551,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 100
+   "duration": 140
   },
   "limace 617.aseprite": {
    "frame": {
@@ -5560,7 +5560,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 55
+   "duration": 140
   },
   "limace 618.aseprite": {
    "frame": {
@@ -5569,7 +5569,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 55
+   "duration": 140
   },
   "limace 619.aseprite": {
    "frame": {
@@ -5578,7 +5578,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 55
+   "duration": 140
   },
   "limace 620.aseprite": {
    "frame": {
@@ -5587,7 +5587,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 70
+   "duration": 140
   },
   "limace 621.aseprite": {
    "frame": {
@@ -5596,7 +5596,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 55
+   "duration": 140
   },
   "limace 622.aseprite": {
    "frame": {
@@ -5605,7 +5605,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 70
+   "duration": 140
   },
   "limace 623.aseprite": {
    "frame": {
@@ -5614,7 +5614,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 55
+   "duration": 140
   },
   "limace 624.aseprite": {
    "frame": {
@@ -5623,7 +5623,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 70
+   "duration": 140
   },
   "limace 625.aseprite": {
    "frame": {
@@ -5632,7 +5632,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 55
+   "duration": 140
   },
   "limace 626.aseprite": {
    "frame": {
@@ -5641,7 +5641,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 70
+   "duration": 140
   },
   "limace 627.aseprite": {
    "frame": {
@@ -5650,7 +5650,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 55
+   "duration": 140
   },
   "limace 628.aseprite": {
    "frame": {
@@ -5659,7 +5659,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 70
+   "duration": 140
   },
   "limace 629.aseprite": {
    "frame": {
@@ -5668,7 +5668,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 55
+   "duration": 140
   },
   "limace 630.aseprite": {
    "frame": {
@@ -5677,7 +5677,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 70
+   "duration": 140
   },
   "limace 631.aseprite": {
    "frame": {
@@ -5686,7 +5686,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 60
+   "duration": 140
   },
   "limace 632.aseprite": {
    "frame": {
@@ -5695,7 +5695,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 60
+   "duration": 100
   },
   "limace 633.aseprite": {
    "frame": {
@@ -5704,7 +5704,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 90
+   "duration": 55
   },
   "limace 634.aseprite": {
    "frame": {
@@ -5713,7 +5713,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 110
+   "duration": 55
   },
   "limace 635.aseprite": {
    "frame": {
@@ -5722,7 +5722,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 130
+   "duration": 55
   },
   "limace 636.aseprite": {
    "frame": {
@@ -5740,7 +5740,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 70
+   "duration": 55
   },
   "limace 638.aseprite": {
    "frame": {
@@ -5758,7 +5758,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 70
+   "duration": 55
   },
   "limace 640.aseprite": {
    "frame": {
@@ -5767,7 +5767,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 90
+   "duration": 70
   },
   "limace 641.aseprite": {
    "frame": {
@@ -5776,7 +5776,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 150
+   "duration": 55
   },
   "limace 642.aseprite": {
    "frame": {
@@ -5785,7 +5785,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 150
+   "duration": 70
   },
   "limace 643.aseprite": {
    "frame": {
@@ -5794,7 +5794,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 90
+   "duration": 55
   },
   "limace 644.aseprite": {
    "frame": {
@@ -5803,7 +5803,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 150
+   "duration": 70
   },
   "limace 645.aseprite": {
    "frame": {
@@ -5812,7 +5812,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 150
+   "duration": 55
   },
   "limace 646.aseprite": {
    "frame": {
@@ -5821,7 +5821,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 90
+   "duration": 70
   },
   "limace 647.aseprite": {
    "frame": {
@@ -5839,7 +5839,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 40
+   "duration": 60
   },
   "limace 649.aseprite": {
    "frame": {
@@ -5848,7 +5848,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 60
+   "duration": 90
   },
   "limace 650.aseprite": {
    "frame": {
@@ -5857,7 +5857,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 40
+   "duration": 110
   },
   "limace 651.aseprite": {
    "frame": {
@@ -5866,7 +5866,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 60
+   "duration": 130
   },
   "limace 652.aseprite": {
    "frame": {
@@ -5875,7 +5875,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 90
+   "duration": 70
   },
   "limace 653.aseprite": {
    "frame": {
@@ -5884,7 +5884,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 80
+   "duration": 70
   },
   "limace 654.aseprite": {
    "frame": {
@@ -5902,7 +5902,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 80
+   "duration": 70
   },
   "limace 656.aseprite": {
    "frame": {
@@ -5911,7 +5911,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 80
+   "duration": 90
   },
   "limace 657.aseprite": {
    "frame": {
@@ -5920,7 +5920,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 60
+   "duration": 100
   },
   "limace 658.aseprite": {
    "frame": {
@@ -5929,7 +5929,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 90
+   "duration": 55
   },
   "limace 659.aseprite": {
    "frame": {
@@ -5938,7 +5938,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 80
+   "duration": 55
   },
   "limace 660.aseprite": {
    "frame": {
@@ -5947,7 +5947,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 70
+   "duration": 55
   },
   "limace 661.aseprite": {
    "frame": {
@@ -5956,7 +5956,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 80
+   "duration": 70
   },
   "limace 662.aseprite": {
    "frame": {
@@ -5965,7 +5965,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 80
+   "duration": 55
   },
   "limace 663.aseprite": {
    "frame": {
@@ -5974,7 +5974,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 110
+   "duration": 70
   },
   "limace 664.aseprite": {
    "frame": {
@@ -5983,7 +5983,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 70
+   "duration": 55
   },
   "limace 665.aseprite": {
    "frame": {
@@ -6001,7 +6001,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 150
+   "duration": 55
   },
   "limace 667.aseprite": {
    "frame": {
@@ -6010,7 +6010,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 50
+   "duration": 70
   },
   "limace 668.aseprite": {
    "frame": {
@@ -6019,7 +6019,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 50
+   "duration": 55
   },
   "limace 669.aseprite": {
    "frame": {
@@ -6028,7 +6028,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 60
+   "duration": 70
   },
   "limace 670.aseprite": {
    "frame": {
@@ -6037,7 +6037,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 60
+   "duration": 55
   },
   "limace 671.aseprite": {
    "frame": {
@@ -6046,7 +6046,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 50
+   "duration": 70
   },
   "limace 672.aseprite": {
    "frame": {
@@ -6064,7 +6064,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 150
+   "duration": 60
   },
   "limace 674.aseprite": {
    "frame": {
@@ -6073,7 +6073,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 150
+   "duration": 90
   },
   "limace 675.aseprite": {
    "frame": {
@@ -6082,7 +6082,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 90
+   "duration": 110
   },
   "limace 676.aseprite": {
    "frame": {
@@ -6091,7 +6091,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 60
+   "duration": 130
   },
   "limace 677.aseprite": {
    "frame": {
@@ -6100,7 +6100,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 40
+   "duration": 70
   },
   "limace 678.aseprite": {
    "frame": {
@@ -6109,7 +6109,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 60
+   "duration": 70
   },
   "limace 679.aseprite": {
    "frame": {
@@ -6118,7 +6118,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 90
+   "duration": 70
   },
   "limace 680.aseprite": {
    "frame": {
@@ -6127,7 +6127,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 80
+   "duration": 70
   },
   "limace 681.aseprite": {
    "frame": {
@@ -6136,7 +6136,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 70
+   "duration": 90
   },
   "limace 682.aseprite": {
    "frame": {
@@ -6145,7 +6145,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 80
+   "duration": 150
   },
   "limace 683.aseprite": {
    "frame": {
@@ -6154,7 +6154,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 80
+   "duration": 150
   },
   "limace 684.aseprite": {
    "frame": {
@@ -6163,7 +6163,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 150
+   "duration": 90
   },
   "limace 685.aseprite": {
    "frame": {
@@ -6172,7 +6172,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 80
+   "duration": 150
   },
   "limace 686.aseprite": {
    "frame": {
@@ -6181,7 +6181,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 110
+   "duration": 150
   },
   "limace 687.aseprite": {
    "frame": {
@@ -6190,7 +6190,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 70
+   "duration": 90
   },
   "limace 688.aseprite": {
    "frame": {
@@ -6199,7 +6199,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 70
+   "duration": 60
   },
   "limace 689.aseprite": {
    "frame": {
@@ -6208,7 +6208,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 150
+   "duration": 40
   },
   "limace 690.aseprite": {
    "frame": {
@@ -6217,7 +6217,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 50
+   "duration": 60
   },
   "limace 691.aseprite": {
    "frame": {
@@ -6226,7 +6226,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 50
+   "duration": 40
   },
   "limace 692.aseprite": {
    "frame": {
@@ -6244,7 +6244,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 60
+   "duration": 90
   },
   "limace 694.aseprite": {
    "frame": {
@@ -6253,7 +6253,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 50
+   "duration": 80
   },
   "limace 695.aseprite": {
    "frame": {
@@ -6262,7 +6262,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 60
+   "duration": 70
   },
   "limace 696.aseprite": {
    "frame": {
@@ -6271,7 +6271,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 150
+   "duration": 80
   },
   "limace 697.aseprite": {
    "frame": {
@@ -6280,7 +6280,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 150
+   "duration": 80
   },
   "limace 698.aseprite": {
    "frame": {
@@ -6289,7 +6289,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 90
+   "duration": 60
   },
   "limace 699.aseprite": {
    "frame": {
@@ -6298,7 +6298,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 60
+   "duration": 90
   },
   "limace 700.aseprite": {
    "frame": {
@@ -6307,7 +6307,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 40
+   "duration": 80
   },
   "limace 701.aseprite": {
    "frame": {
@@ -6316,7 +6316,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 60
+   "duration": 70
   },
   "limace 702.aseprite": {
    "frame": {
@@ -6325,7 +6325,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 90
+   "duration": 80
   },
   "limace 703.aseprite": {
    "frame": {
@@ -6343,7 +6343,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 70
+   "duration": 110
   },
   "limace 705.aseprite": {
    "frame": {
@@ -6352,7 +6352,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 80
+   "duration": 70
   },
   "limace 706.aseprite": {
    "frame": {
@@ -6361,7 +6361,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 80
+   "duration": 70
   },
   "limace 707.aseprite": {
    "frame": {
@@ -6379,7 +6379,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 80
+   "duration": 50
   },
   "limace 709.aseprite": {
    "frame": {
@@ -6388,7 +6388,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 90
+   "duration": 50
   },
   "limace 710.aseprite": {
    "frame": {
@@ -6397,7 +6397,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 90
+   "duration": 60
   },
   "limace 711.aseprite": {
    "frame": {
@@ -6406,7 +6406,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 90
+   "duration": 60
   },
   "limace 712.aseprite": {
    "frame": {
@@ -6415,7 +6415,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 90
+   "duration": 50
   },
   "limace 713.aseprite": {
    "frame": {
@@ -6424,7 +6424,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 90
+   "duration": 60
   },
   "limace 714.aseprite": {
    "frame": {
@@ -6433,7 +6433,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 90
+   "duration": 150
   },
   "limace 715.aseprite": {
    "frame": {
@@ -6442,7 +6442,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 90
+   "duration": 150
   },
   "limace 716.aseprite": {
    "frame": {
@@ -6460,7 +6460,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 90
+   "duration": 60
   },
   "limace 718.aseprite": {
    "frame": {
@@ -6469,7 +6469,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 90
+   "duration": 40
   },
   "limace 719.aseprite": {
    "frame": {
@@ -6478,7 +6478,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 90
+   "duration": 60
   },
   "limace 720.aseprite": {
    "frame": {
@@ -6496,7 +6496,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 90
+   "duration": 80
   },
   "limace 722.aseprite": {
    "frame": {
@@ -6505,7 +6505,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 90
+   "duration": 70
   },
   "limace 723.aseprite": {
    "frame": {
@@ -6514,7 +6514,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 90
+   "duration": 80
   },
   "limace 724.aseprite": {
    "frame": {
@@ -6523,7 +6523,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 90
+   "duration": 80
   },
   "limace 725.aseprite": {
    "frame": {
@@ -6532,7 +6532,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 90
+   "duration": 150
   },
   "limace 726.aseprite": {
    "frame": {
@@ -6541,7 +6541,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 90
+   "duration": 80
   },
   "limace 727.aseprite": {
    "frame": {
@@ -6550,7 +6550,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 90
+   "duration": 110
   },
   "limace 728.aseprite": {
    "frame": {
@@ -6559,7 +6559,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 90
+   "duration": 70
   },
   "limace 729.aseprite": {
    "frame": {
@@ -6568,7 +6568,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 90
+   "duration": 70
   },
   "limace 730.aseprite": {
    "frame": {
@@ -6577,7 +6577,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 90
+   "duration": 150
   },
   "limace 731.aseprite": {
    "frame": {
@@ -6586,7 +6586,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 90
+   "duration": 50
   },
   "limace 732.aseprite": {
    "frame": {
@@ -6595,7 +6595,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 90
+   "duration": 50
   },
   "limace 733.aseprite": {
    "frame": {
@@ -6604,7 +6604,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 80
+   "duration": 60
   },
   "limace 734.aseprite": {
    "frame": {
@@ -6622,7 +6622,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 60
+   "duration": 50
   },
   "limace 736.aseprite": {
    "frame": {
@@ -6631,7 +6631,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 70
+   "duration": 60
   },
   "limace 737.aseprite": {
    "frame": {
@@ -6640,7 +6640,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 60
+   "duration": 150
   },
   "limace 738.aseprite": {
    "frame": {
@@ -6649,7 +6649,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 60
+   "duration": 150
   },
   "limace 739.aseprite": {
    "frame": {
@@ -6658,7 +6658,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 160
+   "duration": 90
   },
   "limace 740.aseprite": {
    "frame": {
@@ -6676,7 +6676,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 60
+   "duration": 40
   },
   "limace 742.aseprite": {
    "frame": {
@@ -6685,7 +6685,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 70
+   "duration": 60
   },
   "limace 743.aseprite": {
    "frame": {
@@ -6694,7 +6694,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 60
+   "duration": 90
   },
   "limace 744.aseprite": {
    "frame": {
@@ -6703,7 +6703,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 60
+   "duration": 80
   },
   "limace 745.aseprite": {
    "frame": {
@@ -6712,7 +6712,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 120
+   "duration": 70
   },
   "limace 746.aseprite": {
    "frame": {
@@ -6730,7 +6730,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 60
+   "duration": 80
   },
   "limace 748.aseprite": {
    "frame": {
@@ -6739,7 +6739,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 60
+   "duration": 150
   },
   "limace 749.aseprite": {
    "frame": {
@@ -6748,7 +6748,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 70
+   "duration": 80
   },
   "limace 750.aseprite": {
    "frame": {
@@ -6757,7 +6757,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 60
+   "duration": 90
   },
   "limace 751.aseprite": {
    "frame": {
@@ -6766,7 +6766,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 60
+   "duration": 90
   },
   "limace 752.aseprite": {
    "frame": {
@@ -6775,7 +6775,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 110
+   "duration": 90
   },
   "limace 753.aseprite": {
    "frame": {
@@ -6784,7 +6784,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 70
+   "duration": 90
   },
   "limace 754.aseprite": {
    "frame": {
@@ -6793,7 +6793,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 70
+   "duration": 90
   },
   "limace 755.aseprite": {
    "frame": {
@@ -6802,7 +6802,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 150
+   "duration": 90
   },
   "limace 756.aseprite": {
    "frame": {
@@ -6811,7 +6811,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 50
+   "duration": 90
   },
   "limace 757.aseprite": {
    "frame": {
@@ -6820,7 +6820,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 50
+   "duration": 90
   },
   "limace 758.aseprite": {
    "frame": {
@@ -6829,7 +6829,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 60
+   "duration": 90
   },
   "limace 759.aseprite": {
    "frame": {
@@ -6838,7 +6838,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 60
+   "duration": 90
   },
   "limace 760.aseprite": {
    "frame": {
@@ -6847,7 +6847,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 50
+   "duration": 90
   },
   "limace 761.aseprite": {
    "frame": {
@@ -6856,7 +6856,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 60
+   "duration": 90
   },
   "limace 762.aseprite": {
    "frame": {
@@ -6865,7 +6865,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 150
+   "duration": 90
   },
   "limace 763.aseprite": {
    "frame": {
@@ -6874,7 +6874,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 150
+   "duration": 90
   },
   "limace 764.aseprite": {
    "frame": {
@@ -6892,7 +6892,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 60
+   "duration": 90
   },
   "limace 766.aseprite": {
    "frame": {
@@ -6901,7 +6901,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 40
+   "duration": 90
   },
   "limace 767.aseprite": {
    "frame": {
@@ -6910,7 +6910,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 60
+   "duration": 90
   },
   "limace 768.aseprite": {
    "frame": {
@@ -6928,7 +6928,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 80
+   "duration": 90
   },
   "limace 770.aseprite": {
    "frame": {
@@ -6937,7 +6937,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 70
+   "duration": 90
   },
   "limace 771.aseprite": {
    "frame": {
@@ -6946,7 +6946,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 80
+   "duration": 90
   },
   "limace 772.aseprite": {
    "frame": {
@@ -6955,7 +6955,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 80
+   "duration": 90
   },
   "limace 773.aseprite": {
    "frame": {
@@ -6964,7 +6964,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 150
+   "duration": 90
   },
   "limace 774.aseprite": {
    "frame": {
@@ -7027,7 +7027,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 110
+   "duration": 160
   },
   "limace 781.aseprite": {
    "frame": {
@@ -7036,7 +7036,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 80
+   "duration": 60
   },
   "limace 782.aseprite": {
    "frame": {
@@ -7054,7 +7054,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 60
+   "duration": 70
   },
   "limace 784.aseprite": {
    "frame": {
@@ -7063,7 +7063,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 70
+   "duration": 60
   },
   "limace 785.aseprite": {
    "frame": {
@@ -7081,7 +7081,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 60
+   "duration": 120
   },
   "limace 787.aseprite": {
    "frame": {
@@ -7090,7 +7090,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 110
+   "duration": 80
   },
   "limace 788.aseprite": {
    "frame": {
@@ -7099,7 +7099,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 70
+   "duration": 60
   },
   "limace 789.aseprite": {
    "frame": {
@@ -7108,7 +7108,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 70
+   "duration": 60
   },
   "limace 790.aseprite": {
    "frame": {
@@ -7117,7 +7117,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 150
+   "duration": 70
   },
   "limace 791.aseprite": {
    "frame": {
@@ -7126,7 +7126,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 50
+   "duration": 60
   },
   "limace 792.aseprite": {
    "frame": {
@@ -7135,7 +7135,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 50
+   "duration": 60
   },
   "limace 793.aseprite": {
    "frame": {
@@ -7144,7 +7144,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 60
+   "duration": 110
   },
   "limace 794.aseprite": {
    "frame": {
@@ -7153,7 +7153,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 60
+   "duration": 70
   },
   "limace 795.aseprite": {
    "frame": {
@@ -7162,7 +7162,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 50
+   "duration": 70
   },
   "limace 796.aseprite": {
    "frame": {
@@ -7171,7 +7171,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 60
+   "duration": 150
   },
   "limace 797.aseprite": {
    "frame": {
@@ -7180,7 +7180,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 150
+   "duration": 50
   },
   "limace 798.aseprite": {
    "frame": {
@@ -7189,7 +7189,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 150
+   "duration": 50
   },
   "limace 799.aseprite": {
    "frame": {
@@ -7198,7 +7198,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 90
+   "duration": 60
   },
   "limace 800.aseprite": {
    "frame": {
@@ -7216,7 +7216,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 40
+   "duration": 50
   },
   "limace 802.aseprite": {
    "frame": {
@@ -7234,7 +7234,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 90
+   "duration": 150
   },
   "limace 804.aseprite": {
    "frame": {
@@ -7243,7 +7243,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 80
+   "duration": 150
   },
   "limace 805.aseprite": {
    "frame": {
@@ -7252,7 +7252,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 70
+   "duration": 90
   },
   "limace 806.aseprite": {
    "frame": {
@@ -7261,7 +7261,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 80
+   "duration": 60
   },
   "limace 807.aseprite": {
    "frame": {
@@ -7270,7 +7270,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 80
+   "duration": 40
   },
   "limace 808.aseprite": {
    "frame": {
@@ -7279,7 +7279,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 150
+   "duration": 60
   },
   "limace 809.aseprite": {
    "frame": {
@@ -7288,7 +7288,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 80
+   "duration": 90
   },
   "limace 810.aseprite": {
    "frame": {
@@ -7297,7 +7297,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 60
+   "duration": 80
   },
   "limace 811.aseprite": {
    "frame": {
@@ -7306,7 +7306,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 60
+   "duration": 70
   },
   "limace 812.aseprite": {
    "frame": {
@@ -7315,7 +7315,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 70
+   "duration": 80
   },
   "limace 813.aseprite": {
    "frame": {
@@ -7324,7 +7324,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 60
+   "duration": 80
   },
   "limace 814.aseprite": {
    "frame": {
@@ -7333,7 +7333,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 60
+   "duration": 150
   },
   "limace 815.aseprite": {
    "frame": {
@@ -7342,7 +7342,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 110
+   "duration": 80
   },
   "limace 816.aseprite": {
    "frame": {
@@ -7351,7 +7351,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 150
+   "duration": 60
   },
   "limace 817.aseprite": {
    "frame": {
@@ -7360,7 +7360,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 100
+   "duration": 60
   },
   "limace 818.aseprite": {
    "frame": {
@@ -7369,7 +7369,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 110
+   "duration": 70
   },
   "limace 819.aseprite": {
    "frame": {
@@ -7378,7 +7378,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 120
+   "duration": 60
   },
   "limace 820.aseprite": {
    "frame": {
@@ -7387,7 +7387,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 140
+   "duration": 60
   },
   "limace 821.aseprite": {
    "frame": {
@@ -7396,7 +7396,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 500
+   "duration": 110
   },
   "limace 822.aseprite": {
    "frame": {
@@ -7405,7 +7405,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 350
+   "duration": 80
   },
   "limace 823.aseprite": {
    "frame": {
@@ -7414,7 +7414,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 130
+   "duration": 60
   },
   "limace 824.aseprite": {
    "frame": {
@@ -7423,7 +7423,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 180
+   "duration": 60
   },
   "limace 825.aseprite": {
    "frame": {
@@ -7432,7 +7432,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 150
+   "duration": 70
   },
   "limace 826.aseprite": {
    "frame": {
@@ -7441,7 +7441,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 150
+   "duration": 60
   },
   "limace 827.aseprite": {
    "frame": {
@@ -7450,7 +7450,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 100
+   "duration": 60
   },
   "limace 828.aseprite": {
    "frame": {
@@ -7468,7 +7468,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 120
+   "duration": 70
   },
   "limace 830.aseprite": {
    "frame": {
@@ -7477,7 +7477,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 140
+   "duration": 70
   },
   "limace 831.aseprite": {
    "frame": {
@@ -7486,7 +7486,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 500
+   "duration": 150
   },
   "limace 832.aseprite": {
    "frame": {
@@ -7495,7 +7495,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 350
+   "duration": 50
   },
   "limace 833.aseprite": {
    "frame": {
@@ -7504,7 +7504,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 130
+   "duration": 50
   },
   "limace 834.aseprite": {
    "frame": {
@@ -7513,7 +7513,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 180
+   "duration": 60
   },
   "limace 835.aseprite": {
    "frame": {
@@ -7522,7 +7522,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 150
+   "duration": 60
   },
   "limace 836.aseprite": {
    "frame": {
@@ -7531,7 +7531,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 900
+   "duration": 50
   },
   "limace 837.aseprite": {
    "frame": {
@@ -7549,7 +7549,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 90
+   "duration": 150
   },
   "limace 839.aseprite": {
    "frame": {
@@ -7558,7 +7558,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 60
+   "duration": 150
   },
   "limace 840.aseprite": {
    "frame": {
@@ -7567,7 +7567,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 140
+   "duration": 90
   },
   "limace 841.aseprite": {
    "frame": {
@@ -7585,7 +7585,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 90
+   "duration": 40
   },
   "limace 843.aseprite": {
    "frame": {
@@ -7603,7 +7603,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 900
+   "duration": 90
   },
   "limace 845.aseprite": {
    "frame": {
@@ -7612,7 +7612,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 400
+   "duration": 80
   },
   "limace 846.aseprite": {
    "frame": {
@@ -7621,7 +7621,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 400
+   "duration": 70
   },
   "limace 847.aseprite": {
    "frame": {
@@ -7630,7 +7630,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 400
+   "duration": 80
   },
   "limace 848.aseprite": {
    "frame": {
@@ -7639,7 +7639,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 400
+   "duration": 80
   },
   "limace 849.aseprite": {
    "frame": {
@@ -7648,7 +7648,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 400
+   "duration": 150
   },
   "limace 850.aseprite": {
    "frame": {
@@ -7657,7 +7657,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 400
+   "duration": 80
   },
   "limace 851.aseprite": {
    "frame": {
@@ -7666,7 +7666,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 90
+   "duration": 60
   },
   "limace 852.aseprite": {
    "frame": {
@@ -7675,7 +7675,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 90
+   "duration": 60
   },
   "limace 853.aseprite": {
    "frame": {
@@ -7684,7 +7684,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 80
+   "duration": 70
   },
   "limace 854.aseprite": {
    "frame": {
@@ -7693,7 +7693,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 80
+   "duration": 60
   },
   "limace 855.aseprite": {
    "frame": {
@@ -7702,7 +7702,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 90
+   "duration": 60
   },
   "limace 856.aseprite": {
    "frame": {
@@ -7711,7 +7711,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 80
+   "duration": 110
   },
   "limace 857.aseprite": {
    "frame": {
@@ -7720,7 +7720,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 80
+   "duration": 150
   },
   "limace 858.aseprite": {
    "frame": {
@@ -7738,7 +7738,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 90
+   "duration": 110
   },
   "limace 860.aseprite": {
    "frame": {
@@ -7747,7 +7747,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 90
+   "duration": 120
   },
   "limace 861.aseprite": {
    "frame": {
@@ -7756,7 +7756,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 80
+   "duration": 140
   },
   "limace 862.aseprite": {
    "frame": {
@@ -7765,7 +7765,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 80
+   "duration": 500
   },
   "limace 863.aseprite": {
    "frame": {
@@ -7774,7 +7774,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 90
+   "duration": 350
   },
   "limace 864.aseprite": {
    "frame": {
@@ -7783,7 +7783,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 80
+   "duration": 130
   },
   "limace 865.aseprite": {
    "frame": {
@@ -7792,7 +7792,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 80
+   "duration": 180
   },
   "limace 866.aseprite": {
    "frame": {
@@ -7801,7 +7801,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 100
+   "duration": 150
   },
   "limace 867.aseprite": {
    "frame": {
@@ -7819,7 +7819,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 90
+   "duration": 100
   },
   "limace 869.aseprite": {
    "frame": {
@@ -7828,7 +7828,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 100
+   "duration": 110
   },
   "limace 870.aseprite": {
    "frame": {
@@ -7837,7 +7837,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 130
+   "duration": 120
   },
   "limace 871.aseprite": {
    "frame": {
@@ -7846,7 +7846,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 130
+   "duration": 140
   },
   "limace 872.aseprite": {
    "frame": {
@@ -7855,7 +7855,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 140
+   "duration": 500
   },
   "limace 873.aseprite": {
    "frame": {
@@ -7864,7 +7864,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 120
+   "duration": 350
   },
   "limace 874.aseprite": {
    "frame": {
@@ -7873,7 +7873,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 100
+   "duration": 130
   },
   "limace 875.aseprite": {
    "frame": {
@@ -7882,7 +7882,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 150
+   "duration": 180
   },
   "limace 876.aseprite": {
    "frame": {
@@ -7900,7 +7900,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 90
+   "duration": 900
   },
   "limace 878.aseprite": {
    "frame": {
@@ -7909,7 +7909,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 100
+   "duration": 60
   },
   "limace 879.aseprite": {
    "frame": {
@@ -7918,7 +7918,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 130
+   "duration": 90
   },
   "limace 880.aseprite": {
    "frame": {
@@ -7927,7 +7927,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 130
+   "duration": 60
   },
   "limace 881.aseprite": {
    "frame": {
@@ -7945,7 +7945,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 120
+   "duration": 60
   },
   "limace 883.aseprite": {
    "frame": {
@@ -7954,7 +7954,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 100
+   "duration": 90
   },
   "limace 884.aseprite": {
    "frame": {
@@ -7963,7 +7963,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 150
+   "duration": 60
   },
   "limace 885.aseprite": {
    "frame": {
@@ -7972,7 +7972,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 160
+   "duration": 900
   },
   "limace 886.aseprite": {
    "frame": {
@@ -7981,7 +7981,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 90
+   "duration": 400
   },
   "limace 887.aseprite": {
    "frame": {
@@ -7990,7 +7990,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 240
+   "duration": 400
   },
   "limace 888.aseprite": {
    "frame": {
@@ -7999,7 +7999,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 160
+   "duration": 400
   },
   "limace 889.aseprite": {
    "frame": {
@@ -8008,7 +8008,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 90
+   "duration": 400
   },
   "limace 890.aseprite": {
    "frame": {
@@ -8017,7 +8017,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 240
+   "duration": 400
   },
   "limace 891.aseprite": {
    "frame": {
@@ -8026,7 +8026,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 160
+   "duration": 400
   },
   "limace 892.aseprite": {
    "frame": {
@@ -8035,7 +8035,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 70
+   "duration": 90
   },
   "limace 893.aseprite": {
    "frame": {
@@ -8044,7 +8044,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 70
+   "duration": 90
   },
   "limace 894.aseprite": {
    "frame": {
@@ -8053,7 +8053,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 70
+   "duration": 80
   },
   "limace 895.aseprite": {
    "frame": {
@@ -8062,7 +8062,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 70
+   "duration": 80
   },
   "limace 896.aseprite": {
    "frame": {
@@ -8071,7 +8071,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 70
+   "duration": 90
   },
   "limace 897.aseprite": {
    "frame": {
@@ -8080,7 +8080,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 70
+   "duration": 80
   },
   "limace 898.aseprite": {
    "frame": {
@@ -8089,7 +8089,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 70
+   "duration": 80
   },
   "limace 899.aseprite": {
    "frame": {
@@ -8098,7 +8098,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 70
+   "duration": 100
   },
   "limace 900.aseprite": {
    "frame": {
@@ -8107,7 +8107,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 70
+   "duration": 90
   },
   "limace 901.aseprite": {
    "frame": {
@@ -8116,7 +8116,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 80
+   "duration": 90
   },
   "limace 902.aseprite": {
    "frame": {
@@ -8125,7 +8125,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 90
+   "duration": 80
   },
   "limace 903.aseprite": {
    "frame": {
@@ -8134,7 +8134,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 100
+   "duration": 80
   },
   "limace 904.aseprite": {
    "frame": {
@@ -8143,7 +8143,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 110
+   "duration": 90
   },
   "limace 905.aseprite": {
    "frame": {
@@ -8152,7 +8152,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 200
+   "duration": 80
   },
   "limace 906.aseprite": {
    "frame": {
@@ -8161,7 +8161,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 160
+   "duration": 80
   },
   "limace 907.aseprite": {
    "frame": {
@@ -8170,7 +8170,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 70
+   "duration": 100
   },
   "limace 908.aseprite": {
    "frame": {
@@ -8179,7 +8179,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 70
+   "duration": 150
   },
   "limace 909.aseprite": {
    "frame": {
@@ -8188,7 +8188,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 70
+   "duration": 90
   },
   "limace 910.aseprite": {
    "frame": {
@@ -8197,7 +8197,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 70
+   "duration": 100
   },
   "limace 911.aseprite": {
    "frame": {
@@ -8206,7 +8206,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 70
+   "duration": 130
   },
   "limace 912.aseprite": {
    "frame": {
@@ -8215,7 +8215,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 70
+   "duration": 130
   },
   "limace 913.aseprite": {
    "frame": {
@@ -8224,7 +8224,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 70
+   "duration": 140
   },
   "limace 914.aseprite": {
    "frame": {
@@ -8233,7 +8233,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 70
+   "duration": 120
   },
   "limace 915.aseprite": {
    "frame": {
@@ -8242,7 +8242,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 70
+   "duration": 100
   },
   "limace 916.aseprite": {
    "frame": {
@@ -8251,7 +8251,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 80
+   "duration": 150
   },
   "limace 917.aseprite": {
    "frame": {
@@ -8260,7 +8260,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 90
+   "duration": 150
   },
   "limace 918.aseprite": {
    "frame": {
@@ -8269,7 +8269,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 100
+   "duration": 90
   },
   "limace 919.aseprite": {
    "frame": {
@@ -8278,7 +8278,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 110
+   "duration": 100
   },
   "limace 920.aseprite": {
    "frame": {
@@ -8287,7 +8287,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 200
+   "duration": 130
   },
   "limace 921.aseprite": {
    "frame": {
@@ -8296,7 +8296,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 140
+   "duration": 130
   },
   "limace 922.aseprite": {
    "frame": {
@@ -8314,7 +8314,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 140
+   "duration": 120
   },
   "limace 924.aseprite": {
    "frame": {
@@ -8323,7 +8323,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 140
+   "duration": 100
   },
   "limace 925.aseprite": {
    "frame": {
@@ -8332,7 +8332,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 140
+   "duration": 150
   },
   "limace 926.aseprite": {
    "frame": {
@@ -8341,7 +8341,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 140
+   "duration": 160
   },
   "limace 927.aseprite": {
    "frame": {
@@ -8350,7 +8350,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 140
+   "duration": 90
   },
   "limace 928.aseprite": {
    "frame": {
@@ -8359,7 +8359,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 140
+   "duration": 240
   },
   "limace 929.aseprite": {
    "frame": {
@@ -8368,7 +8368,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 100
+   "duration": 160
   },
   "limace 930.aseprite": {
    "frame": {
@@ -8377,7 +8377,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 55
+   "duration": 90
   },
   "limace 931.aseprite": {
    "frame": {
@@ -8386,7 +8386,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 55
+   "duration": 240
   },
   "limace 932.aseprite": {
    "frame": {
@@ -8395,7 +8395,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 55
+   "duration": 160
   },
   "limace 933.aseprite": {
    "frame": {
@@ -8413,7 +8413,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 55
+   "duration": 70
   },
   "limace 935.aseprite": {
    "frame": {
@@ -8431,7 +8431,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 55
+   "duration": 70
   },
   "limace 937.aseprite": {
    "frame": {
@@ -8449,7 +8449,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 55
+   "duration": 70
   },
   "limace 939.aseprite": {
    "frame": {
@@ -8467,7 +8467,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 55
+   "duration": 70
   },
   "limace 941.aseprite": {
    "frame": {
@@ -8485,7 +8485,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 55
+   "duration": 80
   },
   "limace 943.aseprite": {
    "frame": {
@@ -8494,7 +8494,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 70
+   "duration": 90
   },
   "limace 944.aseprite": {
    "frame": {
@@ -8503,7 +8503,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 60
+   "duration": 100
   },
   "limace 945.aseprite": {
    "frame": {
@@ -8512,7 +8512,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 60
+   "duration": 110
   },
   "limace 946.aseprite": {
    "frame": {
@@ -8521,7 +8521,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 90
+   "duration": 200
   },
   "limace 947.aseprite": {
    "frame": {
@@ -8530,7 +8530,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 110
+   "duration": 160
   },
   "limace 948.aseprite": {
    "frame": {
@@ -8539,7 +8539,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 130
+   "duration": 70
   },
   "limace 949.aseprite": {
    "frame": {
@@ -8584,7 +8584,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 90
+   "duration": 70
   },
   "limace 954.aseprite": {
    "frame": {
@@ -8593,7 +8593,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 150
+   "duration": 70
   },
   "limace 955.aseprite": {
    "frame": {
@@ -8602,7 +8602,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 150
+   "duration": 70
   },
   "limace 956.aseprite": {
    "frame": {
@@ -8611,7 +8611,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 90
+   "duration": 70
   },
   "limace 957.aseprite": {
    "frame": {
@@ -8620,7 +8620,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 150
+   "duration": 80
   },
   "limace 958.aseprite": {
    "frame": {
@@ -8629,7 +8629,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 150
+   "duration": 90
   },
   "limace 959.aseprite": {
    "frame": {
@@ -8638,7 +8638,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 90
+   "duration": 100
   },
   "limace 960.aseprite": {
    "frame": {
@@ -8647,7 +8647,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 60
+   "duration": 110
   },
   "limace 961.aseprite": {
    "frame": {
@@ -8656,7 +8656,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 40
+   "duration": 200
   },
   "limace 962.aseprite": {
    "frame": {
@@ -8665,7 +8665,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 60
+   "duration": 140
   },
   "limace 963.aseprite": {
    "frame": {
@@ -8674,7 +8674,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 40
+   "duration": 140
   },
   "limace 964.aseprite": {
    "frame": {
@@ -8683,7 +8683,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 60
+   "duration": 140
   },
   "limace 965.aseprite": {
    "frame": {
@@ -8692,7 +8692,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 90
+   "duration": 140
   },
   "limace 966.aseprite": {
    "frame": {
@@ -8701,7 +8701,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 80
+   "duration": 140
   },
   "limace 967.aseprite": {
    "frame": {
@@ -8710,7 +8710,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 70
+   "duration": 140
   },
   "limace 968.aseprite": {
    "frame": {
@@ -8719,7 +8719,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 80
+   "duration": 140
   },
   "limace 969.aseprite": {
    "frame": {
@@ -8728,7 +8728,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 80
+   "duration": 140
   },
   "limace 970.aseprite": {
    "frame": {
@@ -8737,7 +8737,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 60
+   "duration": 100
   },
   "limace 971.aseprite": {
    "frame": {
@@ -8746,7 +8746,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 90
+   "duration": 55
   },
   "limace 972.aseprite": {
    "frame": {
@@ -8755,7 +8755,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 80
+   "duration": 55
   },
   "limace 973.aseprite": {
    "frame": {
@@ -8764,7 +8764,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 70
+   "duration": 55
   },
   "limace 974.aseprite": {
    "frame": {
@@ -8773,7 +8773,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 80
+   "duration": 70
   },
   "limace 975.aseprite": {
    "frame": {
@@ -8782,7 +8782,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 80
+   "duration": 55
   },
   "limace 976.aseprite": {
    "frame": {
@@ -8791,7 +8791,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 110
+   "duration": 70
   },
   "limace 977.aseprite": {
    "frame": {
@@ -8800,7 +8800,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 70
+   "duration": 55
   },
   "limace 978.aseprite": {
    "frame": {
@@ -8818,7 +8818,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 150
+   "duration": 55
   },
   "limace 980.aseprite": {
    "frame": {
@@ -8827,7 +8827,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 50
+   "duration": 70
   },
   "limace 981.aseprite": {
    "frame": {
@@ -8836,7 +8836,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 50
+   "duration": 55
   },
   "limace 982.aseprite": {
    "frame": {
@@ -8845,7 +8845,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 60
+   "duration": 70
   },
   "limace 983.aseprite": {
    "frame": {
@@ -8854,7 +8854,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 60
+   "duration": 55
   },
   "limace 984.aseprite": {
    "frame": {
@@ -8863,7 +8863,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 50
+   "duration": 70
   },
   "limace 985.aseprite": {
    "frame": {
@@ -8881,7 +8881,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 150
+   "duration": 60
   },
   "limace 987.aseprite": {
    "frame": {
@@ -8890,7 +8890,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 150
+   "duration": 90
   },
   "limace 988.aseprite": {
    "frame": {
@@ -8899,7 +8899,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 90
+   "duration": 110
   },
   "limace 989.aseprite": {
    "frame": {
@@ -8908,7 +8908,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 60
+   "duration": 130
   },
   "limace 990.aseprite": {
    "frame": {
@@ -8917,7 +8917,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 40
+   "duration": 70
   },
   "limace 991.aseprite": {
    "frame": {
@@ -8926,7 +8926,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 60
+   "duration": 70
   },
   "limace 992.aseprite": {
    "frame": {
@@ -8935,7 +8935,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 90
+   "duration": 70
   },
   "limace 993.aseprite": {
    "frame": {
@@ -8944,7 +8944,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 80
+   "duration": 70
   },
   "limace 994.aseprite": {
    "frame": {
@@ -8953,7 +8953,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 70
+   "duration": 90
   },
   "limace 995.aseprite": {
    "frame": {
@@ -8962,7 +8962,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 80
+   "duration": 150
   },
   "limace 996.aseprite": {
    "frame": {
@@ -8971,7 +8971,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 80
+   "duration": 150
   },
   "limace 997.aseprite": {
    "frame": {
@@ -8980,7 +8980,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 150
+   "duration": 90
   },
   "limace 998.aseprite": {
    "frame": {
@@ -8989,7 +8989,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 80
+   "duration": 150
   },
   "limace 999.aseprite": {
    "frame": {
@@ -8998,7 +8998,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 110
+   "duration": 150
   },
   "limace 1000.aseprite": {
    "frame": {
@@ -9007,7 +9007,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 70
+   "duration": 90
   },
   "limace 1001.aseprite": {
    "frame": {
@@ -9016,7 +9016,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 70
+   "duration": 60
   },
   "limace 1002.aseprite": {
    "frame": {
@@ -9025,7 +9025,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 150
+   "duration": 40
   },
   "limace 1003.aseprite": {
    "frame": {
@@ -9034,7 +9034,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 50
+   "duration": 60
   },
   "limace 1004.aseprite": {
    "frame": {
@@ -9043,7 +9043,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 50
+   "duration": 40
   },
   "limace 1005.aseprite": {
    "frame": {
@@ -9061,7 +9061,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 60
+   "duration": 90
   },
   "limace 1007.aseprite": {
    "frame": {
@@ -9070,7 +9070,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 50
+   "duration": 80
   },
   "limace 1008.aseprite": {
    "frame": {
@@ -9079,7 +9079,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 60
+   "duration": 70
   },
   "limace 1009.aseprite": {
    "frame": {
@@ -9088,7 +9088,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 150
+   "duration": 80
   },
   "limace 1010.aseprite": {
    "frame": {
@@ -9097,7 +9097,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 150
+   "duration": 80
   },
   "limace 1011.aseprite": {
    "frame": {
@@ -9106,7 +9106,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 90
+   "duration": 60
   },
   "limace 1012.aseprite": {
    "frame": {
@@ -9115,7 +9115,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 60
+   "duration": 90
   },
   "limace 1013.aseprite": {
    "frame": {
@@ -9124,7 +9124,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 40
+   "duration": 80
   },
   "limace 1014.aseprite": {
    "frame": {
@@ -9133,7 +9133,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 60
+   "duration": 70
   },
   "limace 1015.aseprite": {
    "frame": {
@@ -9142,7 +9142,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 90
+   "duration": 80
   },
   "limace 1016.aseprite": {
    "frame": {
@@ -9160,7 +9160,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 70
+   "duration": 110
   },
   "limace 1018.aseprite": {
    "frame": {
@@ -9169,7 +9169,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 80
+   "duration": 70
   },
   "limace 1019.aseprite": {
    "frame": {
@@ -9178,7 +9178,7 @@
     "w": 64,
     "h": 64
    },
-   "duration": 80
+   "duration": 70
   },
   "limace 1020.aseprite": {
    "frame": {
@@ -9196,6 +9196,375 @@
     "w": 64,
     "h": 64
    },
+   "duration": 50
+  },
+  "limace 1022.aseprite": {
+   "frame": {
+    "x": 1920,
+    "y": 1984,
+    "w": 64,
+    "h": 64
+   },
+   "duration": 50
+  },
+  "limace 1023.aseprite": {
+   "frame": {
+    "x": 1984,
+    "y": 1984,
+    "w": 64,
+    "h": 64
+   },
+   "duration": 60
+  },
+  "limace 1024.aseprite": {
+   "frame": {
+    "x": 0,
+    "y": 2048,
+    "w": 64,
+    "h": 64
+   },
+   "duration": 60
+  },
+  "limace 1025.aseprite": {
+   "frame": {
+    "x": 64,
+    "y": 2048,
+    "w": 64,
+    "h": 64
+   },
+   "duration": 50
+  },
+  "limace 1026.aseprite": {
+   "frame": {
+    "x": 128,
+    "y": 2048,
+    "w": 64,
+    "h": 64
+   },
+   "duration": 60
+  },
+  "limace 1027.aseprite": {
+   "frame": {
+    "x": 192,
+    "y": 2048,
+    "w": 64,
+    "h": 64
+   },
+   "duration": 150
+  },
+  "limace 1028.aseprite": {
+   "frame": {
+    "x": 256,
+    "y": 2048,
+    "w": 64,
+    "h": 64
+   },
+   "duration": 150
+  },
+  "limace 1029.aseprite": {
+   "frame": {
+    "x": 320,
+    "y": 2048,
+    "w": 64,
+    "h": 64
+   },
+   "duration": 90
+  },
+  "limace 1030.aseprite": {
+   "frame": {
+    "x": 384,
+    "y": 2048,
+    "w": 64,
+    "h": 64
+   },
+   "duration": 60
+  },
+  "limace 1031.aseprite": {
+   "frame": {
+    "x": 448,
+    "y": 2048,
+    "w": 64,
+    "h": 64
+   },
+   "duration": 40
+  },
+  "limace 1032.aseprite": {
+   "frame": {
+    "x": 512,
+    "y": 2048,
+    "w": 64,
+    "h": 64
+   },
+   "duration": 60
+  },
+  "limace 1033.aseprite": {
+   "frame": {
+    "x": 576,
+    "y": 2048,
+    "w": 64,
+    "h": 64
+   },
+   "duration": 90
+  },
+  "limace 1034.aseprite": {
+   "frame": {
+    "x": 640,
+    "y": 2048,
+    "w": 64,
+    "h": 64
+   },
+   "duration": 80
+  },
+  "limace 1035.aseprite": {
+   "frame": {
+    "x": 704,
+    "y": 2048,
+    "w": 64,
+    "h": 64
+   },
+   "duration": 70
+  },
+  "limace 1036.aseprite": {
+   "frame": {
+    "x": 768,
+    "y": 2048,
+    "w": 64,
+    "h": 64
+   },
+   "duration": 80
+  },
+  "limace 1037.aseprite": {
+   "frame": {
+    "x": 832,
+    "y": 2048,
+    "w": 64,
+    "h": 64
+   },
+   "duration": 80
+  },
+  "limace 1038.aseprite": {
+   "frame": {
+    "x": 896,
+    "y": 2048,
+    "w": 64,
+    "h": 64
+   },
+   "duration": 150
+  },
+  "limace 1039.aseprite": {
+   "frame": {
+    "x": 960,
+    "y": 2048,
+    "w": 64,
+    "h": 64
+   },
+   "duration": 80
+  },
+  "limace 1040.aseprite": {
+   "frame": {
+    "x": 1024,
+    "y": 2048,
+    "w": 64,
+    "h": 64
+   },
+   "duration": 110
+  },
+  "limace 1041.aseprite": {
+   "frame": {
+    "x": 1088,
+    "y": 2048,
+    "w": 64,
+    "h": 64
+   },
+   "duration": 70
+  },
+  "limace 1042.aseprite": {
+   "frame": {
+    "x": 1152,
+    "y": 2048,
+    "w": 64,
+    "h": 64
+   },
+   "duration": 70
+  },
+  "limace 1043.aseprite": {
+   "frame": {
+    "x": 1216,
+    "y": 2048,
+    "w": 64,
+    "h": 64
+   },
+   "duration": 150
+  },
+  "limace 1044.aseprite": {
+   "frame": {
+    "x": 1280,
+    "y": 2048,
+    "w": 64,
+    "h": 64
+   },
+   "duration": 50
+  },
+  "limace 1045.aseprite": {
+   "frame": {
+    "x": 1344,
+    "y": 2048,
+    "w": 64,
+    "h": 64
+   },
+   "duration": 50
+  },
+  "limace 1046.aseprite": {
+   "frame": {
+    "x": 1408,
+    "y": 2048,
+    "w": 64,
+    "h": 64
+   },
+   "duration": 60
+  },
+  "limace 1047.aseprite": {
+   "frame": {
+    "x": 1472,
+    "y": 2048,
+    "w": 64,
+    "h": 64
+   },
+   "duration": 60
+  },
+  "limace 1048.aseprite": {
+   "frame": {
+    "x": 1536,
+    "y": 2048,
+    "w": 64,
+    "h": 64
+   },
+   "duration": 50
+  },
+  "limace 1049.aseprite": {
+   "frame": {
+    "x": 1600,
+    "y": 2048,
+    "w": 64,
+    "h": 64
+   },
+   "duration": 60
+  },
+  "limace 1050.aseprite": {
+   "frame": {
+    "x": 1664,
+    "y": 2048,
+    "w": 64,
+    "h": 64
+   },
+   "duration": 150
+  },
+  "limace 1051.aseprite": {
+   "frame": {
+    "x": 1728,
+    "y": 2048,
+    "w": 64,
+    "h": 64
+   },
+   "duration": 150
+  },
+  "limace 1052.aseprite": {
+   "frame": {
+    "x": 1792,
+    "y": 2048,
+    "w": 64,
+    "h": 64
+   },
+   "duration": 90
+  },
+  "limace 1053.aseprite": {
+   "frame": {
+    "x": 1856,
+    "y": 2048,
+    "w": 64,
+    "h": 64
+   },
+   "duration": 60
+  },
+  "limace 1054.aseprite": {
+   "frame": {
+    "x": 1920,
+    "y": 2048,
+    "w": 64,
+    "h": 64
+   },
+   "duration": 40
+  },
+  "limace 1055.aseprite": {
+   "frame": {
+    "x": 1984,
+    "y": 2048,
+    "w": 64,
+    "h": 64
+   },
+   "duration": 60
+  },
+  "limace 1056.aseprite": {
+   "frame": {
+    "x": 0,
+    "y": 2112,
+    "w": 64,
+    "h": 64
+   },
+   "duration": 90
+  },
+  "limace 1057.aseprite": {
+   "frame": {
+    "x": 64,
+    "y": 2112,
+    "w": 64,
+    "h": 64
+   },
+   "duration": 80
+  },
+  "limace 1058.aseprite": {
+   "frame": {
+    "x": 128,
+    "y": 2112,
+    "w": 64,
+    "h": 64
+   },
+   "duration": 70
+  },
+  "limace 1059.aseprite": {
+   "frame": {
+    "x": 192,
+    "y": 2112,
+    "w": 64,
+    "h": 64
+   },
+   "duration": 80
+  },
+  "limace 1060.aseprite": {
+   "frame": {
+    "x": 256,
+    "y": 2112,
+    "w": 64,
+    "h": 64
+   },
+   "duration": 80
+  },
+  "limace 1061.aseprite": {
+   "frame": {
+    "x": 320,
+    "y": 2112,
+    "w": 64,
+    "h": 64
+   },
+   "duration": 150
+  },
+  "limace 1062.aseprite": {
+   "frame": {
+    "x": 384,
+    "y": 2112,
+    "w": 64,
+    "h": 64
+   },
    "duration": 80
   }
  },
@@ -9205,7 +9574,7 @@
   "format": "RGBA8888",
   "size": {
    "w": 2048,
-   "h": 2048
+   "h": 2176
   },
   "scale": "1",
   "frameTags": [
@@ -9420,399 +9789,411 @@
     "direction": "forward"
    },
    {
-    "name": "chute",
+    "name": "decolle-pendule",
     "from": 308,
-    "to": 319,
-    "direction": "forward"
-   },
-   {
-    "name": "ecrase",
-    "from": 320,
-    "to": 328,
-    "direction": "forward"
-   },
-   {
-    "name": "etourdi",
-    "from": 329,
     "to": 332,
     "direction": "forward"
    },
    {
-    "name": "fache",
+    "name": "pendule-plafond",
     "from": 333,
-    "to": 334,
-    "direction": "forward"
-   },
-   {
-    "name": "intrigue",
-    "from": 335,
-    "to": 335,
-    "direction": "forward"
-   },
-   {
-    "name": "fier",
-    "from": 336,
-    "to": 336,
-    "direction": "forward"
-   },
-   {
-    "name": "crawl@guilleret",
-    "from": 337,
     "to": 348,
     "direction": "forward"
    },
    {
-    "name": "crawl@guilleret:cligne",
+    "name": "chute",
     "from": 349,
     "to": 360,
     "direction": "forward"
    },
    {
-    "name": "turn@guilleret",
+    "name": "ecrase",
     "from": 361,
+    "to": 369,
+    "direction": "forward"
+   },
+   {
+    "name": "etourdi",
+    "from": 370,
     "to": 373,
     "direction": "forward"
    },
    {
-    "name": "turn@guilleret:cligne",
+    "name": "fache",
     "from": 374,
-    "to": 386,
+    "to": 375,
+    "direction": "forward"
+   },
+   {
+    "name": "intrigue",
+    "from": 376,
+    "to": 376,
+    "direction": "forward"
+   },
+   {
+    "name": "fier",
+    "from": 377,
+    "to": 377,
+    "direction": "forward"
+   },
+   {
+    "name": "crawl@guilleret",
+    "from": 378,
+    "to": 389,
+    "direction": "forward"
+   },
+   {
+    "name": "crawl@guilleret:cligne",
+    "from": 390,
+    "to": 401,
+    "direction": "forward"
+   },
+   {
+    "name": "turn@guilleret",
+    "from": 402,
+    "to": 414,
+    "direction": "forward"
+   },
+   {
+    "name": "turn@guilleret:cligne",
+    "from": 415,
+    "to": 427,
     "direction": "forward"
    },
    {
     "name": "saut@guilleret",
-    "from": 387,
-    "to": 421,
+    "from": 428,
+    "to": 462,
     "direction": "forward"
    },
    {
     "name": "saut@guilleret:cligne",
-    "from": 422,
-    "to": 456,
+    "from": 463,
+    "to": 497,
     "direction": "forward"
    },
    {
     "name": "baille@guilleret",
-    "from": 457,
-    "to": 466,
+    "from": 498,
+    "to": 507,
     "direction": "forward"
    },
    {
     "name": "baille@guilleret:cligne",
-    "from": 467,
-    "to": 476,
+    "from": 508,
+    "to": 517,
     "direction": "forward"
    },
    {
     "name": "repos@guilleret",
-    "from": 477,
-    "to": 484,
+    "from": 518,
+    "to": 525,
     "direction": "forward"
    },
    {
     "name": "repos@guilleret:cligne",
-    "from": 485,
-    "to": 492,
+    "from": 526,
+    "to": 533,
     "direction": "forward"
    },
    {
     "name": "regard@guilleret",
-    "from": 493,
-    "to": 498,
+    "from": 534,
+    "to": 539,
     "direction": "forward"
    },
    {
     "name": "regard@guilleret:cligne",
-    "from": 499,
-    "to": 504,
+    "from": 540,
+    "to": 545,
     "direction": "forward"
    },
    {
     "name": "reforme@guilleret",
-    "from": 505,
-    "to": 512,
+    "from": 546,
+    "to": 553,
     "direction": "forward"
    },
    {
     "name": "reforme@guilleret:cligne",
-    "from": 513,
-    "to": 520,
+    "from": 554,
+    "to": 561,
     "direction": "forward"
    },
    {
     "name": "rot@guilleret",
-    "from": 521,
-    "to": 529,
+    "from": 562,
+    "to": 570,
     "direction": "forward"
    },
    {
     "name": "rot@guilleret:cligne",
-    "from": 530,
-    "to": 538,
+    "from": 571,
+    "to": 579,
     "direction": "forward"
    },
    {
     "name": "caresse-fin@guilleret",
-    "from": 539,
-    "to": 541,
-    "direction": "forward"
-   },
-   {
-    "name": "caresse-fin@guilleret:cligne",
-    "from": 542,
-    "to": 544,
-    "direction": "forward"
-   },
-   {
-    "name": "remis@guilleret",
-    "from": 545,
-    "to": 559,
-    "direction": "forward"
-   },
-   {
-    "name": "remis@guilleret:cligne",
-    "from": 560,
-    "to": 574,
-    "direction": "forward"
-   },
-   {
-    "name": "coule@guilleret",
-    "from": 575,
+    "from": 580,
     "to": 582,
     "direction": "forward"
    },
    {
-    "name": "coule@guilleret:cligne",
+    "name": "caresse-fin@guilleret:cligne",
     "from": 583,
-    "to": 590,
+    "to": 585,
     "direction": "forward"
    },
    {
-    "name": "coule-fin@guilleret",
-    "from": 591,
+    "name": "remis@guilleret",
+    "from": 586,
+    "to": 600,
+    "direction": "forward"
+   },
+   {
+    "name": "remis@guilleret:cligne",
+    "from": 601,
     "to": 615,
     "direction": "forward"
    },
    {
-    "name": "coule-fin@guilleret:cligne",
+    "name": "coule@guilleret",
     "from": 616,
-    "to": 640,
+    "to": 623,
     "direction": "forward"
    },
    {
-    "name": "vol@guilleret",
-    "from": 641,
-    "to": 643,
+    "name": "coule@guilleret:cligne",
+    "from": 624,
+    "to": 631,
     "direction": "forward"
    },
    {
-    "name": "vol@guilleret:cligne",
-    "from": 644,
-    "to": 646,
-    "direction": "forward"
-   },
-   {
-    "name": "chute-legere@guilleret",
-    "from": 647,
-    "to": 648,
-    "direction": "forward"
-   },
-   {
-    "name": "chute-legere@guilleret:cligne",
-    "from": 649,
-    "to": 650,
-    "direction": "forward"
-   },
-   {
-    "name": "atterrissage@guilleret",
-    "from": 651,
+    "name": "coule-fin@guilleret",
+    "from": 632,
     "to": 656,
     "direction": "forward"
    },
    {
-    "name": "atterrissage@guilleret:cligne",
+    "name": "coule-fin@guilleret:cligne",
     "from": 657,
-    "to": 662,
+    "to": 681,
+    "direction": "forward"
+   },
+   {
+    "name": "vol@guilleret",
+    "from": 682,
+    "to": 684,
+    "direction": "forward"
+   },
+   {
+    "name": "vol@guilleret:cligne",
+    "from": 685,
+    "to": 687,
+    "direction": "forward"
+   },
+   {
+    "name": "chute-legere@guilleret",
+    "from": 688,
+    "to": 689,
+    "direction": "forward"
+   },
+   {
+    "name": "chute-legere@guilleret:cligne",
+    "from": 690,
+    "to": 691,
+    "direction": "forward"
+   },
+   {
+    "name": "atterrissage@guilleret",
+    "from": 692,
+    "to": 697,
+    "direction": "forward"
+   },
+   {
+    "name": "atterrissage@guilleret:cligne",
+    "from": 698,
+    "to": 703,
     "direction": "forward"
    },
    {
     "name": "saut-face@guilleret",
-    "from": 663,
-    "to": 685,
+    "from": 704,
+    "to": 726,
     "direction": "forward"
    },
    {
     "name": "saut-face@guilleret:cligne",
-    "from": 686,
-    "to": 708,
+    "from": 727,
+    "to": 749,
     "direction": "forward"
    },
    {
     "name": "crawl@vaseux",
-    "from": 709,
-    "to": 720,
+    "from": 750,
+    "to": 761,
     "direction": "forward"
    },
    {
     "name": "crawl@vaseux:cligne",
-    "from": 721,
-    "to": 732,
+    "from": 762,
+    "to": 773,
     "direction": "forward"
    },
    {
     "name": "turn@vaseux",
-    "from": 733,
-    "to": 745,
+    "from": 774,
+    "to": 786,
     "direction": "forward"
    },
    {
     "name": "saut@vaseux",
-    "from": 746,
-    "to": 780,
+    "from": 787,
+    "to": 821,
     "direction": "forward"
    },
    {
     "name": "saut@vaseux:cligne",
-    "from": 781,
-    "to": 815,
+    "from": 822,
+    "to": 856,
     "direction": "forward"
    },
    {
     "name": "baille@vaseux",
-    "from": 816,
-    "to": 825,
-    "direction": "forward"
-   },
-   {
-    "name": "baille@vaseux:cligne",
-    "from": 826,
-    "to": 835,
-    "direction": "forward"
-   },
-   {
-    "name": "repos@vaseux",
-    "from": 836,
-    "to": 843,
-    "direction": "forward"
-   },
-   {
-    "name": "repos@vaseux:cligne",
-    "from": 844,
-    "to": 844,
-    "direction": "forward"
-   },
-   {
-    "name": "regard@vaseux",
-    "from": 845,
-    "to": 850,
-    "direction": "forward"
-   },
-   {
-    "name": "reforme@vaseux",
-    "from": 851,
-    "to": 858,
-    "direction": "forward"
-   },
-   {
-    "name": "reforme@vaseux:cligne",
-    "from": 859,
+    "from": 857,
     "to": 866,
     "direction": "forward"
    },
    {
-    "name": "rot@vaseux",
+    "name": "baille@vaseux:cligne",
     "from": 867,
-    "to": 875,
+    "to": 876,
     "direction": "forward"
    },
    {
-    "name": "rot@vaseux:cligne",
-    "from": 876,
+    "name": "repos@vaseux",
+    "from": 877,
     "to": 884,
     "direction": "forward"
    },
    {
-    "name": "caresse-fin@vaseux",
+    "name": "repos@vaseux:cligne",
     "from": 885,
-    "to": 887,
+    "to": 885,
     "direction": "forward"
    },
    {
-    "name": "caresse-fin@vaseux:cligne",
-    "from": 888,
-    "to": 890,
+    "name": "regard@vaseux",
+    "from": 886,
+    "to": 891,
     "direction": "forward"
    },
    {
-    "name": "remis@vaseux",
-    "from": 891,
-    "to": 905,
+    "name": "reforme@vaseux",
+    "from": 892,
+    "to": 899,
     "direction": "forward"
    },
    {
-    "name": "remis@vaseux:cligne",
-    "from": 906,
-    "to": 920,
+    "name": "reforme@vaseux:cligne",
+    "from": 900,
+    "to": 907,
     "direction": "forward"
    },
    {
-    "name": "coule@vaseux",
-    "from": 921,
+    "name": "rot@vaseux",
+    "from": 908,
+    "to": 916,
+    "direction": "forward"
+   },
+   {
+    "name": "rot@vaseux:cligne",
+    "from": 917,
+    "to": 925,
+    "direction": "forward"
+   },
+   {
+    "name": "caresse-fin@vaseux",
+    "from": 926,
     "to": 928,
     "direction": "forward"
    },
    {
-    "name": "coule-fin@vaseux",
+    "name": "caresse-fin@vaseux:cligne",
     "from": 929,
-    "to": 953,
+    "to": 931,
     "direction": "forward"
    },
    {
-    "name": "vol@vaseux",
-    "from": 954,
-    "to": 956,
+    "name": "remis@vaseux",
+    "from": 932,
+    "to": 946,
     "direction": "forward"
    },
    {
-    "name": "vol@vaseux:cligne",
-    "from": 957,
-    "to": 959,
-    "direction": "forward"
-   },
-   {
-    "name": "chute-legere@vaseux",
-    "from": 960,
+    "name": "remis@vaseux:cligne",
+    "from": 947,
     "to": 961,
     "direction": "forward"
    },
    {
-    "name": "chute-legere@vaseux:cligne",
+    "name": "coule@vaseux",
     "from": 962,
-    "to": 963,
-    "direction": "forward"
-   },
-   {
-    "name": "atterrissage@vaseux",
-    "from": 964,
     "to": 969,
     "direction": "forward"
    },
    {
-    "name": "atterrissage@vaseux:cligne",
+    "name": "coule-fin@vaseux",
     "from": 970,
-    "to": 975,
+    "to": 994,
+    "direction": "forward"
+   },
+   {
+    "name": "vol@vaseux",
+    "from": 995,
+    "to": 997,
+    "direction": "forward"
+   },
+   {
+    "name": "vol@vaseux:cligne",
+    "from": 998,
+    "to": 1000,
+    "direction": "forward"
+   },
+   {
+    "name": "chute-legere@vaseux",
+    "from": 1001,
+    "to": 1002,
+    "direction": "forward"
+   },
+   {
+    "name": "chute-legere@vaseux:cligne",
+    "from": 1003,
+    "to": 1004,
+    "direction": "forward"
+   },
+   {
+    "name": "atterrissage@vaseux",
+    "from": 1005,
+    "to": 1010,
+    "direction": "forward"
+   },
+   {
+    "name": "atterrissage@vaseux:cligne",
+    "from": 1011,
+    "to": 1016,
     "direction": "forward"
    },
    {
     "name": "saut-face@vaseux",
-    "from": 976,
-    "to": 998,
+    "from": 1017,
+    "to": 1039,
     "direction": "forward"
    },
    {
     "name": "saut-face@vaseux:cligne",
-    "from": 999,
-    "to": 1021,
+    "from": 1040,
+    "to": 1062,
     "direction": "forward"
    }
   ]

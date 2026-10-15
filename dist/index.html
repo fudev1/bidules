@@ -380,6 +380,7 @@ function playOnce(tag) {
 function sheetAnim(now) {
   const T2 = SHEET_DATA[style].tags;
   if (swing.on && (mode === "held" || mode === "carried")) return;       // la goutte est dessinée en direct (swingDraw)
+  if (mode === "ceilswing") return;                                      // ses images sont jouées par ceilSwingStep
   // si son état a changé entre-temps (on l'énerve, on l'attrape...), l'animation en cours s'arrête : une seule animation à la fois
   if (sheetOnce && sheetOnce.mode !== mode) sheetOnce = null;
   if ((mode !== "fly" || sheetOnce) && img.style.translate) img.style.translate = "";
@@ -603,13 +604,14 @@ function headroom() {
 }
 // Lancé assez fort vers le haut, il se colle au haut de l'écran, à l'envers (l'image retournée de haut en bas autour de 60 % de sa hauteur),
 // et y rampe comme au sol, 6 à 14 s, puis se décolle et retombe.
-let ceilingUntil = 0, ceilingEdge = 0;          // ceilingEdge : le bord atteint, il finit son cycle de reptation avant le demi-tour
+let ceilingUntil = 0, ceilingEdge = 0, ceilSwingAt = 0, ceilSw = null;          // ceilingEdge : le bord atteint, il finit son cycle de reptation avant le demi-tour
 const ceilingY = () => minY - (WH - 128 + 2 * (76.8 - 1 - SHEET_DATA[style].tags.crawl[0].bot));          // ses pieds (la ligne du sol) touchent le haut de l'écran
 function cling() {
   mode = "ceiling"; vx = vy = 0; angle = 0; img.style.rotate = "0deg"; img.style.translate = ""; pose("");
   if (Math.sign(dir) === 0) dir = 1;
   img.style.scale = `${dir < 0 ? -1 : 1} -1`; ceilingUntil = Date.now() + 6000 + Math.random() * 8000;
   ceilingEdge = 0; y = ceilingY(); say("colle au haut de l'ecran, a l'envers");
+  ceilSwingAt = Math.random() < .6 ? Date.now() + 2000 + Math.random() * 3000 : 0;          // une fois sur deux ou presque, il se décroche pour se balancer
   // il arrive comme au sol après une chute : l'atterrissage (de face), à l'envers, puis le demi-tour vers le profil, et il rampe
   faceSeq = null; sheetLoop = {tag:null, i:0, next:0}; playOnce("atterrissage");
 }
@@ -639,6 +641,21 @@ function cornerStep(now) {          // une image du coin à chaque fois ; à la 
     img.src = T2.coule[0].src; y = minY - headroom();
     say("passe le coin : il descend le long du mur");
   }
+}
+// Au plafond, de temps en temps : il se tourne de face, se décroche vers le bas en goutte au bout d'un fil et se balance (decolle-pendule, puis
+// quelques boucles de pendule-plafond), puis remonte (le début de decolle-pendule à l'envers) et reprend sa marche. Les images sont rangées
+// retournées dans la feuille : avec le retournement du plafond, on les voit comme dessinées.
+function ceilSwingStart(now) {
+  const T2 = SHEET_DATA[style].tags, loop = T2["pendule-plafond"], n = 2 + Math.floor(Math.random() * 3), seq = [...HALF, ...T2["decolle-pendule"]];
+  for (let k = 0; k < n; k++) seq.push(...loop);
+  seq.push(...T2["decolle-pendule"].slice(0, 9).reverse(), ...HALF.slice().reverse());
+  ceilSw = {seq, i:0, next:now}; ceilSwingAt = 0; mode = "ceilswing"; say("se decroche du plafond et se balance");
+}
+function ceilSwingStep(now) {
+  const c = ceilSw; y = ceilingY();
+  if (now < c.next) return;
+  if (c.i >= c.seq.length) { ceilSw = null; mode = "ceiling"; sheetLoop = {tag:null, i:0, next:0}; ceilingUntil = Math.max(ceilingUntil, now + 3000); return; }
+  const f = c.seq[c.i++]; img.src = f.src; c.next = nextAt(c.next, f.dur, now);
 }
 function unceil(tombe) {          // il se décolle : l'image se remet à l'endroit, et s'il tombe, il tombe
   face(); faceSeq = null; document.body.style.translate = "";
@@ -772,11 +789,13 @@ function tickBody() {
     if (x < minX || x > maxX) { ceilingEdge = x < minX ? -1 : 1; x = Math.max(minX, Math.min(maxX, x)); }
     const cr = SHEET_DATA[style].tags[sheetLoop.tag];
     if (ceilingEdge && (!cr || sheetLoop.i % cr.length === 0)) { ceilingToWall(ceilingEdge); push(); return; }
+    if (ceilSwingAt && now > ceilSwingAt && !faceSeq && HALF && SHEET_DATA[style].tags["pendule-plafond"] && (!cr || sheetLoop.i % cr.length === 0)) { ceilSwingStart(now); push(); return; }
     y = ceilingY(); push();
     if (faceSeq) faceStep(now);
     if (now > ceilingUntil) unceil(true);
     return;
   }
+  if (mode === "ceilswing") { ceilSwingStep(now); push(); if (now > ceilingUntil + 20000) { ceilSw = null; unceil(true); } return; }          // il se balance au plafond
   if (mode === "corner") { cornerStep(now); push(); return; }          // il passe le coin du plafond au mur
   if (mode === "wall") {      // collé au bord de l'écran : il coule, de plus en plus vite, jusqu'au sol
     const impact = sheetOnce && /^choc-bord/.test(sheetOnce.tag);          // pendant l'écrasement il reste en place, ensuite il coule
@@ -1075,7 +1094,7 @@ function struggle(on) {
 }
 function clicked() {
   const now = Date.now();
-  if (mode === "ceiling") { ceilingUntil = 0; return; }          // collé en haut : un clic le fait se décoller
+  if (mode === "ceiling" || mode === "ceilswing") { ceilingUntil = 0; ceilSw = null; mode = "ceiling"; return; }          // collé en haut : un clic le fait se décoller
   if (mode === "sleep") {
     wake += 40;
     if (wake >= 100) wakeUp("clics");
@@ -1094,7 +1113,7 @@ function clicked() {
 }
 img.addEventListener("pointerdown", e => {
   if (e.button !== 0 || pull.on) return;
-  if (mode === "ceiling" || mode === "corner") { corner = null; unceil(false); mode = "fly"; }          // pris à la souris pendant qu'il rampe en haut : il se remet à l'endroit
+  if (mode === "ceiling" || mode === "corner" || mode === "ceilswing") { corner = null; ceilSw = null; unceil(false); mode = "fly"; }          // pris à la souris pendant qu'il rampe en haut : il se remet à l'endroit
   img.setPointerCapture(e.pointerId);
   drag = {sx:e.screenX, sy:e.screenY, x0:x, y0:y, gx:e.clientX, gy:e.clientY, moved:false, rev:[], sign:0, shaken:false, asleep:mode === "sleep"};
   samples = [{t:performance.now(), x:e.screenX, y:e.screenY}];
