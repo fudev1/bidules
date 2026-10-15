@@ -293,7 +293,7 @@ function renderSessions() {
   $("sessions").innerHTML = L.length ? "<h3>Sessions de Claude</h3>" + L.map(x => `<div class="sess"><b>${(x.projet || "Session").replace(/</g, "&lt;")}</b><span class="et ${x.etat}">${ETATS[x.etat] || x.etat}</span>`
     + (x.tokens ? `<div class="barre">${barre(Math.min(100, x.pourcent), 12)}</div><small>${Math.round(x.pourcent)} %</small>` : "<span></span><span></span>") + "</div>").join("") : "";
 }
-if (T) T.event.listen("claude", e => { claudeEtat = e.payload; renderClaude(); renderSessions(); });
+if (T) T.event.listen("claude", e => { claudeEtat = e.payload; renderClaude(); renderSessions(); renderFiniTxt(); });
 setInterval(() => { icFrame++; if (vue) renderClaude(); }, 450);
 // Onglet Tests : des essais d'apparence, gardés dans ce navigateur (ce Mac) seulement.
 const ESSAIS = [["", "Aucun", "Le panneau habituel, en aplats."],
@@ -318,13 +318,20 @@ function applyEssai() {
 }
 applyEssai();
 placePill();
-// Prévenir quand Claude a fini : un hook de Claude Code (main.rs), branché ici d'un clic
+// Suivre les sessions de Claude : des hooks de Claude Code (main.rs), branchés ou débranchés d'un clic. Les sessions ouvertes les prennent
+// d'elles-mêmes ; si Claude travaille sans qu'aucune session ne donne de nouvelles, on propose de les relancer.
+let finiEtat = "non";
+function renderFiniTxt() {
+  const muet = finiEtat === "oui" && claudeEtat && claudeEtat.activite && !(claudeEtat.sessions || []).length;
+  $("finiTxt").textContent = finiEtat === "oui" ? (muet ? "Branché, mais les sessions déjà ouvertes ne donnent pas encore de nouvelles. Si ça dure, relance-les : ferme et rouvre la session dans Claude, ou relance claude dans le terminal."
+      : "Branché : il suit toutes tes sessions de Claude, te prévient quand l'une t'attend et quand Claude a fini.")
+    : finiEtat === "ancien" ? "Une ancienne version est branchée : mets-la à jour pour qu'il suive toutes tes sessions."
+    : "Il peut suivre toutes tes sessions de Claude : te prévenir quand l'une t'attend, et quand Claude a fini. Pour ça, on ajoute de petits hooks aux réglages de Claude Code ; ils ne lisent rien de tes messages.";
+  $("fini").textContent = {oui:"Débrancher", ancien:"Mettre à jour", non:"Brancher"}[finiEtat];
+}
 async function renderFini() {
   if (!T) return;
-  const ok = await T.core.invoke("hooks_branches");
-  $("finiTxt").textContent = ok ? "Branché : il te prévient dès que Claude a fini de répondre."
-    : "Il peut te prévenir dès que Claude a fini de répondre. Pour ça, on ajoute un petit hook aux réglages de Claude Code ; il ne lit rien de tes messages.";
-  $("fini").hidden = ok;
+  finiEtat = await T.core.invoke("hooks_etat"); $("fini").hidden = false; renderFiniTxt();
 }
 renderFini();
 document.addEventListener("click", e => {
@@ -339,7 +346,7 @@ document.addEventListener("click", e => {
   else if (b.dataset.mood) send("mood", b.dataset.mood);
   else if (b.id === "random") send("evo", "evo:random");
   else if (b.id === "reset") send("evo", "evo:reset");
-  else if (b.id === "fini") T.core.invoke("brancher_hooks").then(renderFini, err => { $("finiTxt").textContent = "Pas pu brancher : " + err; });
+  else if (b.id === "fini") T.core.invoke(finiEtat === "oui" ? "debrancher_hooks" : "brancher_hooks").then(renderFini, err => { $("finiTxt").textContent = "Pas pu le faire : " + err; });
   else if (b.id === "quit") { if (T) T.core.invoke("quit"); }
 });
 document.addEventListener("keydown", e => { if (e.key === "Escape" && T) T.core.invoke("hide_panel"); });

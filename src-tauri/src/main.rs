@@ -420,23 +420,55 @@ const HOOKS: [(&str, Option<&str>, &str); 6] = [
     ("UserPromptSubmit", None, "travaille"),
     ("PostToolUse", None, "travaille"),
     ("PreToolUse", Some("AskUserQuestion"), "attend"),
-    ("Notification", Some("permission_prompt|elicitation_dialog"), "attend"),
+    ("Notification", Some("permission_prompt|elicitation_dialog|elicitation_url_dialog"), "attend"),
     ("Stop", None, "fini"),
     ("SessionEnd", None, "fin"),
 ];
 fn reglages_claude(home: &str) -> Vec<PathBuf> {
     [".claude", ".claude-masana"].iter().map(|d| PathBuf::from(format!("{home}/{d}"))).filter(|d| d.is_dir()).map(|d| d.join("settings.json")).collect()
 }
+// "oui" : les hooks de cette version sont posés partout ; "ancien" : il reste ceux d'une version précédente (à mettre à jour) ; "non" : aucun.
 #[tauri::command(async)]
-fn hooks_branches() -> bool {
+fn hooks_etat() -> &'static str {
     let home = std::env::var("HOME").unwrap_or_default();
-    let f = reglages_claude(&home);
-    Path::new(&format!("{home}/.bidules/hook.sh")).is_file()
-        && !f.is_empty() && f.iter().all(|p| std::fs::read_to_string(p).is_ok_and(|t| t.contains("bidules/hook.sh") && t.contains("SessionEnd")))
+    let textes: Vec<String> = reglages_claude(&home).iter().map(|p| std::fs::read_to_string(p).unwrap_or_default()).collect();
+    let a_jour = |t: &String| t.contains("bidules/hook.sh") && t.contains("SessionEnd");
+    if !textes.is_empty() && textes.iter().all(a_jour) && Path::new(&format!("{home}/.bidules/hook.sh")).is_file() { "oui" }
+    else if textes.iter().any(|t| t.contains(".bidules")) { "ancien" } else { "non" }
 }
 fn ecrire_hook_sh(home: &str) -> Result<(), String> {
     std::fs::create_dir_all(format!("{home}/.bidules")).map_err(|e| e.to_string())?;
     std::fs::write(format!("{home}/.bidules/hook.sh"), HOOK_SH).map_err(|e| e.to_string())
+}
+// Retire des réglages les hooks du Bidule (ceux qui parlent de ~/.bidules), et les listes ou l'objet « hooks » laissés vides. Le reste ne bouge pas.
+fn retirer_hooks(v: &mut serde_json::Value) {
+    let Some(racine) = v.as_object_mut() else { return };
+    let Some(hooks) = racine.get_mut("hooks").and_then(|h| h.as_object_mut()) else { return };
+    for liste in hooks.values_mut() {
+        if let Some(a) = liste.as_array_mut() { a.retain(|h| !h.to_string().contains(".bidules")) }
+    }
+    hooks.retain(|_, l| l.as_array().map_or(true, |a| !a.is_empty()));
+    if hooks.is_empty() { racine.remove("hooks"); }
+}
+fn lire_reglages(p: &Path) -> Result<(String, serde_json::Value), String> {
+    let texte = std::fs::read_to_string(p).unwrap_or_default();
+    let v = if texte.trim().is_empty() { serde_json::json!({}) } else { serde_json::from_str(&texte).map_err(|e| format!("{} illisible : {e}", p.display()))? };
+    if !v.is_object() { return Err(format!("{} : pas un objet JSON", p.display())) }
+    Ok((texte, v))
+}
+// Débrancher : les hooks du Bidule sont retirés des réglages de Claude Code, avec le script et l'état des sessions.
+#[tauri::command(async)]
+fn debrancher_hooks() -> Result<(), String> {
+    let home = std::env::var("HOME").unwrap_or_default();
+    for p in reglages_claude(&home) {
+        let (texte, mut v) = lire_reglages(&p)?;
+        if !texte.contains(".bidules") { continue }
+        retirer_hooks(&mut v);
+        std::fs::write(&p, serde_json::to_string_pretty(&v).unwrap() + "\n").map_err(|e| e.to_string())?;
+    }
+    let _ = std::fs::remove_file(format!("{home}/.bidules/hook.sh"));
+    let _ = std::fs::remove_dir_all(format!("{home}/.bidules/sessions"));
+    Ok(())
 }
 // Pose les hooks dans les réglages de Claude Code (et du second profil s'il existe), sans toucher au reste. Les anciens hooks du Bidule
 // (ceux qui parlent de ~/.bidules) sont remplacés. La première fois, une copie du fichier d'origine est gardée à côté.
@@ -447,16 +479,9 @@ fn brancher_hooks() -> Result<(), String> {
     if fichiers.is_empty() { return Err("Claude Code n'est pas installé (pas de dossier ~/.claude)".into()) }
     ecrire_hook_sh(&home)?;
     for p in fichiers {
-        let texte = std::fs::read_to_string(&p).unwrap_or_default();
-        let mut v: serde_json::Value = if texte.trim().is_empty() { serde_json::json!({}) } else {
-            serde_json::from_str(&texte).map_err(|e| format!("{} illisible : {e}", p.display()))?
-        };
-        let racine = v.as_object_mut().ok_or(format!("{} : pas un objet JSON", p.display()))?;
-        let hooks = racine.entry("hooks").or_insert(serde_json::json!({})).as_object_mut().ok_or("« hooks » n'est pas un objet")?;
-        for liste in hooks.values_mut() {
-            if let Some(a) = liste.as_array_mut() { a.retain(|h| !h.to_string().contains(".bidules")) }
-        }
-        hooks.retain(|_, l| l.as_array().map_or(true, |a| !a.is_empty()));
+        let (texte, mut v) = lire_reglages(&p)?;
+        retirer_hooks(&mut v);
+        let hooks = v.as_object_mut().unwrap().entry("hooks").or_insert(serde_json::json!({})).as_object_mut().ok_or("« hooks » n'est pas un objet")?;
         for (evt, filtre, etat) in HOOKS {
             let mut h = serde_json::json!({"hooks": [{"type": "command", "command": format!("sh \"$HOME/.bidules/hook.sh\" {etat}")}]});
             if let Some(f) = filtre { h["matcher"] = f.into() }
@@ -503,7 +528,7 @@ fn sessions() -> Vec<Session> {
 
 fn main() {
     tauri::Builder::default()
-        .invoke_handler(tauri::generate_handler![log, quit, hide_panel, prompt_times, contexte, icone, session_active, hooks_branches, brancher_hooks, sessions, montrer_bidule, ouvrir_panneau, lire_choix, garder_choix, bonbon_poser, bonbon_retirer, bonbon_clic])
+        .invoke_handler(tauri::generate_handler![log, quit, hide_panel, prompt_times, contexte, icone, session_active, hooks_etat, brancher_hooks, debrancher_hooks, sessions, montrer_bidule, ouvrir_panneau, lire_choix, garder_choix, bonbon_poser, bonbon_retirer, bonbon_clic])
         .setup(|app| {
             #[cfg(target_os = "macos")]
             app.set_activation_policy(tauri::ActivationPolicy::Accessory);
@@ -567,7 +592,7 @@ fn main() {
                 .build(app)?;
 
             // Déjà branché : le script du hook est remis à jour à chaque lancement (une nouvelle version de l'app peut le changer).
-            if hooks_branches() { let _ = ecrire_hook_sh(&std::env::var("HOME").unwrap_or_default()); }
+            if hooks_etat() == "oui" { let _ = ecrire_hook_sh(&std::env::var("HOME").unwrap_or_default()); }
             // Claude a fini (hook) : le fichier change d'heure, le Bidule est prévenu.
             let h4 = app.handle().clone();
             std::thread::spawn(move || {
