@@ -180,6 +180,20 @@ fn prompt_times() -> Vec<f64> {
     out
 }
 
+// Les heures des prompts des 7 derniers jours, pour les graphiques d'activité du panneau (onglet Claude).
+#[tauri::command(async)]
+fn prompts_semaine() -> Vec<f64> {
+    let home = std::env::var("HOME").unwrap_or_default();
+    let cutoff = SystemTime::now() - Duration::from_secs(7 * 86400);
+    let debut = cutoff.duration_since(SystemTime::UNIX_EPOCH).map_or(0.0, |d| d.as_secs_f64());
+    let mut out = Vec::new();
+    for root in [format!("{home}/.claude/projects"), format!("{home}/.claude-masana/projects")] {
+        collect(Path::new(&root), cutoff, &mut out);
+    }
+    out.retain(|&t| t >= debut);
+    out
+}
+
 // Jauge de contexte de la conversation en cours dans Claude Desktop (onglet Code). Desktop range chaque session dans
 // claude-code-sessions/…/local_*.json (id du journal, modèle, dernier focus) ; le journal est le même que celui de Claude Code,
 // dans ~/.claude/projects. On n'y lit que les quantités de tokens de la dernière réponse, jamais le texte ni le titre.
@@ -445,6 +459,8 @@ fn contexte() -> Option<Jauge> {
 // --- Les sessions de Claude Code, d'après ses hooks : chaque session note son état (travaille, attend, fini) dans ~/.bidules/sessions/<id>
 // (hook.sh). Le Bidule montre l'ensemble des sessions, pas seulement celle qu'on regarde. Les hooks ne gardent que l'id de la session.
 const HOOK_SH: &str = include_str!("hook.sh");
+// La barre d'état de Claude Code (statusLine) : la seule à recevoir les limites de l'abonnement (5 h et semaine). Voir ligne.sh.
+const LIGNE_SH: &str = include_str!("ligne.sh");
 // (événement de Claude Code, filtre, état noté). Une permission accordée ou une question répondue : l'outil se termine (PostToolUse), il retravaille.
 const HOOKS: [(&str, Option<&str>, &str); 6] = [
     ("UserPromptSubmit", None, "travaille"),
@@ -454,21 +470,62 @@ const HOOKS: [(&str, Option<&str>, &str); 6] = [
     ("Stop", None, "fini"),
     ("SessionEnd", None, "fin"),
 ];
+// Un fichier partagé par les deux profils (lien symbolique) ne compte qu'une fois : sinon le second profil écraserait le premier.
 fn reglages_claude(home: &str) -> Vec<PathBuf> {
-    [".claude", ".claude-masana"].iter().map(|d| PathBuf::from(format!("{home}/{d}"))).filter(|d| d.is_dir()).map(|d| d.join("settings.json")).collect()
+    let mut vus = Vec::new();
+    [".claude", ".claude-masana"].iter().map(|d| PathBuf::from(format!("{home}/{d}"))).filter(|d| d.is_dir()).map(|d| d.join("settings.json"))
+        .filter(|p| { let c = std::fs::canonicalize(p).unwrap_or_else(|_| p.clone()); let neuf = !vus.contains(&c); vus.push(c); neuf }).collect()
 }
 // "oui" : les hooks de cette version sont posés partout ; "ancien" : il reste ceux d'une version précédente (à mettre à jour) ; "non" : aucun.
 #[tauri::command(async)]
 fn hooks_etat() -> &'static str {
     let home = std::env::var("HOME").unwrap_or_default();
-    let textes: Vec<String> = reglages_claude(&home).iter().map(|p| std::fs::read_to_string(p).unwrap_or_default()).collect();
-    let a_jour = |t: &String| t.contains("bidules/hook.sh") && t.contains("SessionEnd");
-    if !textes.is_empty() && textes.iter().all(a_jour) && Path::new(&format!("{home}/.bidules/hook.sh")).is_file() { "oui" }
+    let fichiers = reglages_claude(&home);
+    let textes: Vec<String> = fichiers.iter().map(|p| std::fs::read_to_string(p).unwrap_or_default()).collect();
+    // la barre d'état doit nommer le profil de son fichier (une version précédente pouvait mettre celui de l'autre profil)
+    let a_jour = |(t, p): (&String, &PathBuf)| t.contains("bidules/hook.sh") && t.contains("SessionEnd") && t.contains(&format!("ligne.sh\\\" {}\"", profil(p)));
+    if !textes.is_empty() && textes.iter().zip(&fichiers).all(a_jour) && Path::new(&format!("{home}/.bidules/ligne.sh")).is_file() { "oui" }
     else if textes.iter().any(|t| t.contains(".bidules")) { "ancien" } else { "non" }
 }
 fn ecrire_hook_sh(home: &str) -> Result<(), String> {
     std::fs::create_dir_all(format!("{home}/.bidules")).map_err(|e| e.to_string())?;
-    std::fs::write(format!("{home}/.bidules/hook.sh"), HOOK_SH).map_err(|e| e.to_string())
+    std::fs::write(format!("{home}/.bidules/hook.sh"), HOOK_SH).map_err(|e| e.to_string())?;
+    std::fs::write(format!("{home}/.bidules/ligne.sh"), LIGNE_SH).map_err(|e| e.to_string())
+}
+// Le nom du profil de Claude Code d'un fichier de réglages : ~/.claude/settings.json -> claude.
+fn profil(p: &Path) -> String {
+    p.parent().and_then(|d| d.file_name()).map_or("claude".into(), |n| n.to_string_lossy().trim_start_matches('.').to_string())
+}
+// Notre barre d'état prend la place de celle qu'on avait (sa commande est gardée dans ~/.bidules/ligne-avant-<profil>, et ligne.sh la relance).
+fn poser_ligne(home: &str, p: &Path, v: &mut serde_json::Value) -> Result<(), String> {
+    let avant = format!("{home}/.bidules/ligne-avant-{}", profil(p));
+    let cmd = format!("sh \"$HOME/.bidules/ligne.sh\" {}", profil(p));
+    let racine = v.as_object_mut().unwrap();
+    match racine.get_mut("statusLine").and_then(|l| l.as_object_mut()) {
+        Some(l) => {
+            let c = l.get("command").and_then(|c| c.as_str()).unwrap_or("").to_string();
+            if !c.contains(".bidules") {
+                if c.is_empty() { let _ = std::fs::remove_file(&avant); } else { std::fs::write(&avant, c).map_err(|e| e.to_string())?; }
+            }
+            l.insert("type".into(), "command".into());
+            l.insert("command".into(), cmd.into());
+        }
+        None => {
+            let _ = std::fs::remove_file(&avant);
+            racine.insert("statusLine".into(), serde_json::json!({"type": "command", "command": cmd}));
+        }
+    }
+    Ok(())
+}
+// Remet la barre d'état d'avant le Bidule, ou l'enlève s'il n'y en avait pas.
+fn retirer_ligne(home: &str, p: &Path, v: &mut serde_json::Value) {
+    let racine = v.as_object_mut().unwrap();
+    let Some(l) = racine.get_mut("statusLine").and_then(|l| l.as_object_mut()) else { return };
+    if !l.get("command").map_or(false, |c| c.to_string().contains(".bidules")) { return }
+    match std::fs::read_to_string(format!("{home}/.bidules/ligne-avant-{}", profil(p))) {
+        Ok(c) => { l.insert("command".into(), c.into()); }
+        Err(_) => { racine.remove("statusLine"); }
+    }
 }
 // Retire des réglages les hooks du Bidule (ceux qui parlent de ~/.bidules), et les listes ou l'objet « hooks » laissés vides. Le reste ne bouge pas.
 fn retirer_hooks(v: &mut serde_json::Value) {
@@ -494,9 +551,11 @@ fn debrancher_hooks() -> Result<(), String> {
         let (texte, mut v) = lire_reglages(&p)?;
         if !texte.contains(".bidules") { continue }
         retirer_hooks(&mut v);
+        retirer_ligne(&home, &p, &mut v);
         std::fs::write(&p, serde_json::to_string_pretty(&v).unwrap() + "\n").map_err(|e| e.to_string())?;
+        let _ = std::fs::remove_file(format!("{home}/.bidules/ligne-avant-{}", profil(&p)));
     }
-    let _ = std::fs::remove_file(format!("{home}/.bidules/hook.sh"));
+    for f in ["hook.sh", "ligne.sh", "limites.json", "ligne-lancee"] { let _ = std::fs::remove_file(format!("{home}/.bidules/{f}")); }
     let _ = std::fs::remove_dir_all(format!("{home}/.bidules/sessions"));
     Ok(())
 }
@@ -517,6 +576,7 @@ fn brancher_hooks() -> Result<(), String> {
             if let Some(f) = filtre { h["matcher"] = f.into() }
             hooks.entry(evt).or_insert(serde_json::json!([])).as_array_mut().ok_or(format!("« {evt} » n'est pas une liste"))?.push(h);
         }
+        poser_ligne(&home, &p, &mut v)?;
         let copie = p.with_extension("json.avant-bidule");
         if !texte.is_empty() && !copie.exists() { std::fs::write(copie, &texte).map_err(|e| e.to_string())?; }
         std::fs::write(&p, serde_json::to_string_pretty(&v).unwrap() + "\n").map_err(|e| e.to_string())?;
@@ -556,9 +616,28 @@ fn sessions() -> Vec<Session> {
     out
 }
 
+// Les limites de l'abonnement, d'après la barre d'état (ligne.sh) : le pourcentage utilisé et les secondes avant la remise à zéro.
+// Une fenêtre déjà remise à zéro est à 0 %, jusqu'à la prochaine réponse de Claude.
+#[derive(serde::Serialize)]
+struct Limite { pourcent: f64, remise: u64 }
+#[derive(serde::Serialize)]
+struct Limites { cinq_h: Option<Limite>, semaine: Option<Limite>, lancee: bool }
+#[tauri::command(async)]
+fn limites() -> Option<Limites> {
+    let home = std::env::var("HOME").unwrap_or_default();
+    let lancee = Path::new(&format!("{home}/.bidules/ligne-lancee")).exists();
+    let v: serde_json::Value = std::fs::read_to_string(format!("{home}/.bidules/limites.json")).ok().and_then(|t| serde_json::from_str(&t).ok()).unwrap_or_default();
+    let now = SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).ok()?.as_secs();
+    let l = |k: &str| {
+        let (pc, r) = (v[k]["used_percentage"].as_f64()?, v[k]["resets_at"].as_f64()? as u64);
+        Some(if r <= now { Limite { pourcent: 0.0, remise: 0 } } else { Limite { pourcent: pc, remise: r - now } })
+    };
+    Some(Limites { cinq_h: l("cinq_h"), semaine: l("semaine"), lancee })
+}
+
 fn main() {
     tauri::Builder::default()
-        .invoke_handler(tauri::generate_handler![log, quit, hide_panel, prompt_times, contexte, icone, session_active, haptique, hooks_etat, brancher_hooks, debrancher_hooks, sessions, montrer_bidule, ouvrir_panneau, lire_choix, garder_choix, lire_etat, garder_etat, bonbon_poser, bonbon_retirer, bonbon_clic])
+        .invoke_handler(tauri::generate_handler![log, quit, hide_panel, prompt_times, contexte, icone, session_active, haptique, hooks_etat, brancher_hooks, debrancher_hooks, sessions, limites, prompts_semaine, montrer_bidule, ouvrir_panneau, lire_choix, garder_choix, lire_etat, garder_etat, bonbon_poser, bonbon_retirer, bonbon_clic])
         .setup(|app| {
             #[cfg(target_os = "macos")]
             app.set_activation_policy(tauri::ActivationPolicy::Accessory);
