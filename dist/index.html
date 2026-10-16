@@ -673,11 +673,21 @@ function wakeUp(why) {
 }
 function react(m, ms, frame, cls = "") { mode = m; reactUntil = Date.now() + ms; img.src = frame; pose(cls); img.style.rotate = "0deg"; watching = false; lookKey = ""; }
 function toWalk() { mode = "walk"; img.src = FR.normal; pose("walk"); }
-async function bounds() {
-  const m = await T.window.currentMonitor(); if (!m) return;
+async function bounds(m) {
+  m = m || await T.window.currentMonitor(); if (!m) return;
   const s = m.scaleFactor; scale = s; const a = m.workArea || {position:m.position, size:m.size};
   minX = a.position.x / s; maxX = (a.position.x + a.size.width) / s - WW;
   minY = a.position.y / s; floorY = (a.position.y + a.size.height) / s - WH;
+}
+// Clic droit > Écran : il arrive au milieu de l'écran choisi par une petite chute (pas d'écrasement)
+async function toScreen(m) {
+  if (drag || pull.on) return;
+  if (mode === "wall" && wallStick) wallShape(false);
+  corner = null; ceilSw = null; unceil(false);
+  await bounds(m);
+  x = (minX + maxX) / 2; mode = "fly"; vx = 0; vy = 1; angle = 0; spin = 0; bounces = 0; img.style.rotate = "0deg"; img.style.translate = "";
+  y = floorY - 160; peakY = y; fall = null; push(); say("change d'ecran : " + m.name);
+  if (isSheet()) sheetAnim(Date.now());
 }
 // Marge transparente au-dessus du Bidule dans sa fenêtre : l'image (128 px) est en bas de la fenêtre (176 px), et son dessin
 // commence à sa première ligne visible. Gardée par image, pour ne pas relire les pixels à chaque instant.
@@ -1702,9 +1712,14 @@ img.addEventListener("contextmenu", async e => {
     const {Menu, MenuItem, Submenu, CheckMenuItem, PredefinedMenuItem} = T.menu;
     const moods = await Promise.all([["auto", "Automatique"], ...Object.entries(MOOD_LABEL)].map(([id, text]) =>
       CheckMenuItem.new({text, checked:moodMode === id, action:() => { chooseMood(id); sendState(); }})));
+    // plusieurs écrans branchés : on choisit sur lequel il vit
+    const ecrans = await T.window.availableMonitors().catch(() => []), ici = await T.window.currentMonitor().catch(() => null);
+    const surEcran = ecrans.length > 1 ? [await Submenu.new({text:"Écran", items:await Promise.all(ecrans.map((m, i) => CheckMenuItem.new({text:m.name || `Écran ${i + 1}`,
+      checked:!!ici && m.position.x === ici.position.x && m.position.y === ici.position.y, action:() => toScreen(m)})))})] : [];
     const menu = await Menu.new({items:[
       await MenuItem.new({text:"Ouvrir le panneau", action:() => T.core.invoke("ouvrir_panneau")}),
       await Submenu.new({text:"Humeur", items:moods}),
+      ...surEcran,
       await PredefinedMenuItem.new({item:"Separator"}),
       await MenuItem.new({text:"Cacher le Bidule", action:() => T.core.invoke("montrer_bidule", {oui:false})}),
       await MenuItem.new({text:"Quitter", action:() => T.core.invoke("quit")}),
