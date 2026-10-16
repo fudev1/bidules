@@ -9,7 +9,7 @@ use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant, SystemTime};
 use tauri::menu::{Menu, MenuItem};
 use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent};
-use tauri::{AppHandle, Emitter, LogicalSize, Manager, PhysicalPosition, WebviewUrl, WebviewWindow, WebviewWindowBuilder, WindowEvent};
+use tauri::{AppHandle, Emitter, LogicalPosition, LogicalSize, Manager, PhysicalPosition, WebviewUrl, WebviewWindow, WebviewWindowBuilder, WindowEvent};
 
 #[tauri::command]
 fn log(msg: String) {
@@ -81,6 +81,13 @@ fn surligner(app: &AppHandle, on: bool) {
 }
 
 // Retour haptique du trackpad Force Touch (macOS) : "clic" (neutre), "cran" (alignement) ou "palier". Avec une souris ou sous Windows, rien.
+// Déplacer et agrandir la fenêtre du Bidule d'un seul coup (quand on l'étire) : deux appels séparés laissaient la fenêtre vide entre les deux.
+#[tauri::command]
+fn cadre(window: WebviewWindow, x: f64, y: f64, w: f64, h: f64) {
+    let _ = window.set_position(LogicalPosition::new(x, y));
+    let _ = window.set_size(LogicalSize::new(w, h));
+}
+
 #[tauri::command]
 fn haptique(motif: String) {
     #[cfg(target_os = "macos")]
@@ -862,7 +869,7 @@ async fn usage() -> Vec<Releves> { a_part(usage_lire).await }
 
 fn main() {
     tauri::Builder::default()
-        .invoke_handler(tauri::generate_handler![log, quit, hide_panel, prompt_times, contexte, icone, session_active, haptique, hooks_etat, brancher_hooks, debrancher_hooks, sessions, limites, usage, prompts_semaine, depenses, montrer_bidule, ouvrir_panneau, lire_choix, garder_choix, lire_etat, garder_etat, bonbon_poser, bonbon_retirer, bonbon_clic])
+        .invoke_handler(tauri::generate_handler![log, quit, cadre, hide_panel, prompt_times, contexte, icone, session_active, haptique, hooks_etat, brancher_hooks, debrancher_hooks, sessions, limites, usage, prompts_semaine, depenses, montrer_bidule, ouvrir_panneau, lire_choix, garder_choix, lire_etat, garder_etat, bonbon_poser, bonbon_retirer, bonbon_clic])
         .setup(|app| {
             #[cfg(target_os = "macos")]
             app.set_activation_policy(tauri::ActivationPolicy::Accessory);

@@ -162,6 +162,7 @@ function captureFrame(src) {          // src : l'image déjà remise dans le rep
 // pour que l'image ne se montre jamais au mauvais endroit entre les deux (au pire un blanc très court).
 let winChain = Promise.resolve();
 const nextPaint = () => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+const cadre = (x, y, w, h) => T.core.invoke("cadre", {x:Math.round(x), y:Math.round(y), w, h});          // main.rs : déplace et redimensionne en un seul appel
 function setBigWindow(on) { return winChain = winChain.then(() => pull.side && pull.side !== "floor" ? edgeResize(on) : resizeWin(on)).catch(e => say("fenetre: " + e)); }
 // Décollé du plafond ou d'un mur : le même calcul qu'au sol, dans un repère où le bord est le sol. EDGE_ROT : du repère à l'écran,
 // [a, b, c, d] pour X = a u + b v, Y = c u + d v (le retour : u = a X + c Y, v = b X + d Y) ; EDGE_CSS : la même chose pour le grand canevas.
@@ -194,8 +195,7 @@ async function edgeResize(on) {
     // macOS garde la fenêtre sous la barre de menus : au-delà, c'est le dessin qui monte dans la fenêtre (comme flush)
     const [nx, ny] = pull.win, up = Math.max(0, Math.round(minY - ny));
     document.body.style.translate = up ? `0 ${-up}px` : "";
-    await win.setPosition(new LogicalPosition(Math.round(nx), Math.round(ny) + up));
-    await win.setSize(new LogicalSize(W, H));
+    await cadre(nx, ny + up, W, H);
   } else {
     await win.setSize(new LogicalSize(WW, WH));
     pullCanvas.hidden = true; Object.assign(pullCanvas.style, {left:"", top:"", transform:""});
@@ -209,15 +209,12 @@ async function resizeWin(on) {
     img.style.opacity = "0"; pullCanvas.hidden = false; size(true);
     await nextPaint();
     x -= (BIG_W - WW) / 2; y -= BIG_H - WH;
-    await win.setPosition(new LogicalPosition(Math.round(x), Math.round(y)));
-    await win.setSize(new LogicalSize(BIG_W, BIG_H));
+    await cadre(x, y, BIG_W, BIG_H);
   } else {
     // d'abord réduire sur place : l'image reste au bon endroit, juste recadrée ; puis déplacer et remettre l'image normale
     const hung = pull.wasHang;
-    await win.setSize(new LogicalSize(WW, WH));
-    pullCanvas.hidden = true;
-    if (hung) await nextPaint();
-    await win.setPosition(new LogicalPosition(Math.round(x), Math.round(y)));
+    if (hung) { await win.setSize(new LogicalSize(WW, WH)); pullCanvas.hidden = true; await nextPaint(); await win.setPosition(new LogicalPosition(Math.round(x), Math.round(y))); }
+    else { await cadre(x, y, WW, WH); pullCanvas.hidden = true; }
     size(false);
   }
 }
@@ -245,10 +242,10 @@ function pullStart(side = "floor") {
     pull.prev = {x, y, mode};
   }
   const gu = Math.max(S0.cx - 12, Math.min(S0.cx + 12, G[0])), gv = Math.max(S0.top, Math.min(S0.bot - 3, G[1]));
-  Object.assign(pull, {on:true, ready:false, phase:"ground", side, src:S0, srcImg:img.src, g:[gu, gv], d:[0, 0], vd:[0, 0], cran:0});
+  Object.assign(pull, {on:true, ready:false, phase:"ground", side, src:S0, srcImg:img.src, g:[gu, gv], d:[0, 0], dm:null, vd:[0, 0], cran:0});
   // la bulle de pensée disparaît tout de suite, sans fondu : la fenêtre va s'agrandir vers le haut et la gauche, elle se retrouverait dans le coin
   pense.style.transition = "none"; pense.classList.add("off"); pense.offsetWidth; pense.style.transition = "";
-  pullDraw(); setBigWindow(true).then(() => { pull.ready = true; });
+  pullDraw(); setBigWindow(true).then(() => { pull.ready = true; pull.readyAt = performance.now(); });
   return true;
 }
 // Position de la base (B) et du point tenu (G) dans le grand canevas, selon la phase.
@@ -379,10 +376,13 @@ function pullStep(dt) {
   const S0 = pull.src, hs = Math.max(2, S0.bot + 1 - pull.g[1]);
   if (pull.phase === "ground") {
     // il décolle quand on a tiré assez loin ; en chemin, des crans de plus en plus serrés à mesure que le fil s'étire
+    if (pull.dm) pull.d = [...pull.dm];
     const f = Math.hypot(pull.d[0], pull.d[1]) / ((S0.bot + 1 - S0.top) * 2.4), cran = PULL_CRANS.filter(c => f >= c).length;
     if (cran > pull.cran) haptic("cran");
     pull.cran = cran;
-    if (f > 1) {
+    // tiré vite pendant que la fenêtre s'agrandissait : on montre d'abord l'étirement un moment, au lieu de décoller dès la première image
+    if (f > 1 && performance.now() - pull.readyAt < 150) { pull.d = pull.d.map(v => v / f * .99); pull.cran = PULL_CRANS.length; }
+    else if (f > 1) {
       // décollé : la fenêtre reprend sa taille et il est tenu comme dans tous les autres cas (la goutte qui se balance)
       say("il se decolle du sol"); bubble("Plop !", 900); haptic("palier");
       const edge = pull.side !== "floor";
@@ -1364,7 +1364,7 @@ img.addEventListener("pointermove", e => {
   }
   if (!drag.moved) return;
   drag.lastX = e.screenX; drag.lastY = e.screenY;
-  if (pull.on && pull.phase === "ground") { pull.d = edgeFrom(EDGE_ROT[pull.side || "floor"], (e.screenX - drag.sx) / 2, (e.screenY - drag.sy) / 2); return; }
+  if (pull.on && pull.phase === "ground") { pull.d = pull.dm = edgeFrom(EDGE_ROT[pull.side || "floor"], (e.screenX - drag.sx) / 2, (e.screenY - drag.sy) / 2); return; }
   if (drag.asleep) {
     const pv = samples[samples.length - 1], dtm = Math.max(8, performance.now() - pv.t);
     const speed = Math.hypot(e.screenX - pv.x, e.screenY - pv.y) / dtm * 1000;
