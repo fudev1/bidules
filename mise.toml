@@ -13,3 +13,16 @@ description = "Publie les animations, compile et lance le Bidule"
 depends = ["publier"]
 dir = "{{config_root}}/src-tauri"
 run = "cargo build && ./target/debug/bidule-desktop"
+
+# Version optimisée, plus fluide : à utiliser au quotidien
+[tasks."bidule:release"]
+description = "Publie les animations, compile en mode optimisé et lance le Bidule"
+depends = ["publier"]
+dir = "{{config_root}}/src-tauri"
+run = "cargo build --release && ./target/release/bidule-desktop"
+
+# Les tests du comportement, dans la page de test (Chromium sans fenêtre). Une première fois : npm install && npx playwright install chromium
+[tasks.tests]
+description = "Lance les tests du Bidule dans la page de test"
+dir = "{{config_root}}"
+run = "npm test"
