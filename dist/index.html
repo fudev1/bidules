@@ -897,7 +897,8 @@ function tickBody() {
   if (sweets.length && style !== "candy") sweets.slice().forEach(sweetRemove);
   if (drag) {
     swayStep(dtMs / 1000);
-    if (swing.on && (mode === "held" || mode === "carried")) { swingStep(dtMs / 1000); swingDraw(); }
+    // une image pas encore décodée n'est pas remplacée : sinon, si le décodage est lent, aucune n'arrive à s'afficher
+    if (swing.on && (mode === "held" || mode === "carried")) { swingStep(dtMs / 1000); if (img.complete) swingDraw(); }
     if (pull.on && pull.ready) pullStep(dtMs / 1000);
     if (mode === "carried") {
       wake = Math.max(0, wake - 45 * dtMs / 1000);
@@ -1282,13 +1283,14 @@ function holdByHead(cx = drag && drag.lastX, cy = drag && drag.lastY) {
   push();
   drag.x0 = x - (cx - drag.sx); drag.y0 = y - (cy - drag.sy);
   if (heldByHead === null) heldByHead = img.style.transformOrigin;
-  if (dyn && !swing.on) swingStart();
+  // la fenêtre vient de grandir : l'image d'avant (64 px) y serait affichée en grand le temps que la première goutte soit prête
+  if (dyn && !swing.on) { swingStart(); img.style.visibility = "hidden"; img.addEventListener("load", () => { img.style.visibility = ""; }, {once:true}); swingDraw(); }
   img.style.animation = "none";                                   // plus de balancement automatique : il ne bouge que selon la souris (ballottement)
   img.style.transformOrigin = dyn ? "50% 50%" : hx / 64 * 100 + "% " + hy / 64 * 100 + "%";        // pivot : le point tenu (le retournement se fait aussi autour de lui)
 }
 function struggle(on) {
   clearInterval(flap); flap = null;
-  if (!on) { sway.a = sway.w = 0; swing.on = false; img.style.transform = ""; img.style.animation = ""; }
+  if (!on) { sway.a = sway.w = 0; swing.on = false; img.style.transform = ""; img.style.animation = ""; img.style.visibility = ""; }
   if (!on && heldByHead !== null) { img.style.transformOrigin = heldByHead; heldByHead = null; }
   if (!on && swingBig) swingWindow(false);
   if (on) { pose(isSheet() ? "" : "struggle"); img.style.rotate = "0deg"; let f = 0; img.src = FR.p1; if (!isSheet()) flap = setInterval(() => { f = 1 - f; img.src = f ? FR.p2 : FR.p1; }, 160); }

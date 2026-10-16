@@ -100,14 +100,38 @@ main{flex:1;overflow:auto;padding:0 12px 12px}
 .sess .barre i{border-radius:2px;background:rgba(255,255,255,.16)}
 .sess .barre i.z0{background:var(--lime)}.sess .barre i.z1{background:var(--yellow)}.sess .barre i.z2{background:#ff8a3d}
 .sess small{text-align:right;opacity:.85}
-.prevision{gap:5px}
-.courbe{width:100%;height:64px;display:block;border-bottom:1px solid rgba(255,255,255,.3)}
-.courbe line,.courbe polyline{fill:none;vector-effect:non-scaling-stroke;stroke-linecap:round;stroke-linejoin:round}
-.courbe .reg{stroke:rgba(255,255,255,.4);stroke-width:1.5;stroke-dasharray:4 4}
-.courbe .mnt{stroke:rgba(255,255,255,.25);stroke-width:1}
-.courbe .vrai{stroke:var(--white);stroke-width:2.5}
-.courbe .proj{stroke-width:2;stroke-dasharray:3 4}.courbe .z0{stroke:var(--lime)}.courbe .z1{stroke:var(--yellow)}.courbe .z2{stroke:#ff8a3d}
-.prevision p b{color:var(--yellow)}
+/* prévision des limites (onglet Claude) : une carte par fenêtre, ce qui reste en grand, la courbe et la prévision jusqu'à la remise à zéro */
+.alerte{border-radius:12px;padding:8px 12px;background:rgba(179,23,63,.75);font-size:12px}
+.alerte b{color:var(--yellow)}
+.lim2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.prevision{gap:4px;align-content:start}
+.prevision .ligne{display:flex;justify-content:space-between;align-items:center;gap:6px;font-size:11px}
+.prevision .ligne span b{font-weight:700}
+.prevision .gros{font:400 28px/1 var(--display);letter-spacing:.6px}
+.prevision .gros small{font:500 12px/1 var(--text);opacity:.8;margin-left:4px;letter-spacing:0}
+.badge{border-radius:8px;padding:3px 7px;font-weight:700;font-size:11px;white-space:nowrap}
+.badge.av{background:rgba(166,210,58,.2);color:var(--lime)}.badge.ret{background:rgba(255,90,95,.2);color:#ff7a7e}
+.courbe{width:100%;height:auto;display:block;overflow:visible}
+.courbe text{font:500 9px var(--text);fill:rgba(255,255,255,.7);paint-order:stroke;stroke:rgba(30,27,58,.9);stroke-width:3px;stroke-linejoin:round}
+.courbe .lab{fill:var(--white);font-weight:700}
+.courbe line,.courbe polyline{fill:none;stroke-linecap:round;stroke-linejoin:round}
+.courbe .axe0{stroke:rgba(255,255,255,.3)}.courbe .grille{stroke:rgba(255,255,255,.08)}
+.courbe .reg{stroke:rgba(255,255,255,.55);stroke-width:1.2;stroke-dasharray:2 3}
+.courbe .mnt{stroke:var(--yellow);stroke-width:1;opacity:.7}
+.courbe .remise{stroke:rgba(255,255,255,.4);stroke-dasharray:3 3}
+.courbe .vrai{stroke:var(--yellow);stroke-width:2.5}
+.courbe .proj{stroke:var(--yellow);stroke-width:2;stroke-dasharray:5 4}
+.courbe .vide .proj{stroke:#ff5a5f}.courbe .vide .fin{stroke:#ff5a5f}.courbe .vide .lfin{fill:#ff7a7e}
+.courbe .aire.av{fill:rgba(166,210,58,.4)}.courbe .aire.ret{fill:rgba(255,90,95,.25)}
+.courbe .bloque{fill:url(#hachures)}.courbe .lbloque{fill:#ff7a7e;font-weight:700}
+.courbe .pmnt{fill:var(--yellow)}.courbe .fin{fill:var(--ink);stroke:var(--yellow);stroke-width:1.5}
+/* au survol : un trait et un point suivent la courbe, la bulle donne l'heure et ce qui reste */
+.suivi{position:relative;touch-action:none}
+.suivi .cur{stroke:rgba(255,255,255,.7);stroke-width:1}
+.suivi .pt{fill:var(--white)}.suivi .pt.prevu{fill:var(--yellow)}
+.suivi .tip{position:absolute;top:-6px;background:#fff;color:var(--ink);border-radius:8px;padding:4px 7px;font-size:10.5px;line-height:1.3;white-space:nowrap;z-index:1}
+.suivi .cur,.suivi .pt,.suivi .tip{display:none;pointer-events:none}
+.suivi.on .cur,.suivi.on .pt,.suivi.on .tip{display:block}
 /* graphiques d'activité (onglet Claude) : une seule série, des barres fines posées sur la ligne de base, le chiffre au survol */
 .graphes{display:grid;grid-template-columns:3fr 2fr;gap:8px}
 .graphe{border-radius:12px;padding:9px 12px 8px;display:grid;gap:6px}
@@ -377,40 +401,104 @@ function fenetre(rel, k, duree, recent) {
   const [tD, pD] = pts[pts.length - 1], a = pts.find(p => p[0] >= tD - recent);
   // trop peu de relevés récents : la moyenne depuis le début de la fenêtre
   const pente = a && tD - a[0] >= recent / 4 ? (pD - a[1]) / (tD - a[0]) : pD / Math.max(tD - debut, 60);
-  const fin = pente > 0 ? tD + (100 - pD) / pente : Infinity;
+  // déjà à 100 % : vide depuis le premier relevé à 100 %
+  const fin = pD >= 100 ? pts.find(p => p[1] >= 100)[0] : pente > 0 ? tD + (100 - pD) / pente : Infinity;
   return {pc, remise, debut, duree, pts, now, ecart: pc - (now - debut) / duree * 100, fin, finPc: pD + pente * (remise - tD), reste: (100 - pc) / Math.max(remise - now, 60)};
 }
-function courbe(f) {
-  const W = 300, H = 64, x = t => ((t - f.debut) / f.duree * W).toFixed(1), y = p => (H - Math.min(p, 100) / 100 * H).toFixed(1);
-  const [tD, pD] = f.pts[f.pts.length - 1], tF = Math.min(f.fin, f.remise), pF = Math.min(100, f.finPc);
-  return `<svg class="courbe" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true">`
-    + `<line class="reg" x1="0" y1="${H}" x2="${W}" y2="0"/><line class="mnt" x1="${x(f.now)}" y1="0" x2="${x(f.now)}" y2="${H}"/>`
-    + (isFinite(f.fin) ? `<line class="proj z${zoneLim(pF)}" x1="${x(tD)}" y1="${y(pD)}" x2="${x(tF)}" y2="${y(pF)}"/>` : "")
-    + `<polyline class="vrai" points="${f.pts.map(p => x(p[0]) + "," + y(p[1])).join(" ")}"/></svg>`;
+const courbesF = [];
+// La courbe dans le sens de la capture d'origine : ce qui reste, de 100 % au début de la fenêtre à 0 %.
+const G = {W:280, H:150, L:30, R:270, T:16, B:126};
+const gx = (f, t) => G.L + (t - f.debut) / f.duree * (G.R - G.L), gy = p => G.B - Math.max(0, Math.min(100, 100 - p)) / 100 * (G.B - G.T);
+const virg = (v, d = 1) => v.toFixed(d).replace(/\.0+$/, "").replace(".", ",");
+const heureM = t => { const d = new Date(t * 1000); return `${d.getHours()} h ${String(d.getMinutes()).padStart(2, "0")}`; };
+const jourC = t => new Date(t * 1000).toLocaleDateString("fr-FR", {weekday:"short", day:"numeric"});
+const duree = s => { const j = Math.floor(s / 86400), h = Math.floor(s % 86400 / 3600), m = Math.floor(s % 3600 / 60); return j ? `${j} j ${h} h` : h ? `${h} h ${String(m).padStart(2, "0")}` : `${m} min`; };
+function courbe(f, sem) {
+  const i = courbesF.push(f) - 1, x = t => gx(f, t).toFixed(1), y = p => gy(p).toFixed(1), P = f.pts;
+  const [tD, pD] = P[P.length - 1], vide = f.fin < f.remise, tF = isFinite(f.fin) && f.fin > tD ? Math.min(f.fin, f.remise) : 0, pF = Math.min(100, f.finPc);
+  const reg = t => (t - f.debut) / f.duree * 100, av = f.ecart <= 0;
+  const aire = P.map(p => x(p[0]) + "," + y(p[1])).join(" ") + " " + [...P].reverse().map(p => x(p[0]) + "," + y(reg(p[0]))).join(" ");
+  const lx = (v, w) => Math.max(G.L + w / 2, Math.min(G.R - w / 2, v));
+  const axeX = sem ? [jourC(f.debut), `${jourC(f.remise)}, ${heureM(f.remise)}`] : [heureM(f.debut), heureM(f.remise)];
+  const mr = f.debut + f.duree * ((tD - f.debut) / f.duree > .5 ? .22 : .75);
+  let s = `<div class="suivi" data-f="${i}"><svg class="courbe" viewBox="0 0 ${G.W} ${G.H}" aria-hidden="true">`
+    + `<defs><pattern id="hachures" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="6" height="6" fill="rgba(255,90,95,.12)"/><line x1="0" y1="0" x2="0" y2="6" stroke="rgba(255,90,95,.45)" stroke-width="2.5"/></pattern></defs>`
+    + [1, 2, 3].map(k => `<line class="grille" x1="${G.L + k * (G.R - G.L) / 4}" y1="${G.T}" x2="${G.L + k * (G.R - G.L) / 4}" y2="${G.B}"/>`).join("")
+    + `<line class="axe0" x1="${G.L}" y1="${G.B}" x2="${G.R}" y2="${G.B}"/><line class="remise" x1="${G.R}" y1="${G.T}" x2="${G.R}" y2="${G.B}"/>`
+    + `<text x="${G.L - 4}" y="${G.T + 3}" text-anchor="end">100 %</text><text x="${G.L - 4}" y="${G.B + 3}" text-anchor="end">0 %</text>`
+    + `<text x="${G.L}" y="${G.B + 14}">${axeX[0]}</text><text x="${G.R}" y="${G.B + 14}" text-anchor="end">${axeX[1]}</text>`
+    + (vide ? `<rect class="bloque" x="${x(f.fin)}" y="${G.T}" width="${(G.R - gx(f, f.fin)).toFixed(1)}" height="${G.B - G.T}"/>`
+      + (G.R - gx(f, f.fin) > 34 ? `<text class="lbloque" x="${((gx(f, f.fin) + G.R) / 2).toFixed(1)}" y="${(G.T + G.B) / 2 - 4}" text-anchor="middle">Bloqué</text><text class="lbloque" x="${((gx(f, f.fin) + G.R) / 2).toFixed(1)}" y="${(G.T + G.B) / 2 + 7}" text-anchor="middle">${duree(f.remise - f.fin)}</text>` : "") : "")
+    + `<polygon class="aire ${av ? "av" : "ret"}" points="${aire}"/>`
+    + `<line class="reg" x1="${G.L}" y1="${G.T}" x2="${G.R}" y2="${G.B}"/><text x="${x(mr)}" y="${(gy(reg(mr)) + (av ? 14 : -6)).toFixed(1)}" text-anchor="middle">rythme régulier</text>`
+    + `<line class="mnt" x1="${x(tD)}" y1="${y(pD)}" x2="${x(tD)}" y2="${G.B}"/><text class="lab" x="${lx(gx(f, tD), 50)}" y="${(gy(pD) - 7).toFixed(1)}" text-anchor="middle">Maintenant</text>`
+    + (tF ? `<g class="${vide ? "vide" : ""}"><line class="proj" x1="${x(tD)}" y1="${y(pD)}" x2="${x(tF)}" y2="${y(pF)}"/><circle class="fin" cx="${x(tF)}" cy="${y(pF)}" r="3"/>`
+      + (vide ? `<text class="lfin lab" x="${x(tF) - 6}" y="${G.B - 5}" text-anchor="end">Vide ${sem ? jourC(f.fin) : "à " + heureM(f.fin)}</text>`
+        : `<text class="lab" x="${G.R - 2}" y="${(gy(pF) + (gy(pF) > G.B - 18 ? -8 : 14)).toFixed(1)}" text-anchor="end" fill="var(--yellow)">~${virg(100 - pF)} % à la remise</text>`) + "</g>" : "")
+    + `<polyline class="vrai" points="${P.map(p => x(p[0]) + "," + y(p[1])).join(" ")}"/><circle class="pmnt" cx="${x(tD)}" cy="${y(pD)}" r="3.5"/>`
+    + `<line class="cur" y1="${G.T}" y2="${G.B}"/><circle class="pt" r="3.5"/></svg><div class="tip"></div></div>`;
+  return s;
 }
-function blocFenetre(nom, f, unite) {
+// Le pourcentage à l'heure t : entre deux relevés, sur la droite qui les joint ; après le dernier, sur la prévision.
+// Avant le premier relevé ou après la fin de la prévision, on s'arrête au bout de la courbe.
+function surCourbe(f, t) {
+  const P = f.pts, [tD, pD] = P[P.length - 1], tF = isFinite(f.fin) ? Math.min(f.fin, f.remise) : tD;
+  t = Math.max(P[0][0], Math.min(t, tF));
+  if (t > tD) return [t, pD + (Math.min(100, f.finPc) - pD) * (t - tD) / (tF - tD), true];
+  const j = P.findIndex(p => p[0] >= t), a = P[Math.max(0, j - 1)], b = P[j];
+  return [t, b[0] > a[0] ? a[1] + (b[1] - a[1]) * (t - a[0]) / (b[0] - a[0]) : b[1], false];
+}
+const moment = t => { const d = new Date(t * 1000);
+  return (d.toDateString() === new Date().toDateString() ? "" : d.toLocaleDateString("fr-FR", {weekday:"long"}) + " ") + heureM(t); };
+function suivre(box) {
+  const f = courbesF[box.dataset.f], svg = box.querySelector("svg"), cur = box.querySelector(".cur"), pt = box.querySelector(".pt"), tip = box.querySelector(".tip");
+  box.addEventListener("pointermove", e => {
+    const r = svg.getBoundingClientRect(), k = r.width / G.W, ux = (e.clientX - r.left) / k;
+    const [t, p, prevu] = surCourbe(f, f.debut + (ux - G.L) / (G.R - G.L) * f.duree), x = gx(f, t), reg = (t - f.debut) / f.duree * 100;
+    cur.setAttribute("x1", x); cur.setAttribute("x2", x); pt.setAttribute("cx", x); pt.setAttribute("cy", gy(p)); pt.classList.toggle("prevu", prevu);
+    tip.innerHTML = `<b>${moment(t)}</b> : ${Math.max(0, Math.round(100 - p))} % restant${prevu ? " (prévu)" : ""}<br>rythme régulier : ${Math.round(100 - reg)} %`;
+    box.classList.add("on");
+    tip.style.left = Math.max(0, Math.min(r.width - tip.offsetWidth, x * k - tip.offsetWidth / 2)) + "px";
+  });
+  box.addEventListener("pointerleave", () => box.classList.remove("on"));
+}
+function ligneLim(nom, f) {
+  return `<div class="sess"><b>${nom}</b><span class="et">${f.remise ? "à zéro dans " + dans(f.remise - Date.now() / 1000) : "remise à zéro"}</span><div class="barre">${barre(Math.min(100, f.pc), 12, false, zoneLim)}</div><small>${Math.round(f.pc)} %</small></div>`;
+}
+function carte(nom, f, sem) {
   if (!f) return "";
-  const tete = `<div class="sess"><b>${nom}</b><span class="et">${f.remise ? "à zéro dans " + dans(f.remise - Date.now() / 1000) : "remise à zéro"}</span><div class="barre">${barre(Math.min(100, f.pc), 12, false, zoneLim)}</div><small>${Math.round(f.pc)} %</small></div>`;
-  if (!f.pts) return tete;
-  const e = Math.round(f.ecart), [u, n] = unite === "j" ? ["jour", 86400] : ["heure", 3600];
-  const txt = (e ? `${Math.abs(e)} pt${Math.abs(e) > 1 ? "s" : ""} ${e > 0 ? "au-dessus" : "en dessous"} du rythme régulier. ` : "Pile sur le rythme régulier. ")
-    + (f.fin < f.remise ? `<b>Au rythme actuel, plus rien ${quand(f.fin)}.</b> Reste sous ${Math.max(0, f.reste * n).toFixed(1).replace(".0", "").replace(".", ",")} %/${u} pour tenir jusqu'à ${quand(f.remise).replace(" vers ", " ")}.`
-      : isFinite(f.fin) ? `Au rythme actuel, tu finis vers ${Math.round(f.finPc)} % à la remise à zéro.` : "");
-  return tete + `<div class="graphe prevision">${courbe(f)}<p>${txt}</p></div>`;
+  if (!f.pts) return ligneLim(nom, f);
+  const e = -f.ecart;
+  return `<div class="graphe prevision"><div class="ligne"><h3>${nom}</h3><span>à zéro dans <b>${dans(f.remise - Date.now() / 1000)}</b></span></div>`
+    + `<div class="ligne"><span class="gros">${Math.max(0, Math.round(100 - f.pc))} %<small>restant</small></span>`
+    + `<span class="badge ${e >= 0 ? "av" : "ret"}">${f.pc >= 100 ? "épuisé" : Math.abs(e) < .05 ? "pile au rythme" : `${e > 0 ? "+" : "−"}${virg(Math.abs(e))} pts ${e > 0 ? "d'avance" : "de retard"}`}</span></div>${courbe(f, sem)}</div>`;
+}
+// En haut, quand une fenêtre se viderait avant sa remise à zéro : quand, et le rythme à tenir.
+function alerte(nom, f, u, n) {
+  if (!f || !f.pts || !(f.fin < f.remise)) return "";
+  if (f.pc >= 100) return `<div class="alerte"><b>${nom} : limite atteinte</b>, de retour ${quand(f.remise).replace(" vers ", " ")}.</div>`;
+  return `<div class="alerte"><b>${nom} : plus rien ${quand(f.fin)}</b> au rythme actuel. Reste sous ${virg(Math.max(0, f.reste * n))} %/${u} pour tenir jusqu'à la remise à zéro, ${quand(f.remise).replace(" vers ", " ")}.</div>`;
 }
 const ERREURS_USAGE = {jeton:"Pas de connexion de Claude Code trouvée : connecte-toi dans Claude Code (/login), avec un abonnement Pro ou Max.",
   "401":"La connexion de Claude Code a expiré : elle se renouvelle à la prochaine utilisation de Claude Code.", "429":"claude.ai demande d'attendre un peu avant de redemander les limites."};
+const msgUsage = e => ERREURS_USAGE[e] || (e && e.startsWith("meme:") ? `Même compte que le profil ${e.slice(5)} : l'un des deux est connecté au mauvais compte. Lance Claude Code avec celui-là et reconnecte-le (/login).`
+  : e ? `claude.ai ne répond pas (${e}).` : "");
 async function renderLimites() {
   if (Date.now() - usageAt > 60000) { try { usageL = await T.core.invoke("usage"); usageAt = Date.now(); } catch (e) {} }
   const avec = usageL.filter(u => u.releves.length);
   if (avec.length) {
+    courbesF.length = 0;
     $("limites").innerHTML = avec.map(u => {
       const rel = u.releves, der = rel[rel.length - 1], vieux = Date.now() / 1000 - der.t > 20 * 60;
-      return `<h3>Limites de ton abonnement${avec.length > 1 ? ` (${u.profil})` : ""}</h3>`
-        + (vieux ? `<p class="hint">Dernier relevé il y a ${dans(Date.now() / 1000 - der.t)}. ${ERREURS_USAGE[u.erreur] || (u.erreur ? `claude.ai ne répond pas (${u.erreur}).` : "")}</p>` : "")
-        + blocFenetre("Sur 5 h", fenetre(rel, "cinq_h", 5 * 3600, 3600), "h") + blocFenetre("Sur la semaine", fenetre(rel, "semaine", 7 * 86400, 86400), "j")
-        + (der.modeles || []).map(([nom, pc, remise]) => blocFenetre(`${nom}, semaine`, {pc: remise && remise > Date.now() / 1000 ? pc : 0, remise: remise && remise > Date.now() / 1000 ? remise : 0})).join("");
-    }).join("");
+      const f5 = fenetre(rel, "cinq_h", 5 * 3600, 3600), fS = fenetre(rel, "semaine", 7 * 86400, 86400);
+      const cs = [["Sur 5 h", f5, false], ["Sur la semaine", fS, true]].filter(c => c[1] && !(c[1] === f5 && !f5.pts && fS && fS.pc >= 100)), gr = cs.filter(c => c[1].pts);
+      return `<h3>Limites de ton abonnement${usageL.length > 1 ? ` (${u.profil}${der.compte ? ", " + der.compte : ""})` : ""}</h3>`
+        + (vieux ? `<p class="hint">Dernier relevé il y a ${dans(Date.now() / 1000 - der.t)}. ${msgUsage(u.erreur)}</p>` : "")
+        + alerte("Semaine", fS, "jour", 86400) + alerte("Sur 5 h", f5, "heure", 3600)
+        + (gr.length ? `<div class="lim2">${gr.map(c => carte(...c)).join("")}</div>` : "") + cs.filter(c => !c[1].pts).map(c => ligneLim(c[0], c[1])).join("")
+        + (der.modeles || []).map(([nom, pc, remise]) => ligneLim(`${nom}, semaine`, {pc: remise && remise > Date.now() / 1000 ? pc : 0, remise: remise && remise > Date.now() / 1000 ? remise : 0})).join("");
+    }).join("") + usageL.filter(u => !u.releves.length && u.erreur).map(u => `<h3>Limites de ton abonnement (${u.profil})</h3><p class="hint">${msgUsage(u.erreur)}</p>`).join("");
+    $("limites").querySelectorAll(".suivi").forEach(suivre);
     return;
   }
   let L = null; try { L = await T.core.invoke("limites"); } catch (e) {}
