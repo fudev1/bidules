@@ -168,9 +168,7 @@ fn collect(dir: &Path, cutoff: SystemTime, out: &mut Vec<f64>) {
     }
 }
 
-// Les commandes qui lisent des fichiers tournent hors du fil principal (async) : sinon elles bloquent la fenêtre et le Bidule saccade.
-#[tauri::command(async)]
-fn prompt_times() -> Vec<f64> {
+fn prompt_times_lire() -> Vec<f64> {
     let home = std::env::var("HOME").unwrap_or_default();
     let cutoff = SystemTime::now() - Duration::from_secs(5 * 3600);
     let mut out = Vec::new();
@@ -181,8 +179,7 @@ fn prompt_times() -> Vec<f64> {
 }
 
 // Les heures des prompts des 7 derniers jours, pour les graphiques d'activité du panneau (onglet Claude).
-#[tauri::command(async)]
-fn prompts_semaine() -> Vec<f64> {
+fn prompts_semaine_lire() -> Vec<f64> {
     let home = std::env::var("HOME").unwrap_or_default();
     let cutoff = SystemTime::now() - Duration::from_secs(7 * 86400);
     let debut = cutoff.duration_since(SystemTime::UNIX_EPOCH).map_or(0.0, |d| d.as_secs_f64());
@@ -373,8 +370,7 @@ fn icone(app: AppHandle, png: Vec<u8>) {
 }
 
 // La session de Claude Desktop qui a le focus : de petits fichiers, relus souvent pour réagir vite quand on change de session.
-#[tauri::command(async)]
-fn session_active() -> Option<String> {
+fn session_active_lire() -> Option<String> {
     desktop_session(&std::env::var("HOME").unwrap_or_default()).map(|(id, _)| id)
 }
 
@@ -447,8 +443,7 @@ fn montrer_bidule(app: AppHandle, oui: bool) {
     let _ = app.emit("bidule-visible", oui);
 }
 
-#[tauri::command(async)]
-fn contexte() -> Option<Jauge> {
+fn contexte_lire() -> Option<Jauge> {
     let home = std::env::var("HOME").unwrap_or_default();
     let (path, model, source) = match desktop_session(&home).and_then(|(id, m)| Some((find_journal(&home, &id)?, m))) {
         Some((p, m)) => (p, m, "desktop"),
@@ -609,8 +604,7 @@ struct Session {
 }
 // Toutes les sessions connues par les hooks. Une session oubliée (fermée sans prévenir) disparaît : finie depuis 30 min,
 // sans nouvelle depuis 1 h en travaillant, ou depuis 8 h en attendant.
-#[tauri::command(async)]
-fn sessions() -> Vec<Session> {
+fn sessions_lire() -> Vec<Session> {
     let home = std::env::var("HOME").unwrap_or_default();
     let mut out = Vec::new();
     let Ok(rd) = std::fs::read_dir(format!("{home}/.bidules/sessions")) else { return out };
@@ -634,8 +628,7 @@ fn sessions() -> Vec<Session> {
 struct Limite { pourcent: f64, remise: u64 }
 #[derive(serde::Serialize)]
 struct Limites { cinq_h: Option<Limite>, semaine: Option<Limite>, lancee: bool }
-#[tauri::command(async)]
-fn limites() -> Option<Limites> {
+fn limites_lire() -> Option<Limites> {
     let home = std::env::var("HOME").unwrap_or_default();
     let lancee = Path::new(&format!("{home}/.bidules/ligne-lancee")).exists();
     let v: serde_json::Value = std::fs::read_to_string(format!("{home}/.bidules/limites.json")).ok().and_then(|t| serde_json::from_str(&t).ok()).unwrap_or_default();
@@ -705,8 +698,7 @@ fn lire_reponses(p: &Path) -> HashMap<String, Reponse> {
 
 #[derive(serde::Serialize)]
 struct Depense { heure: u64, modele: String, projet: String, tokens: [u64; 5] }
-#[tauri::command(async)]
-fn depenses() -> Vec<Depense> {
+fn depenses_lire() -> Vec<Depense> {
     let home = std::env::var("HOME").unwrap_or_default();
     let mut fichiers = Vec::new();
     for root in [format!("{home}/.claude/projects"), format!("{home}/.claude-masana/projects")] {
@@ -838,8 +830,7 @@ fn relever() {
 }
 #[derive(serde::Serialize)]
 struct Releves { profil: String, releves: Vec<serde_json::Value>, erreur: Option<String> }
-#[tauri::command(async)]
-fn usage() -> Vec<Releves> {
+fn usage_lire() -> Vec<Releves> {
     let home = std::env::var("HOME").unwrap_or_default();
     let erreurs = ERREURS.lock().unwrap().clone().unwrap_or_default();
     PROFILS.iter().filter(|d| Path::new(&format!("{home}/{d}")).is_dir()).map(|d| {
@@ -848,6 +839,26 @@ fn usage() -> Vec<Releves> {
         Releves { profil: d.trim_start_matches('.').to_string(), releves, erreur: erreurs.get(d).cloned() }
     }).collect()
 }
+
+// Les commandes qui lisent des fichiers tournent sur des fils à part (spawn_blocking). Ni sur le fil principal, ni sur ceux du moteur async :
+// les commandes de la fenêtre (la déplacer, lire la souris) y passent aussi, et le Bidule saccaderait en attendant une lecture de journaux.
+async fn a_part<T: Send + Default + 'static>(f: fn() -> T) -> T { tauri::async_runtime::spawn_blocking(f).await.unwrap_or_default() }
+#[tauri::command]
+async fn prompt_times() -> Vec<f64> { a_part(prompt_times_lire).await }
+#[tauri::command]
+async fn prompts_semaine() -> Vec<f64> { a_part(prompts_semaine_lire).await }
+#[tauri::command]
+async fn session_active() -> Option<String> { a_part(session_active_lire).await }
+#[tauri::command]
+async fn contexte() -> Option<Jauge> { a_part(contexte_lire).await }
+#[tauri::command]
+async fn sessions() -> Vec<Session> { a_part(sessions_lire).await }
+#[tauri::command]
+async fn limites() -> Option<Limites> { a_part(limites_lire).await }
+#[tauri::command]
+async fn depenses() -> Vec<Depense> { a_part(depenses_lire).await }
+#[tauri::command]
+async fn usage() -> Vec<Releves> { a_part(usage_lire).await }
 
 fn main() {
     tauri::Builder::default()

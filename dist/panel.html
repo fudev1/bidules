@@ -299,7 +299,7 @@ function hm(min) { min = Math.round(min); return min < 60 ? `${min} min` : `${Ma
 function actif(ts) { let m = 0; ts.forEach((t, i) => { const g = i ? t - ts[i - 1] : Infinity; m += g <= 1200 ? g / 60 : 5; }); return m; }
 function barres(vals, titres, max) { return `<div class="barres">${vals.map((v, i) => `<i class="${v ? "" : "vide"}" style="height:${v ? Math.max(4, v / max * 100) : 0}%" title="${titres[i]}"></i>`).join("")}</div>`; }
 async function renderGraphes() {
-  if (Date.now() - semaineAt > 60000) { try { semaine = (await T.core.invoke("prompts_semaine")).sort((a, b) => a - b); semaineAt = Date.now(); } catch (e) {} }
+  if (Date.now() - semaineAt > 60000) { semaineAt = Date.now(); try { semaine = (await T.core.invoke("prompts_semaine")).sort((a, b) => a - b); } catch (e) {} }
   if (!semaine.length) { $("graphes").innerHTML = ""; return; }
   const jour = d => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime() / 1000, auj = jour(new Date()), hNow = new Date().getHours();
   const today = semaine.filter(t => t >= auj), parH = Array(24).fill(0);
@@ -336,7 +336,7 @@ function abo() { try { return localStorage.getItem("abonnement") || ""; } catch 
 function debut(d, pas) { d = new Date(d); d.setHours(0, 0, 0, 0); if (pas === "semaine") d.setDate(d.getDate() - (d.getDay() + 6) % 7); if (pas === "mois") d.setDate(1); return d; }
 function precedente(d, pas, k) { d = new Date(d); if (pas === "jour") d.setDate(d.getDate() - k); else if (pas === "semaine") d.setDate(d.getDate() - 7 * k); else d.setMonth(d.getMonth() - k); return d; }
 async function renderCout() {
-  if (Date.now() - depensesAt > 300000) { try { depenses = (await T.core.invoke("depenses")).map(x => ({...x, cout:prix(x.modele, x.tokens), tot:x.tokens.reduce((a, b) => a + b, 0)})); depensesAt = Date.now(); } catch (e) {} }
+  if (Date.now() - depensesAt > 300000) { depensesAt = Date.now(); try { depenses = (await T.core.invoke("depenses")).map(x => ({...x, cout:prix(x.modele, x.tokens), tot:x.tokens.reduce((a, b) => a + b, 0)})); } catch (e) {} }
   if (!depenses.length) { $("cout").hidden = true; return; }
   $("cout").hidden = false;
   const total = depenses.reduce((s, x) => s + x.cout, 0), toks = depenses.reduce((s, x) => s + x.tot, 0);
@@ -484,7 +484,7 @@ const ERREURS_USAGE = {jeton:"Pas de connexion de Claude Code trouvée : connect
 const msgUsage = e => ERREURS_USAGE[e] || (e && e.startsWith("meme:") ? `Même compte que le profil ${e.slice(5)} : l'un des deux est connecté au mauvais compte. Lance Claude Code avec celui-là et reconnecte-le (/login).`
   : e ? `claude.ai ne répond pas (${e}).` : "");
 async function renderLimites() {
-  if (Date.now() - usageAt > 60000) { try { usageL = await T.core.invoke("usage"); usageAt = Date.now(); } catch (e) {} }
+  if (Date.now() - usageAt > 60000) { usageAt = Date.now(); try { usageL = await T.core.invoke("usage"); } catch (e) {} }
   const avec = usageL.filter(u => u.releves.length);
   if (avec.length) {
     courbesF.length = 0;

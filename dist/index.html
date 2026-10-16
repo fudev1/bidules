@@ -75,10 +75,17 @@ async function loadSheet(id) {
   const meta = await (await fetch(SHEETS[id].json)).json();
   const im = new Image(); im.src = SHEETS[id].png; await im.decode();
   const list = Object.entries(meta.frames).sort((a, b) => parseInt(a[0].match(/(\d+)\.aseprite$/)?.[1] || 0) - parseInt(b[0].match(/(\d+)\.aseprite$/)?.[1] || 0));
-  const frames = list.map(([, f]) => {
+  // une seule lecture des pixels de toute la feuille, et une pause toutes les 40 images : le Bidule ne fige pas au lancement
+  const all = document.createElement("canvas"); all.width = im.width; all.height = im.height;
+  const ga = all.getContext("2d", {willReadFrequently:true}); ga.drawImage(im, 0, 0);
+  const sheetPx = ga.getImageData(0, 0, im.width, im.height).data, frames = [];
+  for (const [k, [, f]] of list.entries()) {
+    if (k % 40 === 39) await new Promise(r => setTimeout(r));
     const cv = document.createElement("canvas"); cv.width = f.frame.w; cv.height = f.frame.h;
     const g = cv.getContext("2d"); g.drawImage(im, f.frame.x, f.frame.y, f.frame.w, f.frame.h, 0, 0, f.frame.w, f.frame.h);
-    const px = g.getImageData(0, 0, f.frame.w, f.frame.h).data; let bot = 0, l = f.frame.w, r = 0;
+    const px = new Uint8ClampedArray(f.frame.w * f.frame.h * 4);
+    for (let y = 0; y < f.frame.h; y++) { const o = ((f.frame.y + y) * im.width + f.frame.x) * 4; px.set(sheetPx.subarray(o, o + f.frame.w * 4), y * f.frame.w * 4); }
+    let bot = 0, l = f.frame.w, r = 0;
     for (let i = 3; i < px.length; i += 4) if (px[i]) { const X = (i >> 2) % f.frame.w; if (px[i - 3] + px[i - 2] + px[i - 1] < 60) bot = Math.floor((i >> 2) / f.frame.w); l = Math.min(l, X); r = Math.max(r, X); }
     // appui au sol : les deux bouts de la ligne juste au-dessus du bas
     let tail = f.frame.w, head = 0;
@@ -86,8 +93,8 @@ async function loadSheet(id) {
     // sommet de la tête : la première ligne non vide et le milieu de ses pixels (c'est là que la souris tient le Bidule quand il pend)
     let top = f.frame.h, tl = 0, tn = 0;
     for (let i = 3; i < px.length; i += 4) if (px[i]) { const Y = Math.floor((i >> 2) / f.frame.w), X = (i >> 2) % f.frame.w; if (Y < top) { top = Y; tl = 0; tn = 0; } if (Y === top) { tl += X; tn++; } }
-    return {src:cv.toDataURL(), cv, dur:f.duration || 100, bot, cx:(l + r) / 2, tail, head, top, tipx:tn ? tl / tn : f.frame.w / 2, step:f.step};
-  });
+    frames.push({src:cv.toDataURL(), cv, dur:f.duration || 100, bot, cx:(l + r) / 2, tail, head, top, tipx:tn ? tl / tn : f.frame.w / 2, step:f.step});
+  }
   const tags = {};
   for (const t of meta.meta.frameTags || []) tags[t.name] = frames.slice(t.from, Math.min(t.to, frames.length - 1) + 1);
   const turn = tags.turn || frames, front = turn.reduce((a, b) => b.dur > a.dur ? b : a, turn[0]);
@@ -100,8 +107,9 @@ async function loadSheet(id) {
   for (const n in tags) if ((n === "nausee" || n.startsWith("crawl@")) && tags.crawl && tags[n].length === tags.crawl.length) tags[n].forEach((b, i) => { b.step = tags.crawl[i].step; });
   SHEET_DATA[id] = {frames, all:tags, tags, front, axis};
   moodTags(id);
-  say(`perso ${id} : ${frames.length} images, animations ${Object.keys(tags).join(", ")}`);
+  say(`perso ${id} : ${frames.length} images, ${Object.keys(tags).length} animations`);
 }
+const SHEET_LOADING = {};          // un seul chargement par perso, même si on le choisit deux fois pendant qu'il charge
 const isSheet = () => !!(SHEETS[style] && SHEET_DATA[style]);
 // --- Étirement collant : la base reste collée au sol, le haut suit la souris ; on la décolle en tirant fort ---
 const BIG_W = 352, BIG_H = 420, CW2 = 176, CH2 = 210, ORX = 56, ORY = 146, HANG_G = [88, 40];
@@ -1465,7 +1473,7 @@ try {
 let bidHidden = false;          // caché par un clic droit (main.rs : montrer_bidule)
 let chosen = false;          // un Bidule a été choisi (au premier lancement, pas encore)
 let claudeJ = null;          // la dernière jauge lue (contexte), envoyée au panneau
-function sendState() { T.event.emit("etat", {style:chosen ? style : null, partsBy, cheveux, thumb:hairComposite(FR.normal, 2), mood, moodMode, moodReason, cache:bidHidden, haptique:hapticOn}); T.event.emit("claude", claudeJ); }
+function sendState(avecClaude = true) { T.event.emit("etat", {style:chosen ? style : null, partsBy, cheveux, thumb:hairComposite(FR.normal, 2), mood, moodMode, moodReason, cache:bidHidden, haptique:hapticOn}); if (avecClaude) T.event.emit("claude", claudeJ); }
 function refreshSprite() {
   const cur = {sleep:"dort", carried:"dort", dizzy:"d1", nausea:"n1", pet:"content", laugh:"rire", angry:"fache",
     sulk:"fache", eat:"rire", ooh:"ooh", drowsy:"baille", waking:"baille", fly:"p1", held:"p1"}[mode];
@@ -1580,15 +1588,21 @@ async function guessMood() {
 }
 // l'humeur change lentement : la nouvelle doit tenir une minute avant d'être prise (sauf la toute première)
 const MOOD_HOLD = 60000;
-let moodNext = null, moodNextSince = 0;
+let moodNext = null, moodNextSince = 0, moodBusy = false;
+// une seule relecture à la fois : si les journaux sont longs à lire, les suivantes ne s'empilent pas derrière
 async function autoMood() {
+  if (moodBusy) return;
+  moodBusy = true;
+  try { await autoMoodLire(); } finally { moodBusy = false; }
+}
+async function autoMoodLire() {
   await claudeState();
   // l'humeur choisie à la main ne change pas, mais la bulle et le sommeil suivent toujours Claude
   if (moodMode === "auto") {
-    const [m, why] = await guessMood(), now = Date.now();
+    const [m, why] = await guessMood(), now = Date.now(), avant = moodReason;
     moodReason = noConversation ? why + ", aucune session en cours, il dort" : claudeIdle ? why + ", Claude a fini partout, il dort" : why;
     if (m !== moodNext) { moodNext = m; moodNextSince = now; }
-    if (m !== mood && (mood === null || now - moodNextSince >= MOOD_HOLD)) { say(`humeur devinee : ${m} (${why})`); applyMood(m); } else sendState();
+    if (m !== mood && (mood === null || now - moodNextSince >= MOOD_HOLD)) { say(`humeur devinee : ${m} (${why})`); applyMood(m); } else if (moodReason !== avant) sendState(false);          // claudeState vient d'envoyer "claude"
   }
   if (!claudeIdle && mode === "sleep" && Date.now() - sleepSince > 3000) wakeUp(claudeWaits ? "attend" : "seul");   // Claude se remet au travail : il se réveille
 }
@@ -1601,9 +1615,12 @@ T.event.listen("mood", e => chooseMood(e.payload));
 setInterval(autoMood, 1500);
 // On change de session dans Claude Desktop : on relit tout de suite son état, sans attendre les 3 s.
 let lastSession;
+let sessionBusy = false;
 setInterval(async () => {
+  if (sessionBusy) return;
+  sessionBusy = true;
   let id = null;
-  try { id = await T.core.invoke("session_active"); } catch (e) { return; }
+  try { id = await T.core.invoke("session_active"); } catch (e) { return; } finally { sessionBusy = false; }
   if (lastSession !== undefined && id !== lastSession) autoMood();
   lastSession = id;
 }, 700);
@@ -1646,7 +1663,7 @@ function garder() {
 setInterval(() => { if (chosen && mode === "walk" && Math.abs(Math.round(x) - gardeX) > 20) garder(); }, 5000);
 // Le Bidule choisi : chargé, affiché, et gardé pour le prochain lancement (main.rs : garder_choix).
 async function chooseStyle(s) {
-  if (SHEETS[s] && !SHEET_DATA[s]) { try { await loadSheet(s); } catch (err) { say("perso : " + err); return; } }
+  if (SHEETS[s] && !SHEET_DATA[s]) { try { await (SHEET_LOADING[s] ||= loadSheet(s)); } catch (err) { delete SHEET_LOADING[s]; say("perso : " + err); return; } }
   if (mode === "turning") { mode = "walk"; dir = pendingDir; face(); }
   buildFrames(s); lookKey = ""; say("piste : " + s); refreshSprite();
   if (!chosen) { chosen = true; document.body.classList.add("pret"); }
