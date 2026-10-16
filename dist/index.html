@@ -75,10 +75,17 @@ async function loadSheet(id) {
   const meta = await (await fetch(SHEETS[id].json)).json();
   const im = new Image(); im.src = SHEETS[id].png; await im.decode();
   const list = Object.entries(meta.frames).sort((a, b) => parseInt(a[0].match(/(\d+)\.aseprite$/)?.[1] || 0) - parseInt(b[0].match(/(\d+)\.aseprite$/)?.[1] || 0));
-  const frames = list.map(([, f]) => {
+  // une seule lecture des pixels de toute la feuille, et une pause toutes les 40 images : le Bidule ne fige pas au lancement
+  const all = document.createElement("canvas"); all.width = im.width; all.height = im.height;
+  const ga = all.getContext("2d", {willReadFrequently:true}); ga.drawImage(im, 0, 0);
+  const sheetPx = ga.getImageData(0, 0, im.width, im.height).data, frames = [];
+  for (const [k, [, f]] of list.entries()) {
+    if (k % 40 === 39) await new Promise(r => setTimeout(r));
     const cv = document.createElement("canvas"); cv.width = f.frame.w; cv.height = f.frame.h;
     const g = cv.getContext("2d"); g.drawImage(im, f.frame.x, f.frame.y, f.frame.w, f.frame.h, 0, 0, f.frame.w, f.frame.h);
-    const px = g.getImageData(0, 0, f.frame.w, f.frame.h).data; let bot = 0, l = f.frame.w, r = 0;
+    const px = new Uint8ClampedArray(f.frame.w * f.frame.h * 4);
+    for (let y = 0; y < f.frame.h; y++) { const o = ((f.frame.y + y) * im.width + f.frame.x) * 4; px.set(sheetPx.subarray(o, o + f.frame.w * 4), y * f.frame.w * 4); }
+    let bot = 0, l = f.frame.w, r = 0;
     for (let i = 3; i < px.length; i += 4) if (px[i]) { const X = (i >> 2) % f.frame.w; if (px[i - 3] + px[i - 2] + px[i - 1] < 60) bot = Math.floor((i >> 2) / f.frame.w); l = Math.min(l, X); r = Math.max(r, X); }
     // appui au sol : les deux bouts de la ligne juste au-dessus du bas
     let tail = f.frame.w, head = 0;
@@ -86,8 +93,8 @@ async function loadSheet(id) {
     // sommet de la tête : la première ligne non vide et le milieu de ses pixels (c'est là que la souris tient le Bidule quand il pend)
     let top = f.frame.h, tl = 0, tn = 0;
     for (let i = 3; i < px.length; i += 4) if (px[i]) { const Y = Math.floor((i >> 2) / f.frame.w), X = (i >> 2) % f.frame.w; if (Y < top) { top = Y; tl = 0; tn = 0; } if (Y === top) { tl += X; tn++; } }
-    return {src:cv.toDataURL(), cv, dur:f.duration || 100, bot, cx:(l + r) / 2, tail, head, top, tipx:tn ? tl / tn : f.frame.w / 2, step:f.step};
-  });
+    frames.push({src:cv.toDataURL(), cv, dur:f.duration || 100, bot, cx:(l + r) / 2, tail, head, top, tipx:tn ? tl / tn : f.frame.w / 2, step:f.step});
+  }
   const tags = {};
   for (const t of meta.meta.frameTags || []) tags[t.name] = frames.slice(t.from, Math.min(t.to, frames.length - 1) + 1);
   const turn = tags.turn || frames, front = turn.reduce((a, b) => b.dur > a.dur ? b : a, turn[0]);
@@ -100,8 +107,9 @@ async function loadSheet(id) {
   for (const n in tags) if ((n === "nausee" || n.startsWith("crawl@")) && tags.crawl && tags[n].length === tags.crawl.length) tags[n].forEach((b, i) => { b.step = tags.crawl[i].step; });
   SHEET_DATA[id] = {frames, all:tags, tags, front, axis};
   moodTags(id);
-  say(`perso ${id} : ${frames.length} images, animations ${Object.keys(tags).join(", ")}`);
+  say(`perso ${id} : ${frames.length} images, ${Object.keys(tags).length} animations`);
 }
+const SHEET_LOADING = {};          // un seul chargement par perso, même si on le choisit deux fois pendant qu'il charge
 const isSheet = () => !!(SHEETS[style] && SHEET_DATA[style]);
 // --- Étirement collant : la base reste collée au sol, le haut suit la souris ; on la décolle en tirant fort ---
 const BIG_W = 352, BIG_H = 420, CW2 = 176, CH2 = 210, ORX = 56, ORY = 146, HANG_G = [88, 40];
@@ -154,6 +162,7 @@ function captureFrame(src) {          // src : l'image déjà remise dans le rep
 // pour que l'image ne se montre jamais au mauvais endroit entre les deux (au pire un blanc très court).
 let winChain = Promise.resolve();
 const nextPaint = () => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+const cadre = (x, y, w, h) => T.core.invoke("cadre", {x:Math.round(x), y:Math.round(y), w, h});          // main.rs : déplace et redimensionne en un seul appel
 function setBigWindow(on) { return winChain = winChain.then(() => pull.side && pull.side !== "floor" ? edgeResize(on) : resizeWin(on)).catch(e => say("fenetre: " + e)); }
 // Décollé du plafond ou d'un mur : le même calcul qu'au sol, dans un repère où le bord est le sol. EDGE_ROT : du repère à l'écran,
 // [a, b, c, d] pour X = a u + b v, Y = c u + d v (le retour : u = a X + c Y, v = b X + d Y) ; EDGE_CSS : la même chose pour le grand canevas.
@@ -186,8 +195,7 @@ async function edgeResize(on) {
     // macOS garde la fenêtre sous la barre de menus : au-delà, c'est le dessin qui monte dans la fenêtre (comme flush)
     const [nx, ny] = pull.win, up = Math.max(0, Math.round(minY - ny));
     document.body.style.translate = up ? `0 ${-up}px` : "";
-    await win.setPosition(new LogicalPosition(Math.round(nx), Math.round(ny) + up));
-    await win.setSize(new LogicalSize(W, H));
+    await cadre(nx, ny + up, W, H);
   } else {
     await win.setSize(new LogicalSize(WW, WH));
     pullCanvas.hidden = true; Object.assign(pullCanvas.style, {left:"", top:"", transform:""});
@@ -201,15 +209,12 @@ async function resizeWin(on) {
     img.style.opacity = "0"; pullCanvas.hidden = false; size(true);
     await nextPaint();
     x -= (BIG_W - WW) / 2; y -= BIG_H - WH;
-    await win.setPosition(new LogicalPosition(Math.round(x), Math.round(y)));
-    await win.setSize(new LogicalSize(BIG_W, BIG_H));
+    await cadre(x, y, BIG_W, BIG_H);
   } else {
     // d'abord réduire sur place : l'image reste au bon endroit, juste recadrée ; puis déplacer et remettre l'image normale
     const hung = pull.wasHang;
-    await win.setSize(new LogicalSize(WW, WH));
-    pullCanvas.hidden = true;
-    if (hung) await nextPaint();
-    await win.setPosition(new LogicalPosition(Math.round(x), Math.round(y)));
+    if (hung) { await win.setSize(new LogicalSize(WW, WH)); pullCanvas.hidden = true; await nextPaint(); await win.setPosition(new LogicalPosition(Math.round(x), Math.round(y))); }
+    else { await cadre(x, y, WW, WH); pullCanvas.hidden = true; }
     size(false);
   }
 }
@@ -237,10 +242,10 @@ function pullStart(side = "floor") {
     pull.prev = {x, y, mode};
   }
   const gu = Math.max(S0.cx - 12, Math.min(S0.cx + 12, G[0])), gv = Math.max(S0.top, Math.min(S0.bot - 3, G[1]));
-  Object.assign(pull, {on:true, ready:false, phase:"ground", side, src:S0, srcImg:img.src, g:[gu, gv], d:[0, 0], vd:[0, 0], cran:0});
+  Object.assign(pull, {on:true, ready:false, phase:"ground", side, src:S0, srcImg:img.src, g:[gu, gv], d:[0, 0], dm:null, vd:[0, 0], cran:0});
   // la bulle de pensée disparaît tout de suite, sans fondu : la fenêtre va s'agrandir vers le haut et la gauche, elle se retrouverait dans le coin
   pense.style.transition = "none"; pense.classList.add("off"); pense.offsetWidth; pense.style.transition = "";
-  pullDraw(); setBigWindow(true).then(() => { pull.ready = true; });
+  pullDraw(); setBigWindow(true).then(() => { pull.ready = true; pull.readyAt = performance.now(); });
   return true;
 }
 // Position de la base (B) et du point tenu (G) dans le grand canevas, selon la phase.
@@ -371,10 +376,13 @@ function pullStep(dt) {
   const S0 = pull.src, hs = Math.max(2, S0.bot + 1 - pull.g[1]);
   if (pull.phase === "ground") {
     // il décolle quand on a tiré assez loin ; en chemin, des crans de plus en plus serrés à mesure que le fil s'étire
+    if (pull.dm) pull.d = [...pull.dm];
     const f = Math.hypot(pull.d[0], pull.d[1]) / ((S0.bot + 1 - S0.top) * 2.4), cran = PULL_CRANS.filter(c => f >= c).length;
     if (cran > pull.cran) haptic("cran");
     pull.cran = cran;
-    if (f > 1) {
+    // tiré vite pendant que la fenêtre s'agrandissait : on montre d'abord l'étirement un moment, au lieu de décoller dès la première image
+    if (f > 1 && performance.now() - pull.readyAt < 150) { pull.d = pull.d.map(v => v / f * .99); pull.cran = PULL_CRANS.length; }
+    else if (f > 1) {
       // décollé : la fenêtre reprend sa taille et il est tenu comme dans tous les autres cas (la goutte qui se balance)
       say("il se decolle du sol"); bubble("Plop !", 900); haptic("palier");
       const edge = pull.side !== "floor";
@@ -509,10 +517,11 @@ function sheetAnim(now) {
   if (mode === "sleep" && wake > 35) tag = "remue";
   if (mode === "walk") { if (watching) sing = false; if (watching || now >= idleUntil || faceSeq || !FRONT.has(img.src)) return; tag = sing && T2.chante ? "chante" : "repos"; }
   if (!tag || !T2[tag]) { if (tag === "boude" && T2.crawl) tag = "crawl"; else return; }
+  if (mode === "ceiling" && drag) return;          // tenu au plafond : il s'arrête sur l'image où on l'a pris
   if (sheetLoop.tag !== tag) sheetLoop = {tag, i:0, next:0};
   if (now >= sheetLoop.next) { const fr = T2[tag], k2 = sheetLoop.i % fr.length; img.src = fr[k2].src; sheetLoop.next = nextAt(sheetLoop.next, fr[k2].dur * (mode === "nausea" ? 1.6 : 1), now); sheetLoop.i++;
     // nausée au sol : la reptation en vert, plus lente ; il avance d'un pas à chaque image, comme à la marche (pas de glissade)
-    if (mode === "nausea" || mode === "ceiling" && !drag) x += dir * 2 * (fr[k2].step || 0);          // collé en haut, il avance aussi pas à pas
+    if (mode === "nausea" || mode === "ceiling") x += dir * 2 * (fr[k2].step || 0);          // collé en haut, il avance aussi pas à pas
   }
 }
 // Candy sautille en marchant, sauf ronchon ou vaseuse (elle garde la reptation) ; la marche ne change qu'en fin de cycle
@@ -672,11 +681,21 @@ function wakeUp(why) {
 }
 function react(m, ms, frame, cls = "") { mode = m; reactUntil = Date.now() + ms; img.src = frame; pose(cls); img.style.rotate = "0deg"; watching = false; lookKey = ""; }
 function toWalk() { mode = "walk"; img.src = FR.normal; pose("walk"); }
-async function bounds() {
-  const m = await T.window.currentMonitor(); if (!m) return;
+async function bounds(m) {
+  m = m || await T.window.currentMonitor(); if (!m) return;
   const s = m.scaleFactor; scale = s; const a = m.workArea || {position:m.position, size:m.size};
   minX = a.position.x / s; maxX = (a.position.x + a.size.width) / s - WW;
   minY = a.position.y / s; floorY = (a.position.y + a.size.height) / s - WH;
+}
+// Clic droit > Écran : il arrive au milieu de l'écran choisi par une petite chute (pas d'écrasement)
+async function toScreen(m) {
+  if (drag || pull.on) return;
+  if (mode === "wall" && wallStick) wallShape(false);
+  corner = null; ceilSw = null; unceil(false);
+  await bounds(m);
+  x = (minX + maxX) / 2; mode = "fly"; vx = 0; vy = 1; angle = 0; spin = 0; bounces = 0; img.style.rotate = "0deg"; img.style.translate = "";
+  y = floorY - 160; peakY = y; fall = null; push(); say("change d'ecran : " + m.name);
+  if (isSheet()) sheetAnim(Date.now());
 }
 // Marge transparente au-dessus du Bidule dans sa fenêtre : l'image (128 px) est en bas de la fenêtre (176 px), et son dessin
 // commence à sa première ligne visible. Gardée par image, pour ne pas relire les pixels à chaque instant.
@@ -1345,7 +1364,7 @@ img.addEventListener("pointermove", e => {
   }
   if (!drag.moved) return;
   drag.lastX = e.screenX; drag.lastY = e.screenY;
-  if (pull.on && pull.phase === "ground") { pull.d = edgeFrom(EDGE_ROT[pull.side || "floor"], (e.screenX - drag.sx) / 2, (e.screenY - drag.sy) / 2); return; }
+  if (pull.on && pull.phase === "ground") { pull.d = pull.dm = edgeFrom(EDGE_ROT[pull.side || "floor"], (e.screenX - drag.sx) / 2, (e.screenY - drag.sy) / 2); return; }
   if (drag.asleep) {
     const pv = samples[samples.length - 1], dtm = Math.max(8, performance.now() - pv.t);
     const speed = Math.hypot(e.screenX - pv.x, e.screenY - pv.y) / dtm * 1000;
@@ -1454,7 +1473,7 @@ try {
 let bidHidden = false;          // caché par un clic droit (main.rs : montrer_bidule)
 let chosen = false;          // un Bidule a été choisi (au premier lancement, pas encore)
 let claudeJ = null;          // la dernière jauge lue (contexte), envoyée au panneau
-function sendState() { T.event.emit("etat", {style:chosen ? style : null, partsBy, cheveux, thumb:hairComposite(FR.normal, 2), mood, moodMode, moodReason, cache:bidHidden, haptique:hapticOn}); T.event.emit("claude", claudeJ); }
+function sendState(avecClaude = true) { T.event.emit("etat", {style:chosen ? style : null, partsBy, cheveux, thumb:hairComposite(FR.normal, 2), mood, moodMode, moodReason, cache:bidHidden, haptique:hapticOn}); if (avecClaude) T.event.emit("claude", claudeJ); }
 function refreshSprite() {
   const cur = {sleep:"dort", carried:"dort", dizzy:"d1", nausea:"n1", pet:"content", laugh:"rire", angry:"fache",
     sulk:"fache", eat:"rire", ooh:"ooh", drowsy:"baille", waking:"baille", fly:"p1", held:"p1"}[mode];
@@ -1569,15 +1588,21 @@ async function guessMood() {
 }
 // l'humeur change lentement : la nouvelle doit tenir une minute avant d'être prise (sauf la toute première)
 const MOOD_HOLD = 60000;
-let moodNext = null, moodNextSince = 0;
+let moodNext = null, moodNextSince = 0, moodBusy = false;
+// une seule relecture à la fois : si les journaux sont longs à lire, les suivantes ne s'empilent pas derrière
 async function autoMood() {
+  if (moodBusy) return;
+  moodBusy = true;
+  try { await autoMoodLire(); } finally { moodBusy = false; }
+}
+async function autoMoodLire() {
   await claudeState();
   // l'humeur choisie à la main ne change pas, mais la bulle et le sommeil suivent toujours Claude
   if (moodMode === "auto") {
-    const [m, why] = await guessMood(), now = Date.now();
+    const [m, why] = await guessMood(), now = Date.now(), avant = moodReason;
     moodReason = noConversation ? why + ", aucune session en cours, il dort" : claudeIdle ? why + ", Claude a fini partout, il dort" : why;
     if (m !== moodNext) { moodNext = m; moodNextSince = now; }
-    if (m !== mood && (mood === null || now - moodNextSince >= MOOD_HOLD)) { say(`humeur devinee : ${m} (${why})`); applyMood(m); } else sendState();
+    if (m !== mood && (mood === null || now - moodNextSince >= MOOD_HOLD)) { say(`humeur devinee : ${m} (${why})`); applyMood(m); } else if (moodReason !== avant) sendState(false);          // claudeState vient d'envoyer "claude"
   }
   if (!claudeIdle && mode === "sleep" && Date.now() - sleepSince > 3000) wakeUp(claudeWaits ? "attend" : "seul");   // Claude se remet au travail : il se réveille
 }
@@ -1590,9 +1615,12 @@ T.event.listen("mood", e => chooseMood(e.payload));
 setInterval(autoMood, 1500);
 // On change de session dans Claude Desktop : on relit tout de suite son état, sans attendre les 3 s.
 let lastSession;
+let sessionBusy = false;
 setInterval(async () => {
+  if (sessionBusy) return;
+  sessionBusy = true;
   let id = null;
-  try { id = await T.core.invoke("session_active"); } catch (e) { return; }
+  try { id = await T.core.invoke("session_active"); } catch (e) { return; } finally { sessionBusy = false; }
   if (lastSession !== undefined && id !== lastSession) autoMood();
   lastSession = id;
 }, 700);
@@ -1635,7 +1663,7 @@ function garder() {
 setInterval(() => { if (chosen && mode === "walk" && Math.abs(Math.round(x) - gardeX) > 20) garder(); }, 5000);
 // Le Bidule choisi : chargé, affiché, et gardé pour le prochain lancement (main.rs : garder_choix).
 async function chooseStyle(s) {
-  if (SHEETS[s] && !SHEET_DATA[s]) { try { await loadSheet(s); } catch (err) { say("perso : " + err); return; } }
+  if (SHEETS[s] && !SHEET_DATA[s]) { try { await (SHEET_LOADING[s] ||= loadSheet(s)); } catch (err) { delete SHEET_LOADING[s]; say("perso : " + err); return; } }
   if (mode === "turning") { mode = "walk"; dir = pendingDir; face(); }
   buildFrames(s); lookKey = ""; say("piste : " + s); refreshSprite();
   if (!chosen) { chosen = true; document.body.classList.add("pret"); }
@@ -1701,9 +1729,14 @@ img.addEventListener("contextmenu", async e => {
     const {Menu, MenuItem, Submenu, CheckMenuItem, PredefinedMenuItem} = T.menu;
     const moods = await Promise.all([["auto", "Automatique"], ...Object.entries(MOOD_LABEL)].map(([id, text]) =>
       CheckMenuItem.new({text, checked:moodMode === id, action:() => { chooseMood(id); sendState(); }})));
+    // plusieurs écrans branchés : on choisit sur lequel il vit
+    const ecrans = await T.window.availableMonitors().catch(() => []), ici = await T.window.currentMonitor().catch(() => null);
+    const surEcran = ecrans.length > 1 ? [await Submenu.new({text:"Écran", items:await Promise.all(ecrans.map((m, i) => CheckMenuItem.new({text:m.name || `Écran ${i + 1}`,
+      checked:!!ici && m.position.x === ici.position.x && m.position.y === ici.position.y, action:() => toScreen(m)})))})] : [];
     const menu = await Menu.new({items:[
       await MenuItem.new({text:"Ouvrir le panneau", action:() => T.core.invoke("ouvrir_panneau")}),
       await Submenu.new({text:"Humeur", items:moods}),
+      ...surEcran,
       await PredefinedMenuItem.new({item:"Separator"}),
       await MenuItem.new({text:"Cacher le Bidule", action:() => T.core.invoke("montrer_bidule", {oui:false})}),
       await MenuItem.new({text:"Quitter", action:() => T.core.invoke("quit")}),
