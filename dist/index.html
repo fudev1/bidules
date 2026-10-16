@@ -509,10 +509,11 @@ function sheetAnim(now) {
   if (mode === "sleep" && wake > 35) tag = "remue";
   if (mode === "walk") { if (watching) sing = false; if (watching || now >= idleUntil || faceSeq || !FRONT.has(img.src)) return; tag = sing && T2.chante ? "chante" : "repos"; }
   if (!tag || !T2[tag]) { if (tag === "boude" && T2.crawl) tag = "crawl"; else return; }
+  if (mode === "ceiling" && drag) return;          // tenu au plafond : il s'arrête sur l'image où on l'a pris
   if (sheetLoop.tag !== tag) sheetLoop = {tag, i:0, next:0};
   if (now >= sheetLoop.next) { const fr = T2[tag], k2 = sheetLoop.i % fr.length; img.src = fr[k2].src; sheetLoop.next = nextAt(sheetLoop.next, fr[k2].dur * (mode === "nausea" ? 1.6 : 1), now); sheetLoop.i++;
     // nausée au sol : la reptation en vert, plus lente ; il avance d'un pas à chaque image, comme à la marche (pas de glissade)
-    if (mode === "nausea" || mode === "ceiling" && !drag) x += dir * 2 * (fr[k2].step || 0);          // collé en haut, il avance aussi pas à pas
+    if (mode === "nausea" || mode === "ceiling") x += dir * 2 * (fr[k2].step || 0);          // collé en haut, il avance aussi pas à pas
   }
 }
 // Candy sautille en marchant, sauf ronchon ou vaseuse (elle garde la reptation) ; la marche ne change qu'en fin de cycle
