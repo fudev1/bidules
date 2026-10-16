@@ -4,7 +4,7 @@
 #   Images 1 à 5 : penchés à gauche fort, à gauche, droits, à droite, à droite fort ; image 6 : ébouriffés (un choc).
 #   Créé à partir des mèches du modèle (MECHES) seulement s'il n'existe pas :
 #   ensuite il est à retoucher à la main, le script ne l'écrase jamais.
-# - dist/persos/limace/cheveux-poses.png : ces six poses côte à côte, pour l'app (dist/index.html, hairStep).
+# - dist/persos/limace/cheveux-poses.png : ces six poses côte à côte, pour l'app (dist/js/cheveux.js, hairStep).
 import math, os, subprocess, sys, tempfile
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from bidules import ROOT, ASE, lire_png

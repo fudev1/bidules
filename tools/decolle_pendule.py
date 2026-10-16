@@ -1,4 +1,4 @@
-# Deux animations de la limace, calculées comme la goutte que dist/index.html dessine quand on la décolle (pullDraw, tools/boule.py) :
+# Deux animations de la limace, calculées comme la goutte que dist/js/etirement.js dessine quand on la décolle (pullDraw, tools/boule.py) :
 #  - decolle : de face au sol, elle prend son élan (s'écrase), s'étire vers le haut (la tête reste ronde, le bas s'amincit en fil, le pied reste
 #    en flaque), puis le fil casse et elle part vers le haut. Dessinée au sol (bas sur la ligne 60).
 #  - pendule (boucle) : au plafond, elle pend en goutte au bout de son fil et se balance, les yeux vers où elle va.

@@ -12,3 +12,6 @@ CLAUDE.local.md
 
 # jeton PixelLab (voir mise.local.toml.exemple)
 mise.local.toml
+
+# tests (npm install)
+node_modules/
