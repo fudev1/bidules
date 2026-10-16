@@ -1,70 +1,309 @@
 # Notes du projet
 
-Mise à jour : 6 octobre 2026. Ce fichier suit l'état du projet : ce qui est décidé, ce qui reste à trancher, ce qui est fait et ce qui reste à faire. La vision, l'installation et la stack sont dans le [README](README.md).
+Mise à jour : 16 octobre 2026. Ce fichier suit l'état du projet : ce qui est décidé, ce qui reste à trancher, ce qui est
+fait et ce qui reste à faire. La vision, l'installation et la stack sont dans le [README](README.md).
 
 ## Décisions
 
 - Joueurs : les utilisateurs de Claude Code, sur Mac et Windows.
 - Les tokens se comptent comme dans PokéBurn : entrée + sortie, sans le cache.
-- Une saison = un sprint (3 ou 4 semaines), avec les dates dans un fichier de configuration "maître". À la fin du sprint, le Bidule est figé dans la collection et un nouvel œuf arrive. La chambre et les accessoires restent.
+- Une saison = un sprint (3 ou 4 semaines), avec les dates dans un fichier de configuration "maître". À la fin du
+  sprint, le Bidule est figé dans la collection et un nouvel œuf arrive. La chambre et les accessoires restent.
 - Pendant le sprint, le Bidule évolue. Le système d'évolution reste à définir.
 - Chambre à 5 emplacements fixes. Accessoires sur 3 emplacements : tête, visage, cou.
 - Direction artistique : le moodboard de Matteo, en pixel art 64 × 64, jamais de vectoriel.
-- Pour l'instant, seule la limace est jouable : les autres Bidules restent visibles mais grisés dans le panneau (« Bientôt »), le temps de refaire toutes leurs animations pour qu'elles soient fluides. Pour en rendre un jouable : l'ajouter à `READY` dans `dist/panel.html`.
-- Le menu Évolution du panneau est réactivé pour un premier prototype : la limace peut recevoir trois cheveux (un clic les donne, un second les retire, gardé sur ce Mac). Six poses dessinées (`animations/cheveux/cheveux-poses.aseprite`, créé une fois par `tools/cheveux.py` à partir des mèches dessinées par Thibault sur une image de `crawl`, puis à retoucher à la main ; exporté par `mise run publier`), posées en direct au sommet de la tête, au-dessus des yeux, sur toutes les animations et sur la goutte étirée. Un ressort leur donne de l'inertie : la tête bouge (dans l'image ou la fenêtre entière), ils penchent de l'autre côté puis la rattrapent ; un choc les ébouriffe. Ce qui déclenche l'évolution reste à définir.
-- Au lancement, le Bidule choisi la dernière fois apparaît directement (gardé dans `bidule.txt`, dossier de données de l'app). Au premier lancement, aucun Bidule n'apparaît : le panneau s'ouvre pour choisir le premier ; le Bidule attend immobile à sa place de départ ; une fois choisi, le panneau se ferme et le Bidule tombe du haut comme aux lancements suivants.
-- L'humeur est générale, plus celle d'une session : avec plusieurs sessions en parallèle, suivre la jauge de contexte de la session affichée la faisait changer d'une seconde à l'autre, ce qui n'avait pas de sens. Elle suit le rythme de la journée, toutes sessions confondues : il est tard (20 h - 7 h) ou 3 h sans vraie pause : fatigué (vaseux) ; 4 sessions ou plus qui travaillent ou attendent, ou plus de 10 prompts en 10 min : stressé ; pas de prompt depuis 45 min : dans la lune ; sinon joyeux (guilleret). Elle change lentement : une nouvelle humeur doit tenir une minute avant d'être prise. La jauge de contexte de chaque session est dans le panneau (onglet Claude, liste des sessions). L'état de Claude est lui aussi commun à toutes les sessions : si une session attend (une permission, une question), il le dit, quelle que soit la session affichée ; quand toutes ont fini (ou qu'aucune n'est en cours), il s'endort au bout de 5 s de calme et ne se réveille pas seul tant que Claude ne se remet pas au travail, même si l'humeur est choisie à la main (réveillé à la main, il se rendort 5 s après). Jamais en lisant le texte des messages. On peut forcer l'humeur dans le panneau.
-- Humeur et visage : les animations sont dessinées une seule fois, avec le visage neutre (toutes celles faites jusqu'au 5 octobre 2026). Le visage de chaque humeur est dessiné une fois de profil et une fois de face, puis le code le pose sur chaque image où il reconnaît le visage neutre, recalé sur les yeux (et sur la bouche, de face). Les expressions (rire, peur, sommeil, attrapé…) gardent leur visage. Dans une humeur, c'est le code qui fait cligner, au hasard. Fatigué : les yeux fermés sont la norme, il les ouvre de temps en temps (0,6 à 1,5 s, toutes les 3 à 9 s).
+- Pour l'instant, seule la limace est jouable : les autres Bidules restent visibles mais grisés dans le panneau («
+  Bientôt »), le temps de refaire toutes leurs animations pour qu'elles soient fluides. Pour en rendre un jouable :
+  l'ajouter à `READY` dans `dist/panel.html`.
+- Le menu Évolution du panneau est réactivé pour un premier prototype : la limace peut recevoir trois cheveux (un clic
+  les donne, un second les retire, gardé sur ce Mac). Six poses dessinées (`animations/cheveux/cheveux-poses.aseprite`,
+  créé une fois par `tools/cheveux.py` à partir des mèches dessinées par Thibault sur une image de `crawl`, puis à
+  retoucher à la main ; exporté par `mise run publier`), posées en direct au sommet de la tête, au-dessus des yeux, sur
+  toutes les animations et sur la goutte étirée. Un ressort leur donne de l'inertie : la tête bouge (dans l'image ou la
+  fenêtre entière), ils penchent de l'autre côté puis la rattrapent ; un choc les ébouriffe. Ce qui déclenche
+  l'évolution reste à définir.
+- Au lancement, le Bidule choisi la dernière fois apparaît directement (gardé dans `bidule.txt`, dossier de données de
+  l'app). Au premier lancement, aucun Bidule n'apparaît : le panneau s'ouvre pour choisir le premier ; le Bidule attend
+  immobile à sa place de départ ; une fois choisi, le panneau se ferme et le Bidule tombe du haut comme aux lancements
+  suivants.
+- L'humeur est générale, plus celle d'une session : avec plusieurs sessions en parallèle, suivre la jauge de contexte de
+  la session affichée la faisait changer d'une seconde à l'autre, ce qui n'avait pas de sens. Elle suit le rythme de la
+  journée, toutes sessions confondues : il est tard (20 h - 7 h) ou 3 h sans vraie pause : fatigué (vaseux) ; 4 sessions
+  ou plus qui travaillent ou attendent, ou plus de 10 prompts en 10 min : stressé ; pas de prompt depuis 45 min : dans
+  la lune ; sinon joyeux (guilleret). Elle change lentement : une nouvelle humeur doit tenir une minute avant d'être
+  prise. La jauge de contexte de chaque session est dans le panneau (onglet Claude, liste des sessions). L'état de
+  Claude est lui aussi commun à toutes les sessions : si une session attend (une permission, une question), il le dit,
+  quelle que soit la session affichée ; quand toutes ont fini (ou qu'aucune n'est en cours), il s'endort au bout de 5 s
+  de calme et ne se réveille pas seul tant que Claude ne se remet pas au travail, même si l'humeur est choisie à la main
+  (réveillé à la main, il se rendort 5 s après). Jamais en lisant le texte des messages. On peut forcer l'humeur dans le
+  panneau.
+- Humeur et visage : les animations sont dessinées une seule fois, avec le visage neutre (toutes celles faites jusqu'au
+  5 octobre 2026). Le visage de chaque humeur est dessiné une fois de profil et une fois de face, puis le code le pose
+  sur chaque image où il reconnaît le visage neutre, recalé sur les yeux (et sur la bouche, de face). Les expressions
+  (rire, peur, sommeil, attrapé…) gardent leur visage. Dans une humeur, c'est le code qui fait cligner, au hasard.
+  Fatigué : les yeux fermés sont la norme, il les ouvre de temps en temps (0,6 à 1,5 s, toutes les 3 à 9 s).
+- Code du Bidule : sans framework ni étape de build, un fichier par sous-système (`dist/js/` : feuilles, étirement,
+  animation, corps, cheveux, vie, tenu, souris, Claude, démarrage). Tout ce qui revient régulièrement passe par une
+  seule boucle (`horloge.js`), chaque tâche avec sa cadence et une condition pour tourner ; elle démarre une fois le
+  Bidule choisi chargé. Tous les déplacements de la fenêtre passent par `fenetre.js` : seule la dernière position voulue
+  est envoyée, une à la fois, et rien si la fenêtre y est déjà. Le mode ne change que par `setMode`, et ce qui doit
+  réagir à un changement s'y abonne (`quandMode`).
 - Limace :
-  - on la tire du sol pour l'étirer, elle décolle à 2,4 fois sa hauteur ; tirée d'un coup sec, l'étirement reste visible au moins 0,15 s avant le décollage (avant, la souris était déjà loin quand la grande fenêtre était prête : il décollait dès la première image, et on ne voyait qu'un blanc puis un saut) ; la fenêtre est déplacée et agrandie par un seul appel (`cadre`, `main.rs`), ce qui raccourcit le blanc pendant le changement de taille ;
+  - on la tire du sol pour l'étirer, elle décolle à 2,4 fois sa hauteur ; tirée d'un coup sec, l'étirement reste visible
+    au moins 0,15 s avant le décollage (avant, la souris était déjà loin quand la grande fenêtre était prête : il
+    décollait dès la première image, et on ne voyait qu'un blanc puis un saut) ; la fenêtre est déplacée et agrandie par
+    un seul appel (`cadre`, `main.rs`), ce qui raccourcit le blanc pendant le changement de taille ;
   - petite chute : goutte calme, puis atterrissage ;
-  - grande chute (au moins les deux tiers de l'écran) : elle a peur, s'écrase, reste en flaque 1,5 à 3 s, puis se reforme ;
+  - grande chute (au moins les deux tiers de l'écran) : elle a peur, s'écrase, reste en flaque 1,5 à 3 s, puis se
+    reforme ;
   - la vitesse de marche vient du dessin (plus lente qu'avant), gardée telle quelle pour l'instant.
 
 ## À trancher
 
-- **Récompense** : la règle de départ récompense le volume de tokens (100 tokens = 1 pièce), ce qui pousse à prompter pour rien. Proposition : le Bidule montre l'usage et récompense la bonne utilisation.
-- **Besoins** (faim, soif, saleté) : ils montent avec les tokens, ou avec le temps ? Avec les tokens, ils poussent aussi à consommer.
+- **Récompense** : la règle de départ récompense le volume de tokens (100 tokens = 1 pièce), ce qui pousse à prompter
+  pour rien. Proposition : le Bidule montre l'usage et récompense la bonne utilisation.
+- **Besoins** (faim, soif, saleté) : ils montent avec les tokens, ou avec le temps ? Avec les tokens, ils poussent aussi
+  à consommer.
 - **Évolution** : ce qui la déclenche pendant le sprint.
 - **Personnages** : animer à la main les 6 monstres du moodboard, ou garder seulement la limace pour la v1.
 
 ## Fait
 
-- Skills de Matt Pocock (`github.com/mattpocock/skills`, version 1.3.1) copiés dans `.claude/skills/` : les 27 du plugin officiel (grilling, tdd, diagnosing-bugs, to-spec, etc.). Pour les commits et les pull requests, nos skills `commit` et `pull-request` restent prioritaires sur `pr`. Ce qu'ils produisent est écrit en français, et quand ils parlent de `main` on lit `test`. Mise à jour : à la main, en recopiant depuis le repo. Réglés pour le projet (`docs/agents/`) : tickets et specs en issues GitHub, étiquettes de tri par défaut, glossaire et ADR à la racine.
-- App de bureau Mac : fenêtre transparente au premier plan, le Bidule vit en bas de l'écran, panneau dans la barre de menus (Piste, Évolution, Humeur), sans contours, en aplats de couleur avec le Bidule choisi en grand dans l'en-tête.
-- Panneau : 6 Bidules par ligne (640 × 600). Grand en-tête : son nom, son humeur et pourquoi, le Bidule en grand, et sa bulle de BD à côté (ce que fait Claude, toutes sessions confondues, depuis quand, et le contexte de la session en vue). Il remplace les trois essais « État de Claude » (bandeau, tableau de bord, bulle et anneau), retirés de l'onglet Tests ; la simulation de chaque état y reste. Onglets : Claude (les limites de l'abonnement, deux graphiques d'activité, les sessions, le branchement ; le panneau s'ouvre dessus dès qu'un Bidule est choisi), Piste, Évolution, Humeur (forcer l'humeur). Le bouton jaune de l'onglet choisi glisse d'un onglet à l'autre, avec un petit rebond. Un onglet Tests (bouton rond en pointillés au bout des onglets) pour simuler chaque état de Claude dans la bulle. Les cadres d'infos (limites, graphiques, sessions, lignes avec un bouton) sont creusés : fond violet foncé, ombre à l'intérieur en haut, fine lueur en bas ; on les lit, alors que les boutons, en relief, se cliquent. Choisi parmi une dizaine d'essais (plus foncé, vers le noir, flouté, creusé doux, profond, net...), retirés depuis. Des cinq essais d'effet verre, seul D est gardé et appliqué à tout le panneau : un reflet blanc sur les onglets et la pastille jaune, sans transparence ni flou. L'icône de la barre de menus reste en surbrillance tant que le panneau est ouvert. La fenêtre du Bidule envoie la jauge au panneau (événement `claude`) ; les icônes de la bulle de pensée sont dans `dist/pense.js`, partagé par les deux.
-- Icône de la barre de menus : la limace, animée selon Claude. Elle rampe sur place quand il travaille (avec le visage de l'humeur), elle est intriguée quand une session attend, elle dort quand toutes ont fini (toutes sessions confondues). Bidule fermé, elle se fige au repos. Dessinée par la fenêtre du Bidule (`index.html`), envoyée à la commande `icone` (`main.rs`) ; image de repos : `src-tauri/icons/tray-repos.png`.
-- Hooks de Claude Code : chaque session note son état dans `~/.bidules/sessions/<id de la session>` par un petit script (`~/.bidules/hook.sh`, recopié depuis `src-tauri/src/hook.sh`), qui ne lit que l'identifiant de la session dans ce que Claude Code lui envoie. `UserPromptSubmit` et `PostToolUse` : travaille ; `Notification` (permission, question d'un MCP) et `PreToolUse` d'`AskUserQuestion` : attend ; `Stop` : fini (et touche `~/.bidules/claude-fini`, surveillé par l'app) ; `SessionEnd` : la session disparaît. Une session oubliée disparaît seule (finie depuis 30 min, sans nouvelle depuis 1 h en travaillant ou 8 h en attendant). Une session attend : le Bidule dit « Une session t'attend ! » (ou « N sessions t'attendent ! »), réveillé s'il dormait, le redit toutes les 30 s et ne s'endort pas. Claude a fini : il dit « À toi ! » tout de suite (endormi, il se réveille ; en marche, il saute de joie face à toi) et reste éveillé 20 s. Les hooks se branchent et se débranchent d'un clic dans l'onglet Claude du panneau (« Mettre à jour » si une version précédente est branchée) : ils s'ajoutent à `~/.claude/settings.json` (et `~/.claude-masana/` s'il existe), sans toucher au reste ; les anciens hooks du Bidule sont remplacés ; une copie du fichier d'origine est gardée la première fois (`settings.json.avant-bidule`). Débrancher retire ces hooks (et les listes laissées vides), le script et l'état des sessions. Rien à redémarrer : Claude Code relit ses réglages de lui-même (doc des hooks : « normally picked up automatically by the file watcher ») ; si Claude travaille sans qu'aucune session ne donne de nouvelles, le panneau propose de relancer les sessions ouvertes. Sans hooks branchés, le Bidule retombe sur la session en cours (lien avec Claude, plus bas).
-- Limites de l'abonnement (issue #46) : ni les journaux de Claude Code ni ses hooks ne les donnent ; seule sa barre d'état (`statusLine`) les reçoit (`rate_limits.five_hour` et `seven_day` : `used_percentage`, `resets_at`), pour les abonnements Pro et Max, après la première réponse de la session. « Brancher » pose donc aussi une barre d'état (`~/.bidules/ligne.sh`, recopiée depuis `src-tauri/src/ligne.sh`) qui ne garde que ces chiffres, dans `~/.bidules/limites.json`. S'il y avait déjà une barre d'état, sa commande est gardée dans `~/.bidules/ligne-avant-<profil>` et `ligne.sh` la relance : elle affiche la même chose. Débrancher la remet telle quelle. Le panneau (onglet Claude) montre deux barres, « Sur 5 h » et « Sur la semaine », avec le temps avant la remise à zéro (vert jusqu'à 70 %, jaune, orange après 90 %). Une fenêtre passée sa remise à zéro est à 0 % jusqu'à la prochaine réponse. Ce qu'il y avait de branché avant devient « Mettre à jour ». Si `~/.claude-masana/settings.json` est un lien vers celui de `~/.claude`, le fichier ne compte qu'une fois (sinon le second profil écrasait le premier, et la barre d'état d'avant n'était plus relancée). `ligne.sh` laisse aussi un repère, `~/.bidules/ligne-lancee` : le panneau sait si Claude Code a lancé la barre d'état sans donner de limites (pas d'abonnement Pro ou Max), ou jamais.
-- Retour haptique (trackpad Force Touch du Mac ; rien avec une souris ni sous Windows) : la commande `haptique` (`main.rs`, `NSHapticFeedbackManager`) joue un « clic », un « cran » ou un « palier ». Attraper : clic ; tirer du sol : 6 crans de plus en plus serrés pendant que le fil s'étire, puis un palier au décollage ; secouer : un clic à chaque changement de sens ; tenu contre un bord de l'écran : un cran ; caresser : un cran à chaque aller-retour ; lancé, à chaque choc contre un bord, le sol ou le plafond : un clic, ou un palier pour un gros choc (on le sent si le doigt est encore sur le trackpad, et surtout on l'entend). Au plus un coup de chaque sorte toutes les 60 ms. Se coupe dans le panneau (onglet Piste), réglage gardé sur le Mac.
-- Au lancement, la feuille de la limace (plus de 1000 images) est lue en une fois, puis découpée par tranches de 40 images avec une pause entre chaque : le Bidule ne fige plus 2 s au démarrage.
-- État gardé d'un lancement à l'autre : le Bidule choisi (`bidule.txt`), et dans `etat.json` (dossier de l'app, commandes `lire_etat` et `garder_etat` de `main.rs`, un texte JSON que seule la fenêtre du Bidule lit) l'humeur choisie à la main, les parties des monstres, les cheveux de la limace, caché ou non, le retour au toucher, et sa place à l'écran : au lancement suivant, il revient au sol au même endroit. Écrit une demi-seconde après chaque changement, sa place toutes les 5 s si elle a bougé ; le fichier est écrit à côté puis renommé, jamais à moitié. Rien sur Claude ni sur les messages.
+- Skills de Matt Pocock (`github.com/mattpocock/skills`, version 1.3.1) copiés dans `.claude/skills/` : les 27 du plugin
+  officiel (grilling, tdd, diagnosing-bugs, to-spec, etc.). Pour les commits et les pull requests, nos skills `commit`
+  et `pull-request` restent prioritaires sur `pr`. Ce qu'ils produisent est écrit en français, et quand ils parlent de
+  `main` on lit `test`. Mise à jour : à la main, en recopiant depuis le repo. Réglés pour le projet (`docs/agents/`) :
+  tickets et specs en issues GitHub, étiquettes de tri par défaut, glossaire et ADR à la racine.
+- App de bureau Mac : fenêtre transparente au premier plan, le Bidule vit en bas de l'écran, panneau dans la barre de
+  menus (Piste, Évolution, Humeur), sans contours, en aplats de couleur avec le Bidule choisi en grand dans l'en-tête.
+- Panneau : 6 Bidules par ligne (640 × 600). Grand en-tête : son nom, son humeur et pourquoi, le Bidule en grand, et sa
+  bulle de BD à côté (ce que fait Claude, toutes sessions confondues, depuis quand, et le contexte de la session en
+  vue). Il remplace les trois essais « État de Claude » (bandeau, tableau de bord, bulle et anneau), retirés de l'onglet
+  Tests ; la simulation de chaque état y reste. Onglets : Claude (les limites de l'abonnement, deux graphiques
+  d'activité, les sessions, le branchement ; le panneau s'ouvre dessus dès qu'un Bidule est choisi), Piste, Évolution,
+  Humeur (forcer l'humeur). Le bouton jaune de l'onglet choisi glisse d'un onglet à l'autre, avec un petit rebond. Un
+  onglet Tests (bouton rond en pointillés au bout des onglets) pour simuler chaque état de Claude dans la bulle. Les
+  cadres d'infos (limites, graphiques, sessions, lignes avec un bouton) sont creusés : fond violet foncé, ombre à
+  l'intérieur en haut, fine lueur en bas ; on les lit, alors que les boutons, en relief, se cliquent. Choisi parmi une
+  dizaine d'essais (plus foncé, vers le noir, flouté, creusé doux, profond, net...), retirés depuis. Des cinq essais
+  d'effet verre, seul D est gardé et appliqué à tout le panneau : un reflet blanc sur les onglets et la pastille jaune,
+  sans transparence ni flou. L'icône de la barre de menus reste en surbrillance tant que le panneau est ouvert. La
+  fenêtre du Bidule envoie la jauge au panneau (événement `claude`) ; les icônes de la bulle de pensée sont dans
+  `dist/pense.js`, partagé par les deux.
+- Icône de la barre de menus : la limace, animée selon Claude. Elle rampe sur place quand il travaille (avec le visage
+  de l'humeur), elle est intriguée quand une session attend, elle dort quand toutes ont fini (toutes sessions
+  confondues). Bidule fermé, elle se fige au repos. Dessinée par la fenêtre du Bidule (`index.html`), envoyée à la
+  commande `icone` (`main.rs`) ; image de repos : `src-tauri/icons/tray-repos.png`.
+- Hooks de Claude Code : chaque session note son état dans `~/.bidules/sessions/<id de la session>` par un petit script
+  (`~/.bidules/hook.sh`, recopié depuis `src-tauri/src/hook.sh`), qui ne lit que l'identifiant de la session dans ce que
+  Claude Code lui envoie. `UserPromptSubmit` et `PostToolUse` : travaille ; `Notification` (permission, question d'un
+  MCP) et `PreToolUse` d'`AskUserQuestion` : attend ; `Stop` : fini (et touche `~/.bidules/claude-fini`, surveillé par
+  l'app) ; `SessionEnd` : la session disparaît. Une session oubliée disparaît seule (finie depuis 30 min, sans nouvelle
+  depuis 1 h en travaillant ou 8 h en attendant). Une session attend : le Bidule dit « Une session t'attend ! » (ou « N
+  sessions t'attendent ! »), réveillé s'il dormait, le redit toutes les 30 s et ne s'endort pas. Claude a fini : il dit
+  « À toi ! » tout de suite (endormi, il se réveille ; en marche, il saute de joie face à toi) et reste éveillé 20 s.
+  Les hooks se branchent et se débranchent d'un clic dans l'onglet Claude du panneau (« Mettre à jour » si une version
+  précédente est branchée) : ils s'ajoutent à `~/.claude/settings.json` (et `~/.claude-masana/` s'il existe), sans
+  toucher au reste ; les anciens hooks du Bidule sont remplacés ; une copie du fichier d'origine est gardée la première
+  fois (`settings.json.avant-bidule`). Débrancher retire ces hooks (et les listes laissées vides), le script et l'état
+  des sessions. Rien à redémarrer : Claude Code relit ses réglages de lui-même (doc des hooks : « normally picked up
+  automatically by the file watcher ») ; si Claude travaille sans qu'aucune session ne donne de nouvelles, le panneau
+  propose de relancer les sessions ouvertes. Sans hooks branchés, le Bidule retombe sur la session en cours (lien avec
+  Claude, plus bas).
+- Limites de l'abonnement (issue #46) : ni les journaux de Claude Code ni ses hooks ne les donnent ; seule sa barre
+  d'état (`statusLine`) les reçoit (`rate_limits.five_hour` et `seven_day` : `used_percentage`, `resets_at`), pour les
+  abonnements Pro et Max, après la première réponse de la session. « Brancher » pose donc aussi une barre d'état
+  (`~/.bidules/ligne.sh`, recopiée depuis `src-tauri/src/ligne.sh`) qui ne garde que ces chiffres, dans
+  `~/.bidules/limites.json`. S'il y avait déjà une barre d'état, sa commande est gardée dans
+  `~/.bidules/ligne-avant-<profil>` et `ligne.sh` la relance : elle affiche la même chose. Débrancher la remet telle
+  quelle. Le panneau (onglet Claude) montre deux barres, « Sur 5 h » et « Sur la semaine », avec le temps avant la
+  remise à zéro (vert jusqu'à 70 %, jaune, orange après 90 %). Une fenêtre passée sa remise à zéro est à 0 % jusqu'à la
+  prochaine réponse. Ce qu'il y avait de branché avant devient « Mettre à jour ». Si `~/.claude-masana/settings.json`
+  est un lien vers celui de `~/.claude`, le fichier ne compte qu'une fois (sinon le second profil écrasait le premier,
+  et la barre d'état d'avant n'était plus relancée). `ligne.sh` laisse aussi un repère, `~/.bidules/ligne-lancee` : le
+  panneau sait si Claude Code a lancé la barre d'état sans donner de limites (pas d'abonnement Pro ou Max), ou jamais.
+- Retour haptique (trackpad Force Touch du Mac ; rien avec une souris ni sous Windows) : la commande `haptique`
+  (`main.rs`, `NSHapticFeedbackManager`) joue un « clic », un « cran » ou un « palier ». Attraper : clic ; tirer du sol
+  : 6 crans de plus en plus serrés pendant que le fil s'étire, puis un palier au décollage ; secouer : un clic à chaque
+  changement de sens ; tenu contre un bord de l'écran : un cran ; caresser : un cran à chaque aller-retour ; lancé, à
+  chaque choc contre un bord, le sol ou le plafond : un clic, ou un palier pour un gros choc (on le sent si le doigt est
+  encore sur le trackpad, et surtout on l'entend). Au plus un coup de chaque sorte toutes les 60 ms. Se coupe dans le
+  panneau (onglet Piste), réglage gardé sur le Mac.
+- Au lancement, la feuille de la limace (plus de 1000 images) est lue en une fois, puis découpée par tranches de 40
+  images avec une pause entre chaque : le Bidule ne fige plus 2 s au démarrage.
+- État gardé d'un lancement à l'autre : le Bidule choisi (`bidule.txt`), et dans `etat.json` (dossier de l'app,
+  commandes `lire_etat` et `garder_etat` de `main.rs`, un texte JSON que seule la fenêtre du Bidule lit) l'humeur
+  choisie à la main, les parties des monstres, les cheveux de la limace, caché ou non, le retour au toucher, et sa place
+  à l'écran : au lancement suivant, il revient au sol au même endroit. Écrit une demi-seconde après chaque changement,
+  sa place toutes les 5 s si elle a bougé ; le fichier est écrit à côté puis renommé, jamais à moitié. Rien sur Claude
+  ni sur les messages.
 - Interactions :
-  - attraper au premier clic, lancer avec rebonds sur les bords (jusqu'en haut de l'écran : le plafond se règle sur le haut du dessin, pas de sa fenêtre ; macOS ne laisse pas la fenêtre passer au-dessus de la barre de menus, alors au-delà c'est le dessin qui continue de monter dans sa fenêtre, sans s'arrêter), suivre la souris des yeux ;
-  - lancé assez fort vers le haut (limace), il se colle au haut de l'écran, à l'envers : il y atterrit comme au sol après une chute (`atterrissage`, de face, retourné), fait son demi-tour vers le profil, puis y rampe comme au sol (même animation, même pas, visage de l'humeur) ; arrivé à un bord, il finit son cycle de reptation sur place, puis fait son demi-tour, retourné lui aussi (de profil jusqu'à la face), puis passe le coin (`coule-fin` à l'envers et retourné de haut en bas, sans ses 7 premières images, la fenêtre glissant vers le bord) puis descend le mur en coulant (`coule`, puis `coule-fin` au sol), comme après un choc contre le bord, sans l'écrasement, mais par à-coups, comme une goutte : collé un moment (0,25 à 0,95 s), il glisse d'un coup sur 40 à 130 px en laissant une traînée : sa queue (les lignes étroites au-dessus du corps) s'allonge vers le haut, ligne par ligne au pixel près, jusqu'à 24 lignes de plus ; à l'arrêt net elle rentre un instant dans le corps puis reprend sa longueur (un ressort). Le corps et le visage ne bougent pas et restent collés au mur (une douzaine de secondes depuis tout en haut) ; au bout de 6 à 14 s, ou d'un clic, il se décolle (« Oups ! ») et retombe ; pris à la souris, il se remet à l'endroit. Six fois sur dix, 2 à 5 s après s'être collé, il se tourne de face, se décroche vers le bas en goutte au bout d'un fil, prend de l'élan et se balance 2 à 4 fois (`decolle-pendule`, puis `pendule-plafond` en boucle ; calculées par `tools/decolle_pendule.py`, visage à l'envers comme au plafond, tout au-dessus de la ligne 51 pour ne pas déborder de la fenêtre), puis remonte et reprend sa marche ; un clic le fait tomber. Saisi au plafond ou sur un mur, il reste collé tant qu'on ne tire pas (au plafond, il s'arrête sur l'image où on l'a pris, sans continuer de ramper sur place) ; si on tire, il s'étire depuis ce bord exactement comme depuis le sol (la flaque reste collée au bord, la boule suit la souris, même calcul dans un repère tourné), puis se décolle et la souris le tient par la tête ; relâché avant, il revient à sa place sur le bord. Pas assez d'élan : il rebondit comme avant. Collé en haut, c'est le dessin qui monte dans sa fenêtre si macOS bloque la fenêtre sous la barre de menus ;
+  - attraper au premier clic, lancer avec rebonds sur les bords (jusqu'en haut de l'écran : le plafond se règle sur le
+    haut du dessin, pas de sa fenêtre ; macOS ne laisse pas la fenêtre passer au-dessus de la barre de menus, alors
+    au-delà c'est le dessin qui continue de monter dans sa fenêtre, sans s'arrêter), suivre la souris des yeux ;
+  - lancé assez fort vers le haut (limace), il se colle au haut de l'écran, à l'envers : il y atterrit comme au sol
+    après une chute (`atterrissage`, de face, retourné), fait son demi-tour vers le profil, puis y rampe comme au sol
+    (même animation, même pas, visage de l'humeur) ; arrivé à un bord, il finit son cycle de reptation sur place, puis
+    fait son demi-tour, retourné lui aussi (de profil jusqu'à la face), puis passe le coin (`coule-fin` à l'envers et
+    retourné de haut en bas, sans ses 7 premières images, la fenêtre glissant vers le bord) puis descend le mur en
+    coulant (`coule`, puis `coule-fin` au sol), comme après un choc contre le bord, sans l'écrasement, mais par à-coups,
+    comme une goutte : collé un moment (0,25 à 0,95 s), il glisse d'un coup sur 40 à 130 px en laissant une traînée : sa
+    queue (les lignes étroites au-dessus du corps) s'allonge vers le haut, ligne par ligne au pixel près, jusqu'à 24
+    lignes de plus ; à l'arrêt net elle rentre un instant dans le corps puis reprend sa longueur (un ressort). Le corps
+    et le visage ne bougent pas et restent collés au mur (une douzaine de secondes depuis tout en haut) ; au bout de 6 à
+    14 s, ou d'un clic, il se décolle (« Oups ! ») et retombe ; pris à la souris, il se remet à l'endroit. Six fois sur
+    dix, 2 à 5 s après s'être collé, il se tourne de face, se décroche vers le bas en goutte au bout d'un fil, prend de
+    l'élan et se balance 2 à 4 fois (`decolle-pendule`, puis `pendule-plafond` en boucle ; calculées par
+    `tools/decolle_pendule.py`, visage à l'envers comme au plafond, tout au-dessus de la ligne 51 pour ne pas déborder
+    de la fenêtre), puis remonte et reprend sa marche ; un clic le fait tomber. Saisi au plafond ou sur un mur, il reste
+    collé tant qu'on ne tire pas (au plafond, il s'arrête sur l'image où on l'a pris, sans continuer de ramper sur
+    place) ; si on tire, il s'étire depuis ce bord exactement comme depuis le sol (la flaque reste collée au bord, la
+    boule suit la souris, même calcul dans un repère tourné), puis se décolle et la souris le tient par la tête ;
+    relâché avant, il revient à sa place sur le bord. Pas assez d'élan : il rebondit comme avant. Collé en haut, c'est
+    le dessin qui monte dans sa fenêtre si macOS bloque la fenêtre sous la barre de menus ;
   - caresses, chatouilles (rire, puis fâché), secouer (nausée) ;
   - fichier glissé dessus : il le "mange", sans y toucher ;
-  - clic droit : un petit menu du Mac sur le Bidule (ouvrir le panneau, humeur, cacher le Bidule, quitter), à compléter avec d'autres actions ; caché, l'icône se fige au repos, et il revient d'un clic sur lui dans l'onglet Piste du panneau (marqué « Caché ») ou avec « Afficher le Bidule » dans le menu de l'icône ;
-  - plusieurs écrans branchés : clic droit > Écran, il arrive au milieu de l'écran choisi par une petite chute ; porté à la souris, il adopte l'écran où on le lâche ; lancé, il rebondit encore sur le bord entre deux écrans (à faire) ;
+  - clic droit : un petit menu du Mac sur le Bidule (ouvrir le panneau, humeur, cacher le Bidule, quitter), à compléter
+    avec d'autres actions ; caché, l'icône se fige au repos, et il revient d'un clic sur lui dans l'onglet Piste du
+    panneau (marqué « Caché ») ou avec « Afficher le Bidule » dans le menu de l'icône ;
+  - plusieurs écrans branchés : clic droit > Écran, il arrive au milieu de l'écran choisi par une petite chute ; porté à
+    la souris, il adopte l'écran où on le lâche ; lancé, il rebondit encore sur le bord entre deux écrans (à faire) ;
   - sommeil après 40 s de calme (il bâille, ses paupières tombent, puis il se couche : `endort`), porté endormi, réveil.
-  - porté endormi (ou tenu après le réveil), il est tenu par la pointe d'une goutte que le code dessine en direct (test) : une boule au bout d'un ressort, comme quand on décolle un Bidule éveillé, avec l'effet yoyo (la queue s'allonge, se raccourcit et penche) ; la peau est élastique et résiste de plus en plus : souple au repos (`SW_K`), elle se durcit au-delà de l'étirement de repos (`SW_DUR`), et la force de la souris compte (jusqu'à `SW_AMAX`), si bien que plus on secoue fort, plus la peau se tend, puis la renvoie d'un coup sec ; sans butée, l'étirement est ramené dans l'image en douceur (`swingVis`) ; la boule tourne librement autour de la main : des cercles rapides avec la souris la font tourner tout autour, des cercles lents la balancent jusqu'à l'horizontale ; pour lui laisser la place, la goutte est dessinée dans une image de 128 px (la main au milieu) et la fenêtre passe de 176 à 256 px pendant qu'on la tient, puis reprend sa taille au lâcher, la main restant au même endroit (`swingWindow`) ; tendue, la boule s'allonge dans l'axe du cou (+12 %) et le cou s'amincit (jusqu'à -45 %), remontée vers la main, elle s'écrase un peu ; un cran du trackpad quand la peau est bien tendue ; et par-dessus le visage, les sourcils et la sueur d'`attrape` ; ses bras se débattent en tournant vite autour de leur attache, avec des poses fantômes (les positions précédentes, plus pâles et tramées, comme un bras en pose longue). `animations/attrape-boule` montre la goutte à l'équilibre ; le code n'en prend que le visage et la sueur (`tools/boule.py`, tag `attrape-boule-parts`) et les bras de la première image (tag `attrape-boule-arms`), qu'il fait tourner. l'ancienne image `attrape` (4 images) a été retirée, `attrape-boule` la remplace ; `attrape` remplace `porte-endormi`, et ne bouge que selon la souris : un pendule amorti autour de la tête, dont l'angle suit la vitesse horizontale (20° au plus ; immobile, il ne bouge pas, secoué, il oscille) ; tant qu'on le porte il ne repasse jamais par `remue` ni par une pose de sommeil ; lâché, il est réveillé et retombe : il ne se rendort pas (il ne s'endort à nouveau qu'après 40 s de calme, 15 s s'il est « vaseux »). Réveillé pendant qu'on le porte (trop vite, ou secoué), il reste dans `attrape` ; secoué, il joue la boule passée au vert de la nausée (`secoue`), puis reste vert pendant toute la chute et l'atterrissage (versions vertes de `vol`, `chute-legere`, `chute` et `atterrissage`) jusqu'à ce qu'il se remette (`remis` est bleu : de profil, il se secoue la tête de droite à gauche pour retrouver ses esprits, 15 images, 1,4 s ; les gros coups de tête (yeux plissés, traits de vitesse, tête dédoublée) dessinés par Thibault, les petits tirés de la reptation par `tools/remis.py` ; à chaque bout du balancement, des gouttes vertes de nausée partent du haut de la tête dans le sens de l'élan, de plus en plus petites, calque `gouttes` redessiné par `tools/remis_gouttes.py` ; joué une fois, puis il reprend sa marche sans repasser par la face, sans dégradé de couleur) ; retombé nauséeux, il rampe en vert avec des spirales à la place des yeux (la reptation classique, plus lente, qui tournent d'un quart de tour toutes les 3 images) : il est tenu par le haut de la tête, ce qui explique sa tête allongée. La fenêtre est recalée pour que la souris tombe sur le sommet de la tête de l'image `attrape`, et il se balance autour de ce point.
-- Personnages : 6 monstres du moodboard et le Bidule « classique », générés par le code, 12 parties sur 6 emplacements (ajoutées à la main depuis le panneau). Les 4 blobs « Il louche », « Yeux dépareillés », « Paupières lourdes » et « Yeux dessus » ont été retirés : c'étaient des états de visage, pas des personnages.
+  - porté endormi (ou tenu après le réveil), il est tenu par la pointe d'une goutte que le code dessine en direct (test)
+    : une boule au bout d'un ressort, comme quand on décolle un Bidule éveillé, avec l'effet yoyo (la queue s'allonge,
+    se raccourcit et penche) ; la peau est élastique et résiste de plus en plus : souple au repos (`SW_K`), elle se
+    durcit au-delà de l'étirement de repos (`SW_DUR`), et la force de la souris compte (jusqu'à `SW_AMAX`), si bien que
+    plus on secoue fort, plus la peau se tend, puis la renvoie d'un coup sec ; sans butée, l'étirement est ramené dans
+    l'image en douceur (`swingVis`) ; la boule tourne librement autour de la main : des cercles rapides avec la souris
+    la font tourner tout autour, des cercles lents la balancent jusqu'à l'horizontale ; pour lui laisser la place, la
+    goutte est dessinée dans une image de 128 px (la main au milieu) et la fenêtre passe de 176 à 256 px pendant qu'on
+    la tient, puis reprend sa taille au lâcher, la main restant au même endroit (`swingWindow`) ; tendue, la boule
+    s'allonge dans l'axe du cou (+12 %) et le cou s'amincit (jusqu'à -45 %), remontée vers la main, elle s'écrase un peu
+    ; un cran du trackpad quand la peau est bien tendue ; et par-dessus le visage, les sourcils et la sueur d'`attrape`
+    ; ses bras se débattent en tournant vite autour de leur attache, avec des poses fantômes (les positions précédentes,
+    plus pâles et tramées, comme un bras en pose longue). `animations/attrape-boule` montre la goutte à l'équilibre ; le
+    code n'en prend que le visage et la sueur (`tools/boule.py`, tag `attrape-boule-parts`) et les bras de la première
+    image (tag `attrape-boule-arms`), qu'il fait tourner. l'ancienne image `attrape` (4 images) a été retirée,
+    `attrape-boule` la remplace ; `attrape` remplace `porte-endormi`, et ne bouge que selon la souris : un pendule
+    amorti autour de la tête, dont l'angle suit la vitesse horizontale (20° au plus ; immobile, il ne bouge pas, secoué,
+    il oscille) ; tant qu'on le porte il ne repasse jamais par `remue` ni par une pose de sommeil ; lâché, il est
+    réveillé et retombe : il ne se rendort pas (il ne s'endort à nouveau qu'après 40 s de calme, 15 s s'il est « vaseux
+    »). Réveillé pendant qu'on le porte (trop vite, ou secoué), il reste dans `attrape` ; secoué, il joue la boule
+    passée au vert de la nausée (`secoue`), puis reste vert pendant toute la chute et l'atterrissage (versions vertes de
+    `vol`, `chute-legere`, `chute` et `atterrissage`) jusqu'à ce qu'il se remette (`remis` est bleu : de profil, il se
+    secoue la tête de droite à gauche pour retrouver ses esprits, 15 images, 1,4 s ; les gros coups de tête (yeux
+    plissés, traits de vitesse, tête dédoublée) dessinés par Thibault, les petits tirés de la reptation par
+    `tools/remis.py` ; à chaque bout du balancement, des gouttes vertes de nausée partent du haut de la tête dans le
+    sens de l'élan, de plus en plus petites, calque `gouttes` redessiné par `tools/remis_gouttes.py` ; joué une fois,
+    puis il reprend sa marche sans repasser par la face, sans dégradé de couleur) ; retombé nauséeux, il rampe en vert
+    avec des spirales à la place des yeux (la reptation classique, plus lente, qui tournent d'un quart de tour toutes
+    les 3 images) : il est tenu par le haut de la tête, ce qui explique sa tête allongée. La fenêtre est recalée pour
+    que la souris tombe sur le sommet de la tête de l'image `attrape`, et il se balance autour de ce point.
+- Personnages : 6 monstres du moodboard et le Bidule « classique », générés par le code, 12 parties sur 6 emplacements
+  (ajoutées à la main depuis le panneau). Les 4 blobs « Il louche », « Yeux dépareillés », « Paupières lourdes » et «
+  Yeux dessus » ont été retirés : c'étaient des états de visage, pas des personnages.
 - Limace :
   - étirement collé au sol, deux chutes, écrasement ;
   - demi-tours, passage profil / face, marche sans glissade ;
   - animations à 60 images par seconde.
-  - lancé contre un bord de l'écran, il s'écrase contre le mur (`choc-bord`, l'écrasement d'atterrissage à la verticale), coule lentement (`coule`, de plus en plus vite jusqu'à 60 px/s), puis se détache au sol et se reforme (`coule-fin`, dessinée contre le mur, qui finit sur la première image de `repos` pendant que la fenêtre rentre dans l'écran). Secoué, il reste vert tout du long (`choc-bord-vert`, `coule-vert`, `coule-fin-vert`), puis garde sa nausée au sol. La fenêtre dépasse de 22 px de l'écran pendant qu'il est au mur (à vérifier sur macOS) ;
-  - rattrapé en l'air (ou décroché du mur), il est tenu par la goutte qui se balance dès le clic, sans attendre que la souris bouge, quel que soit l'état où on l'attrape (éveillé, endormi, tiré du sol) ; quand la fenêtre grandit au rattrapage, l'image est cachée jusqu'à ce que la première goutte soit dessinée, sinon l'image de 64 px s'affichait en grand (jusqu'à une seconde sur Mac, le temps du décodage) ; la secousse de l'image n'existe plus pour les persos dessinés ;
-- Animations de Thibault branchées : reptation (12 images, dos plus droit), demi-tour aligné dessus, saut, baille, dort, mange, rot, chute, repos (de face, double clignement, queue côté d'où il vient), remue (de profil sur la pose de dort : la bulle éclate, l'œil de devant s'entrouvre), regard (6 images de face, le regard suit la souris : devant et de côté, en haut, au milieu et en bas), reforme (8 images : de la flaque de chute jusqu'à la pose de repos, avec un rebond), attrape (4 images : tenu par la souris, étiré et pincé en haut ; les bras alternent entre le haut et le bas, dessinés à la main ; le bas du corps des images 2 à 4 est aligné sur l'image 1 par `tools/attrape_bas.py`), rire (il rit en se soulevant et en se tassant sur place : deux poses dessinées à la main, transitions calculées par `tools/rire.py`).
-- Humeurs joyeux (guilleret) et fatigué (vaseux) sur toutes les animations de la limace où son visage apparaît : reptation, demi-tour, saut, repos, regard, bâillement (début et fin), reforme, rot, fins de caresse, coule, coule-fin et remis. Visages de profil dessinés par Thibault dans `crawl.aseprite` (sur l'image 12) : images 13, 14 et 16 = joyeux, la langue qui remue (un visage animé : l'image k de l'animation prend le visage k modulo 3), 15 = l'image 14 les yeux fermés (le clignement), 17-18 = fatigué. Visages de face : `animations/visages-face/visages-face.aseprite` (1 = repos, 2-4 = joyeux avec la langue, 5-7 = les mêmes yeux fermés, 8-9 = fatigué yeux ouverts et fermés, repris du coule-fin fatigué retouché par Thibault). Là où ni l'un ni l'autre ne se pose tel quel (trois quarts du demi-tour, coule, coule-fin, saut écrasé) : chaque œil de l'image reçoit l'œil de face entier, recalé sur lui (trait vertical ou yeux plissés en trait horizontal), la bouche la bouche de l'humeur, et le joyeux la langue de face sous sa bouche. Chaque animation de chaque humeur a son fichier à retoucher à la main : `animations/humeurs/joyeux/` et `animations/humeurs/fatigue/`, `<nom>.aseprite`, balises `normal` (le visage habituel) et `cligne` (celui que l'app montre de temps en temps : yeux fermés pour le joyeux, ouverts pour le fatigué ; sans balise `cligne`, pas de clignement : c'est le cas du demi-tour, de `coule` et de `coule-fin` fatigués, qui gardent les yeux fermés) ; le `regard` fatigué n'a plus qu'une version, les yeux ouverts (le visage de Thibault, déplacé d'un bloc pour chaque direction), pour suivre le curseur. `gen.py --fichiers` n'écrit que ceux qui manquent ; ensuite `gen.py` lit ces fichiers, retouches comprises (`mise run publier` les réexporte). Retouchés à la main : fatigué `baille`, `caresse-fin`, `coule-fin` (les images non retouchées de `coule-fin` ont reçu le visage retouché). Le fatigué yeux fermés a les joues creusées (reprises de l'image 2 de `caresse-fin` fatigué), sur `visages-face` image 9 et sur toutes les animations fatiguées où ce visage apparaît (sauf de profil, qui avait déjà la sienne). Les morceaux du saut (vol, chute-legere, atterrissage, saut-face) sont pris dans `saut`. Pour qu'un visage retouché soit reposé partout, supprimer les fichiers non retouchés de l'humeur concernée, puis `gen.py --fichiers`. L'app prend `nom@humeur` quand elle existe (sinon la neutre) et, de temps en temps, la même image dans `nom@humeur:cligne` (`BLINK_TIME` dans `index.html`). La feuille de la limace est maintenant une grille de 32 images de large (plus de 1 000 images).
-- Malade (vert) : toutes les animations vertes (nausee, secoue, vol, chute-legere, atterrissage, chute, choc-bord, coule, coule-fin) ont les yeux en spirale, qui tournent d'un quart de tour toutes les 3 images, dans le sens inverse des aiguilles d'une montre (`dizzy` dans `gen.py` : yeux en trait vertical, horizontal, ou grands yeux blancs dont le contour reste).
+  - lancé contre un bord de l'écran, il s'écrase contre le mur (`choc-bord`, l'écrasement d'atterrissage à la
+    verticale), coule lentement (`coule`, de plus en plus vite jusqu'à 60 px/s), puis se détache au sol et se reforme
+    (`coule-fin`, dessinée contre le mur, qui finit sur la première image de `repos` pendant que la fenêtre rentre dans
+    l'écran). Secoué, il reste vert tout du long (`choc-bord-vert`, `coule-vert`, `coule-fin-vert`), puis garde sa
+    nausée au sol. La fenêtre dépasse de 22 px de l'écran pendant qu'il est au mur (à vérifier sur macOS) ;
+  - rattrapé en l'air (ou décroché du mur), il est tenu par la goutte qui se balance dès le clic, sans attendre que la
+    souris bouge, quel que soit l'état où on l'attrape (éveillé, endormi, tiré du sol) ; quand la fenêtre grandit au
+    rattrapage, l'image est cachée jusqu'à ce que la première goutte soit dessinée, sinon l'image de 64 px s'affichait
+    en grand (jusqu'à une seconde sur Mac, le temps du décodage) ; la secousse de l'image n'existe plus pour les persos
+    dessinés ;
+- Animations de Thibault branchées : reptation (12 images, dos plus droit), demi-tour aligné dessus, saut, baille, dort,
+  mange, rot, chute, repos (de face, double clignement, queue côté d'où il vient), remue (de profil sur la pose de dort
+  : la bulle éclate, l'œil de devant s'entrouvre), regard (6 images de face, le regard suit la souris : devant et de
+  côté, en haut, au milieu et en bas), reforme (8 images : de la flaque de chute jusqu'à la pose de repos, avec un
+  rebond), attrape (4 images : tenu par la souris, étiré et pincé en haut ; les bras alternent entre le haut et le bas,
+  dessinés à la main ; le bas du corps des images 2 à 4 est aligné sur l'image 1 par `tools/attrape_bas.py`), rire (il
+  rit en se soulevant et en se tassant sur place : deux poses dessinées à la main, transitions calculées par
+  `tools/rire.py`).
+- Humeurs joyeux (guilleret) et fatigué (vaseux) sur toutes les animations de la limace où son visage apparaît :
+  reptation, demi-tour, saut, repos, regard, bâillement (début et fin), reforme, rot, fins de caresse, coule, coule-fin
+  et remis. Visages de profil dessinés par Thibault dans `crawl.aseprite` (sur l'image 12) : images 13, 14 et 16 =
+  joyeux, la langue qui remue (un visage animé : l'image k de l'animation prend le visage k modulo 3), 15 = l'image 14
+  les yeux fermés (le clignement), 17-18 = fatigué. Visages de face : `animations/visages-face/visages-face.aseprite` (1
+  = repos, 2-4 = joyeux avec la langue, 5-7 = les mêmes yeux fermés, 8-9 = fatigué yeux ouverts et fermés, repris du
+  coule-fin fatigué retouché par Thibault). Là où ni l'un ni l'autre ne se pose tel quel (trois quarts du demi-tour,
+  coule, coule-fin, saut écrasé) : chaque œil de l'image reçoit l'œil de face entier, recalé sur lui (trait vertical ou
+  yeux plissés en trait horizontal), la bouche la bouche de l'humeur, et le joyeux la langue de face sous sa bouche.
+  Chaque animation de chaque humeur a son fichier à retoucher à la main : `animations/humeurs/joyeux/` et
+  `animations/humeurs/fatigue/`, `<nom>.aseprite`, balises `normal` (le visage habituel) et `cligne` (celui que l'app
+  montre de temps en temps : yeux fermés pour le joyeux, ouverts pour le fatigué ; sans balise `cligne`, pas de
+  clignement : c'est le cas du demi-tour, de `coule` et de `coule-fin` fatigués, qui gardent les yeux fermés) ; le
+  `regard` fatigué n'a plus qu'une version, les yeux ouverts (le visage de Thibault, déplacé d'un bloc pour chaque
+  direction), pour suivre le curseur. `gen.py --fichiers` n'écrit que ceux qui manquent ; ensuite `gen.py` lit ces
+  fichiers, retouches comprises (`mise run publier` les réexporte). Retouchés à la main : fatigué `baille`,
+  `caresse-fin`, `coule-fin` (les images non retouchées de `coule-fin` ont reçu le visage retouché). Le fatigué yeux
+  fermés a les joues creusées (reprises de l'image 2 de `caresse-fin` fatigué), sur `visages-face` image 9 et sur toutes
+  les animations fatiguées où ce visage apparaît (sauf de profil, qui avait déjà la sienne). Les morceaux du saut (vol,
+  chute-legere, atterrissage, saut-face) sont pris dans `saut`. Pour qu'un visage retouché soit reposé partout,
+  supprimer les fichiers non retouchés de l'humeur concernée, puis `gen.py --fichiers`. L'app prend `nom@humeur` quand
+  elle existe (sinon la neutre) et, de temps en temps, la même image dans `nom@humeur:cligne` (`BLINK_TIME` dans
+  `index.html`). La feuille de la limace est maintenant une grille de 32 images de large (plus de 1 000 images).
+- Malade (vert) : toutes les animations vertes (nausee, secoue, vol, chute-legere, atterrissage, chute, choc-bord,
+  coule, coule-fin) ont les yeux en spirale, qui tournent d'un quart de tour toutes les 3 images, dans le sens inverse
+  des aiguilles d'une montre (`dizzy` dans `gen.py` : yeux en trait vertical, horizontal, ou grands yeux blancs dont le
+  contour reste).
 - Dort : 8 images, la bulle gonfle (1 à 4) puis dégonfle (5 à 8 = 4 à 1).
-- Base de face unique : turn, saut et baille ont été alignés sur la pose de repos (plus de jupe au bas du corps, côté droit droit, queue à gauche) par `tools/rebase_animations.py`, outil à lancer une seule fois. Au retournement, la queue change de côté d'une image à l'autre (images 6 et 7 de turn).
-- Bâillement : le Bidule étire ses deux petits bras, qui sortent des côtés du corps et montent à 45° (images 3 à 8 de baille), ajoutés par `tools/baille_bras.py`.
-- Candy : le seul style Candy, dessiné image par image (planche, comme la limace), bondissante au lieu de s'étaler. Marche sautillante comme un enfant (ronchon ou vaseuse : elle garde la reptation), demi-tour, pause, regard, saut en "boing boing", rebonds réels et doux quand on la lance (3 au plus, élan de côté et petite toupie au hasard à chaque rebond, inclinaison continue limitée à 60° et remise à plat avant l'atterrissage ; réservés à Candy, `BOUNCY` dans `index.html`), pas d'étirement quand on la soulève (`NO_PULL`) : elle râle "Hey !", apeurée et fâchée, elle panique en tombant (bras qui battent, quelques larmes, pas pendant les rebonds), grosse chute suivie d'une bouderie, bâillement, sommeil (de face), caresse, rire, bouderie, chant pendant 37 % des pauses (jamais en humeur ronchon, un clic ou la souris le coupe). Elle laisse des bonbons en marchant quand elle est guilleret (3 au plus par terre, un petit bonbon menthe, rose ou jaune de la taille de ses pieds, dans sa propre petite fenêtre `bonbon.html` car la sienne la suit partout) ; ils restent jusqu'à ce qu'on clique sur l'un d'eux : elle vient alors le manger (animation `mange`, une par couleur ; elle sert aussi quand on lui glisse un fichier). Les bonbons ne comptent rien et ne servent à rien d'autre (voir "Récompense" dans "À trancher"). Pas encore : rot, évolution, parties.
-- Lien avec Claude : la conversation en cours est celle de Claude Desktop (onglet Code) qui a eu le focus en dernier (`~/Library/Application Support/Claude/claude-code-sessions/…/local_*.json`, champs `cliSessionId` et `lastFocusedAt`) ; sinon le journal Claude Code du terminal modifié dans la dernière demi-heure. Dans son journal (`~/.claude/projects/…/<id>.jsonl`), la commande `contexte` (`main.rs`) ne lit que les tokens de la dernière réponse (entrée + cache) ou d'un résumé de compactage, et les rapporte à la fenêtre du modèle (1 M pour les modèles récents, 200 k pour Haiku et les anciens). Sans hooks, c'est cette session qui donne l'état de Claude ; avec, elle ne sert plus qu'à la bulle de pensée (l'outil de la session en vue). Vérifiée toutes les 1,5 s, et tout de suite quand on change de session dans Claude Desktop (la session qui a le focus est relue toutes les 0,7 s) ; ces lectures tournent sur des fils à part (`spawn_blocking`), ni sur le fil principal ni sur ceux du moteur async de Tauri, par lesquels passent aussi les déplacements de la fenêtre et la lecture de la souris : sinon, pendant une lecture de journaux, la fenêtre suit la souris en retard, le Bidule saute et ces allers-retours passent pour une secousse (nausée au lancement). Une seule relecture à la fois : si une lecture traîne, les suivantes ne s'empilent pas (pareil dans le panneau pour les dépenses, les prompts de la semaine et les limites). Un journal qui n'a pas changé n'est pas relu (les heures des prompts, au plus une fois par minute). Bulle de pensée : tant que Claude travaille, une petite bulle en pixel art (28 × 18) flotte au-dessus de la tête du Bidule (posée d'après le haut de la silhouette de l'image affichée, pastilles du côté où il regarde), avec une icône animée de 2 ou 3 images : réfléchit (points), lit (livre), écrit (crayon), commande (terminal), cherche (loupe), web (globe), délègue (deux têtes), bricole (clé, pour les autres outils et les MCP). Elle vient du dernier bloc du journal : nom de l'outil appelé, ou « pense » après un prompt, un résultat d'outil ou un bloc de réflexion ; rien quand la réponse est finie ou que le journal n'a pas bougé depuis 5 min. Seulement en marche ou pendant une caresse (`PENSE_ICONS` dans `index.html`). La fenêtre du Bidule a `backgroundThrottling: disabled` (`tauri.conf.json`) : sans ça, macOS ralentit ses minuteries quand l'app n'a pas le focus (une vérification toutes les 15 s au lieu de 3, et il mettait plus d'une minute à s'endormir). Sinon, l'humeur est lue dans les heures des prompts de `~/.claude` et `~/.claude-masana`, jamais dans le texte.
-- Outils : `animations/limace-complete/gen.py` assemble la feuille de la limace, `tools/sim.py` fait tourner le Bidule dans un navigateur sans l'app.
-- Chaîne PixelLab (README, « Générer avec PixelLab ») : `tools/pixellab.py` (animer une pose, interpoler entre deux poses, proposer dans le style de références), `planche.py`, `importer.py` (64 × 64, palette du personnage, poussières, recalage sur la source), `verifier.py`, `bilan.py` (ce que la retouche a changé). Skills `animer-bidule` et `creer-bidule`. La bible du style (`moodboard/style-bidules.md`) grandit d'une leçon à chaque animation terminée. Testée de bout en bout avec une fausse API ; avec la vraie, seul le solde a été lu (essai de 40 générations), pas encore de génération.
+- Base de face unique : turn, saut et baille ont été alignés sur la pose de repos (plus de jupe au bas du corps, côté
+  droit droit, queue à gauche) par `tools/rebase_animations.py`, outil à lancer une seule fois. Au retournement, la
+  queue change de côté d'une image à l'autre (images 6 et 7 de turn).
+- Bâillement : le Bidule étire ses deux petits bras, qui sortent des côtés du corps et montent à 45° (images 3 à 8 de
+  baille), ajoutés par `tools/baille_bras.py`.
+- Candy : le seul style Candy, dessiné image par image (planche, comme la limace), bondissante au lieu de s'étaler.
+  Marche sautillante comme un enfant (ronchon ou vaseuse : elle garde la reptation), demi-tour, pause, regard, saut en
+  "boing boing", rebonds réels et doux quand on la lance (3 au plus, élan de côté et petite toupie au hasard à chaque
+  rebond, inclinaison continue limitée à 60° et remise à plat avant l'atterrissage ; réservés à Candy, `BOUNCY` dans
+  `index.html`), pas d'étirement quand on la soulève (`NO_PULL`) : elle râle "Hey !", apeurée et fâchée, elle panique en
+  tombant (bras qui battent, quelques larmes, pas pendant les rebonds), grosse chute suivie d'une bouderie, bâillement,
+  sommeil (de face), caresse, rire, bouderie, chant pendant 37 % des pauses (jamais en humeur ronchon, un clic ou la
+  souris le coupe). Elle laisse des bonbons en marchant quand elle est guilleret (3 au plus par terre, un petit bonbon
+  menthe, rose ou jaune de la taille de ses pieds, dans sa propre petite fenêtre `bonbon.html` car la sienne la suit
+  partout) ; ils restent jusqu'à ce qu'on clique sur l'un d'eux : elle vient alors le manger (animation `mange`, une par
+  couleur ; elle sert aussi quand on lui glisse un fichier). Les bonbons ne comptent rien et ne servent à rien d'autre
+  (voir "Récompense" dans "À trancher"). Pas encore : rot, évolution, parties.
+- Lien avec Claude : la conversation en cours est celle de Claude Desktop (onglet Code) qui a eu le focus en dernier
+  (`~/Library/Application Support/Claude/claude-code-sessions/…/local_*.json`, champs `cliSessionId` et `lastFocusedAt`)
+  ; sinon le journal Claude Code du terminal modifié dans la dernière demi-heure. Dans son journal
+  (`~/.claude/projects/…/<id>.jsonl`), la commande `contexte` (`main.rs`) ne lit que les tokens de la dernière réponse
+  (entrée + cache) ou d'un résumé de compactage, et les rapporte à la fenêtre du modèle (1 M pour les modèles récents,
+  200 k pour Haiku et les anciens). Sans hooks, c'est cette session qui donne l'état de Claude ; avec, elle ne sert plus
+  qu'à la bulle de pensée (l'outil de la session en vue). Vérifiée toutes les 1,5 s, et tout de suite quand on change de
+  session dans Claude Desktop (la session qui a le focus est relue toutes les 0,7 s) ; ces lectures tournent sur des
+  fils à part (`spawn_blocking`), ni sur le fil principal ni sur ceux du moteur async de Tauri, par lesquels passent
+  aussi les déplacements de la fenêtre et la lecture de la souris : sinon, pendant une lecture de journaux, la fenêtre
+  suit la souris en retard, le Bidule saute et ces allers-retours passent pour une secousse (nausée au lancement). Une
+  seule relecture à la fois : si une lecture traîne, les suivantes ne s'empilent pas (pareil dans le panneau pour les
+  dépenses, les prompts de la semaine et les limites). Un journal qui n'a pas changé n'est pas relu (les heures des
+  prompts, au plus une fois par minute). Bulle de pensée : tant que Claude travaille, une petite bulle en pixel art (28
+  × 18) flotte au-dessus de la tête du Bidule (posée d'après le haut de la silhouette de l'image affichée, pastilles du
+  côté où il regarde), avec une icône animée de 2 ou 3 images : réfléchit (points), lit (livre), écrit (crayon),
+  commande (terminal), cherche (loupe), web (globe), délègue (deux têtes), bricole (clé, pour les autres outils et les
+  MCP). Elle vient du dernier bloc du journal : nom de l'outil appelé, ou « pense » après un prompt, un résultat d'outil
+  ou un bloc de réflexion ; rien quand la réponse est finie ou que le journal n'a pas bougé depuis 5 min. Seulement en
+  marche ou pendant une caresse (`PENSE_ICONS` dans `index.html`). La fenêtre du Bidule a `backgroundThrottling:
+  disabled` (`tauri.conf.json`) : sans ça, macOS ralentit ses minuteries quand l'app n'a pas le focus (une vérification
+  toutes les 15 s au lieu de 3, et il mettait plus d'une minute à s'endormir). Sinon, l'humeur est lue dans les heures
+  des prompts de `~/.claude` et `~/.claude-masana`, jamais dans le texte.
+- Outils : `animations/limace-complete/gen.py` assemble la feuille de la limace, `tools/sim.py` fait tourner le Bidule
+  dans un navigateur sans l'app, `tests/` le vérifie dans cette page (`mise run tests`, Playwright : la vie qui attend
+  le Bidule choisi, la fenêtre, l'icône, la souris, l'étirement, le plafond, les réglages du panneau).
+- Performances : l'icône de la barre de menus part en octets PNG, seulement quand son image change ; la souris n'est lue
+  que quand il la regarde (moins souvent quand elle est loin, jamais quand il est caché) ; `mise run bidule:release`
+  compile la version optimisée.
+- Chaîne PixelLab (README, « Générer avec PixelLab ») : `tools/pixellab.py` (animer une pose, interpoler entre deux
+  poses, proposer dans le style de références), `planche.py`, `importer.py` (64 × 64, palette du personnage, poussières,
+  recalage sur la source), `verifier.py`, `bilan.py` (ce que la retouche a changé). Skills `animer-bidule` et
+  `creer-bidule`. La bible du style (`moodboard/style-bidules.md`) grandit d'une leçon à chaque animation terminée.
+  Testée de bout en bout avec une fausse API ; avec la vraie, seul le solde a été lu (essai de 40 générations), pas
+  encore de génération.
 - Documents :
   - la spec des animations (`moodboard/animations-des-bidules.html`) ;
   - les animations à dessiner (`moodboard/planches-limace.html`) ;
@@ -74,16 +313,53 @@ Mise à jour : 6 octobre 2026. Ce fichier suit l'état du projet : ce qui est d�
 
 ### Le lien avec Claude (le cœur)
 
-- Lire les vrais tokens (entrée + sortie, sans cache) dans les journaux de Claude Code, par session, par jour, par sprint.
-- Le Bidule fatigue à l'approche de la limite de 5 h (la jauge est faite, voir les limites de l'abonnement plus haut), ce qui permettra aussi de deviner l'humeur Ronchon.
-- Limites de l'abonnement : la barre d'état n'est documentée que pour Claude Code dans le terminal ; rien ne dit que l'onglet Code de Claude Desktop ou les extensions des éditeurs la lancent. Premier essai sur Mac : rien n'est apparu. À vérifier avec une session dans le terminal.
+- Lire les vrais tokens (entrée + sortie, sans cache) dans les journaux de Claude Code, par session, par jour, par
+  sprint.
+- Le Bidule fatigue à l'approche de la limite de 5 h (la jauge est faite, voir les limites de l'abonnement plus haut),
+  ce qui permettra aussi de deviner l'humeur Ronchon.
+- Limites de l'abonnement : la barre d'état n'est documentée que pour Claude Code dans le terminal ; rien ne dit que
+  l'onglet Code de Claude Desktop ou les extensions des éditeurs la lancent. Premier essai sur Mac : rien n'est apparu.
+  À vérifier avec une session dans le terminal.
 - Alerte "contexte presque plein", avant que Claude Code compacte la conversation.
-- Hooks de Claude Code : vérifier sur Mac que le filtre du hook `Notification` (permission et question seulement) marche bien, sinon il dira « une session t'attend » une minute après chaque réponse finie.
+- Hooks de Claude Code : vérifier sur Mac que le filtre du hook `Notification` (permission et question seulement) marche
+  bien, sinon il dira « une session t'attend » une minute après chaque réponse finie.
 - Voir les sessions en parallèle : combien tournent, lesquelles attendent.
-- Graphiques d'activité (onglet Claude, commande `prompts_semaine`) : « Aujourd'hui », les prompts heure par heure ; « 7 derniers jours », le temps d'activité par jour (écarts de moins de 20 min entre deux prompts, comme pour l'humeur, plus 5 min par reprise). Seulement les heures des prompts. Un relevé, sans record ni objectif.
-- Ce que ton abonnement t'a évité de payer (issue #48, onglet Claude, commande `depenses`) : les tokens de chaque réponse (entrée, sortie, cache écrit pour 5 min ou 1 h, cache lu) et son modèle, additionnés par heure, modèle et projet (le dossier où la session a commencé), puis mis au prix de l'API dans le panneau (table `PRIX`, à tenir à jour ; Haiku 5.5 au prix de Haiku 4.5, le sien n'étant pas publié). Chaque réponse est écrite plusieurs fois dans le journal et une session reprise recopie les anciennes : elle n'est comptée qu'une fois (id du message et de la requête). Les journaux déjà lus restent en mémoire tant qu'ils ne changent pas. Montant total « depuis le … » (Claude Code efface ses journaux au bout de 30 jours par défaut), tokens, montant du mois à côté de l'abonnement choisi (gardé dans le panneau), barres par jour, semaine ou mois empilées par modèle, et les cinq premiers projets et modèles. Présenté comme une économie, sans record ni classement, pour ne pas en faire un score à faire monter. Seulement Claude Code, pas les autres outils.
-- Prédiction des limites (issue #49, onglet Claude, commande `usage`) : toutes les 5 min, l'app lit l'endpoint `api/oauth/usage` (celui de `/usage` dans Claude Code) avec le jeton de Claude Code de chaque profil : `.credentials.json` s'il existe, sinon le trousseau macOS (service `Claude Code-credentials`, suivi pour un `CLAUDE_CONFIG_DIR` des 8 premiers caractères du sha256 du chemin). L'app ne renouvelle jamais le jeton (ça déconnecterait Claude Code) : s'il a expiré, elle attend que Claude Code le renouvelle. Chaque relevé (5 h, semaine, semaines par modèle) va dans `~/.bidules/usage-<profil>.jsonl`, gardé 8 jours. Chaque relevé note aussi l'organisation du jeton (`api/oauth/profile`, son nom s'affiche à côté du profil) : les relevés d'une autre organisation sont écartés de la courbe, et quand deux profils donnent la même, seul le premier est relevé, le second dit que l'un des deux est connecté au mauvais compte. Le profil perso de Matteo a montré les limites du compte masana : cause pas encore trouvée (entrée du trousseau ?), ce contrôle la rend visible. Une fenêtre déjà à 100 % : alerte « limite atteinte, de retour ... », badge « épuisé », pas de prévision. Le panneau montre une carte par fenêtre (5 h et semaine, côte à côte), sur le modèle d'une capture d'app vue ailleurs : ce qui reste en grand, l'avance ou le retard en points sur le rythme régulier, et une courbe qui descend de 100 % à 0 % jusqu'à la remise à zéro : le relevé, le rythme régulier (pointillés), la surface entre les deux (verte en avance, rouge en retard), « Maintenant », et la prévision au rythme de la dernière heure (5 h) ou du dernier jour (semaine), jusqu'à ce qui resterait à la remise, ou jusqu'à l'heure où il ne resterait plus rien (en rouge, avec la période bloquée hachurée). Dans ce cas, une alerte en haut donne l'heure et le rythme à tenir. Au survol de la courbe, un trait et un point suivent la souris, et une bulle donne l'heure, ce qui reste (relevé, ou prévu au-delà du dernier relevé) et le rythme régulier. Sans relevé (pas de jeton, refus), il revient aux chiffres de la barre d'état. Non documenté, l'endpoint peut changer. À vérifier sur Mac : la fenêtre d'autorisation du trousseau (redemandée après chaque compilation, l'app n'étant pas signée) et le nom du service pour `.claude-masana`.
-- Le panneau prend toute la hauteur de l'écran sous la barre de menus, mais jamais plus que le plus petit écran branché : sur un grand écran externe, il garde la hauteur qu'il a sur l'écran du Mac.
+- Graphiques d'activité (onglet Claude, commande `prompts_semaine`) : « Aujourd'hui », les prompts heure par heure ; « 7
+  derniers jours », le temps d'activité par jour (écarts de moins de 20 min entre deux prompts, comme pour l'humeur,
+  plus 5 min par reprise). Seulement les heures des prompts. Un relevé, sans record ni objectif.
+- Ce que ton abonnement t'a évité de payer (issue #48, onglet Claude, commande `depenses`) : les tokens de chaque
+  réponse (entrée, sortie, cache écrit pour 5 min ou 1 h, cache lu) et son modèle, additionnés par heure, modèle et
+  projet (le dossier où la session a commencé), puis mis au prix de l'API dans le panneau (table `PRIX`, à tenir à jour
+  ; Haiku 5.5 au prix de Haiku 4.5, le sien n'étant pas publié). Chaque réponse est écrite plusieurs fois dans le
+  journal et une session reprise recopie les anciennes : elle n'est comptée qu'une fois (id du message et de la
+  requête). Les journaux déjà lus restent en mémoire tant qu'ils ne changent pas. Montant total « depuis le … » (Claude
+  Code efface ses journaux au bout de 30 jours par défaut), tokens, montant du mois à côté de l'abonnement choisi (gardé
+  dans le panneau), barres par jour, semaine ou mois empilées par modèle, et les cinq premiers projets et modèles.
+  Présenté comme une économie, sans record ni classement, pour ne pas en faire un score à faire monter. Seulement Claude
+  Code, pas les autres outils.
+- Prédiction des limites (issue #49, onglet Claude, commande `usage`) : toutes les 5 min, l'app lit l'endpoint
+  `api/oauth/usage` (celui de `/usage` dans Claude Code) avec le jeton de Claude Code de chaque profil :
+  `.credentials.json` s'il existe, sinon le trousseau macOS (service `Claude Code-credentials`, suivi pour un
+  `CLAUDE_CONFIG_DIR` des 8 premiers caractères du sha256 du chemin). L'app ne renouvelle jamais le jeton (ça
+  déconnecterait Claude Code) : s'il a expiré, elle attend que Claude Code le renouvelle. Chaque relevé (5 h, semaine,
+  semaines par modèle) va dans `~/.bidules/usage-<profil>.jsonl`, gardé 8 jours. Chaque relevé note aussi l'organisation
+  du jeton (`api/oauth/profile`, son nom s'affiche à côté du profil) : les relevés d'une autre organisation sont écartés
+  de la courbe, et quand deux profils donnent la même, seul le premier est relevé, le second dit que l'un des deux est
+  connecté au mauvais compte. Le profil perso de Matteo a montré les limites du compte masana : cause pas encore trouvée
+  (entrée du trousseau ?), ce contrôle la rend visible. Une fenêtre déjà à 100 % : alerte « limite atteinte, de retour
+  ... », badge « épuisé », pas de prévision. Le panneau montre une carte par fenêtre (5 h et semaine, côte à côte), sur
+  le modèle d'une capture d'app vue ailleurs : ce qui reste en grand, l'avance ou le retard en points sur le rythme
+  régulier, et une courbe qui descend de 100 % à 0 % jusqu'à la remise à zéro : le relevé, le rythme régulier
+  (pointillés), la surface entre les deux (verte en avance, rouge en retard), « Maintenant », et la prévision au rythme
+  de la dernière heure (5 h) ou du dernier jour (semaine), jusqu'à ce qui resterait à la remise, ou jusqu'à l'heure où
+  il ne resterait plus rien (en rouge, avec la période bloquée hachurée). Dans ce cas, une alerte en haut donne l'heure
+  et le rythme à tenir. Au survol de la courbe, un trait et un point suivent la souris, et une bulle donne l'heure, ce
+  qui reste (relevé, ou prévu au-delà du dernier relevé) et le rythme régulier. Sans relevé (pas de jeton, refus), il
+  revient aux chiffres de la barre d'état. Non documenté, l'endpoint peut changer. À vérifier sur Mac : la fenêtre
+  d'autorisation du trousseau (redemandée après chaque compilation, l'app n'étant pas signée) et le nom du service pour
+  `.claude-masana`.
+- Le panneau prend toute la hauteur de l'écran sous la barre de menus, mais jamais plus que le plus petit écran branché
+  : sur un grand écran externe, il garde la hauteur qu'il a sur l'écran du Mac.
 - Récap de fin de journée et de fin de sprint, sans classement.
 - Réglage des dossiers Claude suivis (plusieurs profils).
 - Rythme de travail : proposer une pause après une longue session, et des heures calmes (réunions, soirée).
@@ -92,7 +368,8 @@ Mise à jour : 6 octobre 2026. Ce fichier suit l'état du projet : ce qui est d�
 
 - Ne plus récompenser le volume brut de tokens (voir "À trancher").
 - Plafond par jour : au-delà d'une journée de travail normale, plus rien ne se gagne.
-- Ne compter que le vrai travail, lu dans les métadonnées : outils utilisés, fichiers modifiés, sessions qui aboutissent. Toujours sans lire le texte.
+- Ne compter que le vrai travail, lu dans les métadonnées : outils utilisés, fichiers modifiés, sessions qui
+  aboutissent. Toujours sans lire le texte.
 - Récompenser la bonne utilisation : rester sous la limite, bon usage du cache, pauses, pas de soirées tardives.
 - Pas de classement des tokens entre collègues.
 - Fonctions d'équipe en option seulement, avec des totaux, jamais de contenu.
@@ -109,23 +386,30 @@ Mise à jour : 6 octobre 2026. Ce fichier suit l'état du projet : ce qui est d�
 
 ### Animations (Thibault)
 
-- Humeurs : vérifier dans l'app les visages posés par le code (trois quarts, coule, saut écrasé : la langue est coupée quand il est tout aplati), dessiner ceux des autres humeurs (ronchon, stressé, dans la lune) : deux images de profil dans `crawl.aseprite` et deux de face, puis une ligne dans `HUMEURS` (`gen.py`). Candy n'a pas encore d'humeurs.
+- Humeurs : vérifier dans l'app les visages posés par le code (trois quarts, coule, saut écrasé : la langue est coupée
+  quand il est tout aplati), dessiner ceux des autres humeurs (ronchon, stressé, dans la lune) : deux images de profil
+  dans `crawl.aseprite` et deux de face, puis une ligne dans `HUMEURS` (`gen.py`). Candy n'a pas encore d'humeurs.
 
-- Premier vrai essai PixelLab : « Caressé » avec le skill `animer-bidule`, et la première leçon dans `moodboard/style-bidules.md`. Selon le résultat, décider si PixelLab sert à toutes les animations ou seulement aux ébauches et aux images intermédiaires.
+- Premier vrai essai PixelLab : « Caressé » avec le skill `animer-bidule`, et la première leçon dans
+  `moodboard/style-bidules.md`. Selon le résultat, décider si PixelLab sert à toutes les animations ou seulement aux
+  ébauches et aux images intermédiaires.
 
-- Les 8 animations restantes (porte-endormi est remplacée par attrape ; secoue est attrape en vert ; nausee est la reptation en vert, avec des spirales) de `moodboard/planches-limace.html`, en commençant par « Caressé » (`caresse`, n° 6). Les animations générées (regard, reforme et attrape exceptées) reprennent la silhouette de repos : à redessiner à la main avec sa queue à gauche.
+- Les 8 animations restantes (porte-endormi est remplacée par attrape ; secoue est attrape en vert ; nausee est la
+  reptation en vert, avec des spirales) de `moodboard/planches-limace.html`, en commençant par « Caressé » (`caresse`,
+  n° 6). Les animations générées (regard, reforme et attrape exceptées) reprennent la silhouette de repos : à redessiner
+  à la main avec sa queue à gauche.
 
 ### Technique et diffusion
 
 - Version Windows : fenêtre transparente, barre des tâches, dossiers Claude sous Windows.
-- Version de production (plus légère que la version de développement), signature Mac, installeur.
+- Signature Mac et installeur (la version optimisée se lance avec `mise run bidule:release`).
 - Mise à jour automatique, comme le fichier latest.json de PokéBurn.
 - Lancement à l'ouverture de session.
 - Tests par-dessus une app en plein écran, avec plusieurs écrans et plusieurs bureaux.
 - Réglages : couper les bulles, taille du Bidule, heures calmes.
-- Tests automatiques à partir de `tools/sim.py`.
 
 ### À améliorer dans l'existant
 
 - Le fil qui se courbe quand on tire de côté, et des gouttelettes quand le fil casse.
-- Le blanc très court quand la fenêtre change de taille au moment où on l'attrape. Option : une fenêtre fixe qui laisse passer les clics.
+- Le blanc très court quand la fenêtre change de taille au moment où on l'attrape. Option : une fenêtre fixe qui laisse
+  passer les clics.

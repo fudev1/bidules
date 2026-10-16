@@ -4,7 +4,7 @@ Compagnon de bureau pour les utilisateurs de Claude Code. La vision et l'install
 
 ## Où est quoi
 
-- `dist/index.html` : tout le comportement du Bidule (JavaScript sans framework, sans étape de build).
+- `dist/index.html` et `dist/js/` : le comportement du Bidule (JavaScript sans framework, sans étape de build), un fichier par sous-système. `horloge.js` : la seule boucle (chaque tâche régulière y a sa cadence) ; `fenetre.js` : tous les déplacements de la fenêtre ; le mode ne change que par `setMode` (`corps.js`).
 - `dist/panel.html` : le panneau de la barre de menus. `dist/monstre64.js` et `dist/bidule64.js` : les monstres générés par le code.
 - `dist/persos/limace/` : la feuille d'images de la limace, recopiée depuis `animations/limace-complete/`.
 - `src-tauri/src/main.rs` : l'app de bureau en Rust (fenêtre, icône, lecture des journaux de Claude Code).
@@ -17,6 +17,8 @@ Compagnon de bureau pour les utilisateurs de Claude Code. La vision et l'install
 ## Lancer et vérifier
 
 - `mise run bidule` compile et lance l'app. `dist/` est embarqué à la compilation : relancer après chaque modification.
+- `mise run bidule:release` compile la version optimisée et la lance.
+- `mise run tests` : les tests du comportement du Bidule dans la page de test (la première fois : `npm install && npx playwright install chromium`). À relancer après une modification de `dist/js/`.
 - Pour vérifier un enchaînement d'animations sans l'app : `tools/sim.py` (mode d'emploi en tête du fichier). On peut y avancer le temps image par image.
 - Après une modification de `gen.py` ou d'une animation : relancer `gen.py`, recopier la feuille dans `dist/persos/limace/`, vérifier dans la page de test.
 
