@@ -118,7 +118,7 @@ Après `gh pr checkout`, `git switch test` ramène sur `test`.
 
 | Dossier | Contenu |
 | --- | --- |
-| `dist/` | L'interface : `index.html` (le Bidule), `panel.html` (le panneau), `monstre64.js` et `bidule64.js` (monstres générés), `persos/limace/` (feuille d'images de la limace) |
+| `dist/` | L'interface : `index.html` et `js/` (le Bidule, un fichier par sous-système), `panel.html` (le panneau), `monstre64.js` et `bidule64.js` (monstres générés), `persos/limace/` (feuille d'images de la limace) |
 | `src-tauri/` | L'app de bureau en Rust |
 | `animations/` | Les animations dessinées, un dossier par animation ; `limace-complete/gen.py` assemble la feuille de la limace |
 | `animations/candy/` | Candy, dessinée image par image (123 images, 24 balises) : `gen.py` génère les images, la planche et le JSON, et les copie dans `dist/persos/candy/` ; `apercu_x4.gif` pour la voir bouger |
@@ -137,7 +137,7 @@ Après `gh pr checkout`, `git switch test` ramène sur `test`.
 
 `mise run publier` se lance seul (depuis n'importe quel dossier du projet) quand on veut seulement mettre à jour la feuille. L'app lit la feuille exportée, pas le fichier Aseprite : enregistrer ne suffit pas.
 
-Une animation qui remplace une existante (même nom de balise, par exemple `dort`) est prise en compte sans toucher au code. Une nouvelle balise doit aussi être utilisée dans `dist/index.html`.
+Une animation qui remplace une existante (même nom de balise, par exemple `dort`) est prise en compte sans toucher au code. Une nouvelle balise doit aussi être utilisée dans le code du Bidule (`dist/js/`).
 
 Format attendu : 64 × 64 pixels, fond transparent, tourné vers la droite (l'app le retourne pour la gauche). De profil, le bas du contour est sur la ligne 60, comme la reptation. De face, le corps est placé comme la pose de repos (`repos`, aussi l'image de face du demi-tour) : centré sur 31,5, petite queue à gauche, sans jupe au bas du corps.
 

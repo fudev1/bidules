@@ -257,7 +257,7 @@ def put_face(f, face):
         g[y][x] = c
     return g
 # humeur de l'app -> ses visages : (visage habituel, visage que l'app montre de temps en temps), de profil et de face ; « neutre » = les animations
-# telles que dessinées. Joyeux : les yeux ouverts, il cligne ; fatigué : les yeux fermés, il les ouvre de temps en temps (durées : index.html, BLINK_TIME).
+# telles que dessinées. Joyeux : les yeux ouverts, il cligne ; fatigué : les yeux fermés, il les ouvre de temps en temps (durées : dist/js/animation.js, BLINK_TIME).
 # crawl.aseprite : images 13, 14 et 16 = joyeux (guilleret), un visage animé (la langue qui remue), 15 = l'image 14 les yeux fermés, 17-18 = fatigué
 # (vaseux), dessinées sur l'image 12 ; visages-face.aseprite : 1 = repos, 2-4 = joyeux (la langue, comme de profil), 5-7 = les mêmes yeux fermés,
 # 8-9 = fatigué (yeux ouverts, fermés). Une liste de visages =

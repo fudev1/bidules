@@ -49,6 +49,6 @@ Terminé quand la pose de profil est validée, réexportée (`python3 tools/asep
 
 - Écrire la fiche du Bidule dans `moodboard/style-bidules.md`, sur le modèle de celles de la limace et de Candy : silhouette, tableau des rôles de couleur, références.
 - `python3 tools/bilan.py <nom> repos` et `python3 tools/bilan.py <nom> crawl`, puis écrire la leçon (ce que la retouche a corrigé, ce qu'il faudra demander autrement) dans la section « Leçons ».
-- Le faire entrer dans l'app (`dist/persos/<nom>/`, `SHEETS` dans `dist/index.html`, le panneau) est un chantier à part : le noter dans `NOTES.md` (« À faire ») et en parler avec Thibault.
+- Le faire entrer dans l'app (`dist/persos/<nom>/`, `SHEETS` dans `dist/js/feuilles.js`, le panneau) est un chantier à part : le noter dans `NOTES.md` (« À faire ») et en parler avec Thibault.
 
 Terminé quand la fiche et la leçon sont écrites et que `animations/<nom>/` est commité (skill `commit`, sur une branche partie de `test`).

@@ -372,8 +372,11 @@ fn window_for(model: &str) -> u64 {
 
 // L'icône de la barre de menu, dessinée par la fenêtre du Bidule (une image PNG de 64 × 36).
 #[tauri::command]
-fn icone(app: AppHandle, png: Vec<u8>) {
-    if let (Some(tray), Ok(im)) = (app.tray_by_id("bidule"), tauri::image::Image::from_bytes(&png)) { let _ = tray.set_icon(Some(im)); }
+fn icone(app: AppHandle, request: tauri::ipc::Request<'_>) {
+    // le PNG arrive en octets bruts, pas en tableau JSON
+    if let tauri::ipc::InvokeBody::Raw(png) = request.body() {
+        if let (Some(tray), Ok(im)) = (app.tray_by_id("bidule"), tauri::image::Image::from_bytes(png)) { let _ = tray.set_icon(Some(im)); }
+    }
 }
 
 // La session de Claude Desktop qui a le focus : de petits fichiers, relus souvent pour réagir vite quand on change de session.
@@ -398,7 +401,7 @@ fn garder_choix(app: AppHandle, style: String) {
     let _ = std::fs::write(p, style);
 }
 
-// L'état du Bidule, gardé d'un lancement à l'autre (index.html : garder) : humeur choisie, parties, caché ou non, réglages, sa place à l'écran.
+// L'état du Bidule, gardé d'un lancement à l'autre (dist/js/demarrage.js : garder) : humeur choisie, parties, caché ou non, réglages, sa place à l'écran.
 // Un texte JSON, que l'app ne lit pas : seule la fenêtre du Bidule s'en sert. Écrit à côté puis renommé, pour ne jamais laisser un fichier coupé.
 fn etat_path(app: &AppHandle) -> Option<PathBuf> {
     app.path().app_data_dir().ok().map(|d| d.join("etat.json"))

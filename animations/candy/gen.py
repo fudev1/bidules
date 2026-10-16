@@ -779,7 +779,7 @@ def palette_for(P):
     return dict(PAL, **SICK) if P.get("pal") == "sick" else PAL
 
 
-# ---------------------------------------------------------------- les mêmes mesures que l'app (index.html, loadSheet)
+# ---------------------------------------------------------------- les mêmes mesures que l'app (dist/js/feuilles.js, loadSheet)
 def measure(im):
     bot, l, r = 0, N, 0
     for y in range(N):
