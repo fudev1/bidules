@@ -43,7 +43,7 @@ Terminé quand Thibault dit que l'animation lui convient et que la vérification
 
 ## 5. Brancher dans l'app
 
-- **Limace** : déclarer l'animation dans `HAND` (`animations/limace-complete/gen.py`) et dans `ANIMS` (`tools/publier.py`), comme les autres, puis `mise run publier`. Une nouvelle balise doit aussi être jouée quelque part dans `dist/index.html` : voir avec Thibault à quel moment.
+- **Limace** : déclarer l'animation dans `HAND` (`animations/limace-complete/gen.py`) et dans `ANIMS` (`tools/publier.py`), comme les autres, puis `mise run publier`. Une nouvelle balise doit aussi être jouée quelque part dans le code du Bidule (`dist/js/`) : voir avec Thibault à quel moment.
 - **Candy** : ses images sont générées par `animations/candy/gen.py`, pas lues dans un `.aseprite`. Décider avec Thibault comment y faire entrer l'animation avant de toucher à ce script.
 - Vérifier l'enchaînement dans `tools/sim.py` (mode d'emploi en tête du fichier).
 

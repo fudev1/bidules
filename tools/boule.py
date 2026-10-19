@@ -1,4 +1,4 @@
-# La goutte (une boule et un cône qui s'amincit jusqu'à la pointe tenue par la souris) : la forme et les couleurs que dist/index.html dessine en direct
+# La goutte (une boule et un cône qui s'amincit jusqu'à la pointe tenue par la souris) : la forme et les couleurs que dist/js (etirement.js, tenu.js) dessine en direct
 # (maskDrop et styleRender de pullDraw, et swingDraw pour le Bidule tenu par la tête). Utilisé par gen.py (animations/attrape-boule montre la goutte à l'équilibre, à retoucher dans Aseprite).
 import math
 
