@@ -293,7 +293,7 @@ fait et ce qui reste à faire. La vision, l'installation et la stack sont dans l
   toutes les 15 s au lieu de 3, et il mettait plus d'une minute à s'endormir). Sinon, l'humeur est lue dans les heures
   des prompts de `~/.claude` et `~/.claude-masana`, jamais dans le texte.
 - Outils : `animations/limace-complete/gen.py` assemble la feuille de la limace, `tools/sim.py` fait tourner le Bidule
-  dans un navigateur sans l'app, `tests/` le vérifie dans cette page (`mise run tests`, Playwright : la vie qui attend
+  dans un navigateur sans l'app, `tests/` le vérifie dans cette page (`mise run tests`, Bun et Playwright : la vie qui attend
   le Bidule choisi, la fenêtre, l'icône, la souris, l'étirement, le plafond, les réglages du panneau).
 - Performances : l'icône de la barre de menus part en octets PNG, seulement quand son image change ; la souris n'est lue
   que quand il la regarde (moins souvent quand elle est loin, jamais quand il est caché) ; `mise run bidule:release`
