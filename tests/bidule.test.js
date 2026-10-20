@@ -1,4 +1,4 @@
-// Le comportement du Bidule dans la page de test : npm test (ou mise run tests)
+// Le comportement du Bidule dans la page de test : mise run tests
 const {test, before, after} = require("node:test");
 const assert = require("node:assert/strict");
 const {demarrer} = require("./page");

@@ -18,7 +18,7 @@ Compagnon de bureau pour les utilisateurs de Claude Code. La vision et l'install
 
 - `mise run bidule` compile et lance l'app. `dist/` est embarqué à la compilation : relancer après chaque modification.
 - `mise run bidule:release` compile la version optimisée et la lance.
-- `mise run tests` : les tests du comportement du Bidule dans la page de test (la première fois : `npm install && npx playwright install chromium`). À relancer après une modification de `dist/js/`.
+- `mise run tests` : les tests du comportement du Bidule dans la page de test (avec Bun, installé par mise ; Playwright et son Chromium s'installent au premier lancement). À relancer après une modification de `dist/js/`.
 - Pour vérifier un enchaînement d'animations sans l'app : `tools/sim.py` (mode d'emploi en tête du fichier). On peut y avancer le temps image par image.
 - Après une modification de `gen.py` ou d'une animation : relancer `gen.py`, recopier la feuille dans `dist/persos/limace/`, vérifier dans la page de test.
 
