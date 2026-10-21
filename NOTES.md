@@ -1,6 +1,6 @@
 # Notes du projet
 
-Mise à jour : 16 octobre 2026. Ce fichier suit l'état du projet : ce qui est décidé, ce qui reste à trancher, ce qui est
+Mise à jour : 21 octobre 2026. Ce fichier suit l'état du projet : ce qui est décidé, ce qui reste à trancher, ce qui est
 fait et ce qui reste à faire. La vision, l'installation et la stack sont dans le [README](README.md).
 
 ## Décisions
@@ -57,6 +57,13 @@ fait et ce qui reste à faire. La vision, l'installation et la stack sont dans l
   - grande chute (au moins les deux tiers de l'écran) : elle a peur, s'écrase, reste en flaque 1,5 à 3 s, puis se
     reforme ;
   - la vitesse de marche vient du dessin (plus lente qu'avant), gardée telle quelle pour l'instant.
+- Apparence de la limace (spec #57, première étape #73) : une teinte par partie (corps, cheveux, pupilles, intérieur de
+  la bouche), prise dans une liste fermée (10 corps, 6 cheveux, 5 pupilles, 4 bouches). Chaque partie est reconnue à ses
+  couleurs et recolorée ton pour ton, une fois au chargement ou au changement d'apparence (`dist/js/apparence.js`) ; le
+  contour reste noir, et les verts de la nausée passent devant. Les pupilles ont leur couleur à elles dans la feuille
+  (`#000001`, posée par `gen.py`). Les teintes sont provisoires, en attendant la planche validée (#72) ; la palette
+  fermée s'étend aux teintes proposées (`docs/adr/0001-la-palette-fermee-s-etend-aux-teintes.md`). Pas encore d'onglet
+  dans le panneau ni d'enregistrement : `Apparence.appliquer` dans la page de test.
 
 ## À trancher
 
