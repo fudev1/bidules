@@ -189,7 +189,7 @@ function buildFrames(s) {
       let n = 0; for (let i = 3; i < swing.armPx.length; i += 4) if (swing.armPx[i]) n++; say(`goutte : bras charges (${n} pixels)`); } catch (e) { say("goutte : bras illisibles : " + e); } };
       im.onerror = () => say("goutte : image des bras introuvable"); im.src = AR[0].src; }
     else say("goutte : pas de bras dans la feuille (attrape-boule-arms)");
-    const P = T2["attrape-boule-parts"]; swing.parts = P ? P.map(f => { const im = new Image(); im.src = f.src; return im; }) : null; swing.durs = P ? P.map(f => f.dur) : [];
+    swingParties(T2["attrape-boule-parts"]);
     FR = nf; LOOK = nl; style = s; return;
   }
   const G = MONSTRES[s] ? (st, look) => monstreURL(s, st, look, partsBy[s], mood)

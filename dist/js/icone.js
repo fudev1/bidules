@@ -5,6 +5,8 @@ const Icone = (() => {
   const T = window.__TAURI__, cv = document.createElement("canvas"), png = new Map(), imgs = new Map();
   cv.width = 64; cv.height = 36;
   let tag = "", i = 0, next = 0, montree = "";
+  // l'apparence a changé : les images déjà converties ne valent plus
+  Apparence.quandElleChange(() => { montree = ""; png.clear(); imgs.clear(); });
   function octets(src) {
     if (png.has(src)) return png.get(src);
     if (!imgs.has(src)) imgs.set(src, Object.assign(new Image(), {src}));
@@ -22,10 +24,10 @@ const Icone = (() => {
       const now = Date.now();
       if (voulu !== tag) { tag = voulu; i = 0; next = 0; }
       if (now < next) return;
-      const fr = D.tags[tag], f = fr[i % fr.length];
-      if (f.src !== montree) {
-        const p = octets(f.src); if (!p) return;
-        montree = f.src;
+      const fr = D.tags[tag], f = fr[i % fr.length], src = Apparence.affichee(f.src);
+      if (src !== montree) {
+        const p = octets(src); if (!p) return;
+        montree = src;
         await T.core.invoke("icone", await p);          // les octets bruts, sans passer par du JSON
       }
       i++; next = now + f.dur;

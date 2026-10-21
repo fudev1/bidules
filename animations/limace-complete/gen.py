@@ -442,6 +442,25 @@ for h, (normal, alt) in HUMEURS.items():
             add(f"{n}@{h}", done["saut"][0][i:j + 1])
             if done["saut"][1]: add(f"{n}@{h}:cligne", done["saut"][1][i:j + 1])
 
+# les pupilles ont leur couleur à elles, presque noire (#000001), pour que l'app puisse les recolorer sans toucher au contour ni à la bouche
+# (apparence, dist/js/apparence.js) : les traits d'encre verticaux des yeux (eyes_of) et l'encre posée dans le blanc des grands yeux ouverts.
+# Les images de la nausée gardent leurs spirales d'encre.
+# L'intérieur de la bouche a aussi sa couleur à lui (#3f3f75) : #3f3f74 sert aussi d'ombre aux éclaboussures des images vertes, jamais teintes.
+PUPILLE, BOUCHE, MOUTH_IN = (0, 0, 1, 255), (0x3f, 0x3f, 0x75, 255), (0x3f, 0x3f, 0x74, 255)
+def pupilles(f):
+    g = [[BOUCHE if p == MOUTH_IN else p for p in row] for row in f]
+    for e in eyes_of(f):
+        for x, y in e: g[y][x] = PUPILLE
+    for e in white_eyes(f):
+        xs, ys = [p[0] for p in e], [p[1] for p in e]
+        for y in range(min(ys), max(ys) + 1):
+            for x in range(min(xs), max(xs) + 1):
+                if f[y][x] == B and all(f[y + b][x + a] != (0, 0, 0, 0) for a in (-1, 0, 1) for b in (-1, 0, 1)) and \
+                   any(f[y + b][x + a] == WHITE for a, b in ((1, 0), (-1, 0), (0, 1), (0, -1))): g[y][x] = PUPILLE
+    return g
+VERTS = set(VERT.values())
+out_frames = [(f if any(p in VERTS for row in f for p in row) else pupilles(f), d) for f, d in out_frames]
+
 # la feuille : une grille de 32 images de large (une seule ligne dépasserait la taille d'image que le navigateur accepte)
 N = len(out_frames); COLS = 32; ROWS = (N + COLS - 1) // COLS
 EMPTY = [(0, 0, 0, 0)] * 64

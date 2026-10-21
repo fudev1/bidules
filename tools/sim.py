@@ -9,6 +9,8 @@
 # Pour simuler des commandes lentes (la lecture des journaux) : window.DELAI = {sessions: 2000}, en ms, avant le chargement de la page (addInitScript).
 # Les appels aux commandes Rust (hors "log") et les déplacements de la fenêtre (setPosition, setSize) sont gardés dans CALLS ; LISTEN[nom] liste les fonctions qui écoutent un événement, pour en simuler un :
 #   LISTEN["bonbon-clic"].forEach(f => f({payload: 1}))
+# L'apparence de la limace : await Apparence.appliquer({corps: "rose", cheveux: "roux", pupilles: "brun", bouche: "rouge", motif: "pois", motifTeinte: "blanc"}) ;
+#   {} pour l'apparence d'origine (teintes : Apparence.TEINTES ; motifs : Apparence.MOTIFS, motifTeinte est une teinte du corps, absente : celle du motif).
 # La souris : T.window.cursorPosition = async () => ({x: ..., y: ...}), l'horloge la relit toute seule.
 import os, sys
 DIST = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "dist")
@@ -21,7 +23,9 @@ STUB = """<script>
 window.LOG = []; window.CALLS = []; window.LISTEN = {}; window.DELAI = window.DELAI || {};
 const noop = async () => {};
 window.__TAURI__ = {
-  core: {invoke: async (c, a) => { if (c === "log") LOG.push([Date.now(), a.msg]); else CALLS.push([Date.now(), c, a]); if (DELAI[c]) await new Promise(r => setTimeout(r, DELAI[c])); return c === "prompt_times" ? [] : c === "lire_choix" ? "limace" : null; }},
+  core: {invoke: async (c, a) => { if (c === "log") LOG.push([Date.now(), a.msg]); else CALLS.push([Date.now(), c, a]); if (DELAI[c]) await new Promise(r => setTimeout(r, DELAI[c]));
+    if (c === "garder_apparences") localStorage.setItem("apparences", a.apparences);          // l'enregistrement de l'app, simulé : il survit au rechargement
+    return c === "prompt_times" ? [] : c === "lire_choix" ? "limace" : c === "lire_apparences" ? localStorage.getItem("apparences") : null; }},
   event: {emit: noop, listen: async (n, f) => { (LISTEN[n] = LISTEN[n] || []).push(f); return () => {}; }},
   dpi: {LogicalPosition: function (x, y) { this.x = x; this.y = y; }, LogicalSize: function (w, h) { this.w = w; this.h = h; }},
   window: {cursorPosition: async () => ({x: -5000, y: -5000}),
