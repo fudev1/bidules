@@ -13,12 +13,12 @@ async function hairLoad() {
   if (hair.px || hair.loading || !cheveux) return; hair.loading = true;
   const im = new Image(); im.src = "persos/limace/cheveux-poses.png"; await im.decode();
   const cv = document.createElement("canvas"); cv.width = im.width; cv.height = im.height; const g = cv.getContext("2d"); g.drawImage(im, 0, 0);
-  hair.px = g.getImageData(0, 0, im.width, im.height).data; hair.pw = im.width;
+  hair.px0 = g.getImageData(0, 0, im.width, im.height).data; hair.px = hair.px0; hair.pw = im.width; Apparence.cheveuxTeints();
 }
 // le sommet de la tête d'une image de la feuille : au-dessus des yeux (l'encre loin du bord du corps), le milieu de la ligne du haut ; null sans corps
 function hairAnchor(f) {
   if (f.hairAt !== undefined) return f.hairAt;
-  const d = f.cv.getContext("2d").getImageData(0, 0, 64, 64).data, A = i => d[i * 4 + 3] > 0, ink = i => A(i) && d[i * 4] + d[i * 4 + 1] + d[i * 4 + 2] < 30;
+  const d = f.px0 || f.cv.getContext("2d").getImageData(0, 0, 64, 64).data, A = i => d[i * 4 + 3] > 0, ink = i => A(i) && d[i * 4] + d[i * 4 + 1] + d[i * 4 + 2] < 30;
   const inside = (X, Y) => X >= 0 && Y >= 0 && X < 64 && Y < 64 && A(Y * 64 + X);
   const edge = (X, Y) => inside(X, Y) && [[1, 0], [-1, 0], [0, 1], [0, -1]].some(([a, b]) => !inside(X + a, Y + b));
   let ex = 0, ey = 0, n = 0, top = 64;
@@ -35,12 +35,12 @@ function hairAnchor(f) {
   let a = X, b = X; while (inside(a - 1, Y)) a--; while (inside(b + 1, Y)) b++;
   return f.hairAt = [(a + b + 1) / 2, Y];
 }
-// l'image coiffée (gardée par image et par pose) ; sans cheveux, ou si l'image n'est pas de la feuille : l'image elle-même
+// l'image coiffée (gardée par image et par pose), aux couleurs de l'apparence ; sans cheveux : l'image teinte (la même si elle n'est pas de la feuille)
 function hairComposite(src, pose) {
-  if (!cheveux || !hair.px || style !== "limace" || !SHEET_DATA.limace) return src;
-  const D = SHEET_DATA.limace, f = (D.bySrc || (D.bySrc = new Map(D.frames.map(f => [f.src, f])))).get(src); if (!f) return src;
+  if (!cheveux || !hair.px || style !== "limace" || !SHEET_DATA.limace) return Apparence.affichee(src);
+  const D = SHEET_DATA.limace, f = (D.bySrc || (D.bySrc = new Map(D.frames.map(f => [f.src, f])))).get(src); if (!f) return Apparence.affichee(src);
   const key = src + "|" + pose; let out = hair.cache.get(key); if (out) return out;
-  const at = hairAnchor(f); if (!at) return src;
+  const at = hairAnchor(f); if (!at) return Apparence.affichee(src);
   const cv = document.createElement("canvas"); cv.width = cv.height = 64; const g = cv.getContext("2d"); g.drawImage(f.cv, 0, 0);
   const im = g.getImageData(0, 0, 64, 64), d = im.data, ox = Math.floor(at[0]) - HAIR_RX, oy = at[1] - HAIR_H;
   for (let v = 0; v < HAIR_H; v++) for (let u = 0; u < HAIR_W; u++) {

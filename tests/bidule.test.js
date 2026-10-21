@@ -147,3 +147,81 @@ test("les réglages du panneau passent sans erreur", async () => {
   assert.deepEqual(await page.evaluate(() => LOG.map(l => l[1]).filter(m => /erreur|init:|: [A-Z]\w*Error/.test(m))), []);
   await page.close();
 });
+
+// Apparence : on applique une apparence, puis on lit les couleurs de la limace affichée
+const ROSE = ["#ffd6e8", "#ff9cc6", "#e0679f"], BLEU = ["#a4c6ff", "#639bff", "#4577e0"];
+async function couleursAffichees(page, tag, i = 0) {
+  return page.evaluate(async ([tag, i]) => {
+    Horloge.arreter(); img.src = SHEET_DATA.limace.tags[tag][i].src;
+    const im = new Image(); im.src = IMG_SRC.get.call(img); await im.decode();
+    const cv = document.createElement("canvas"); cv.width = cv.height = 64; const g = cv.getContext("2d"); g.drawImage(im, 0, 0);
+    const d = g.getImageData(0, 0, 64, 64).data, vu = new Set();
+    for (let k = 0; k < d.length; k += 4) if (d[k + 3]) vu.add("#" + [d[k], d[k + 1], d[k + 2]].map(v => v.toString(16).padStart(2, "0")).join(""));
+    return [...vu];
+  }, [tag, i]);
+}
+
+test("une apparence recolore le corps avec ses trois tons, change les pupilles et garde le contour noir", async () => {
+  const page = await sim.ouvrir();
+  await page.waitForFunction(() => SHEET_DATA.limace);
+  await page.evaluate(() => Apparence.appliquer({corps: "rose", pupilles: "brun"}));
+  const vu = await couleursAffichees(page, "repos");
+  for (const c of ROSE) assert.ok(vu.includes(c), `ton ${c} absent`);
+  for (const c of BLEU) assert.ok(!vu.includes(c), `bleu d'origine ${c} encore là`);
+  assert.ok(vu.includes("#000000"), "le contour n'est plus noir");
+  assert.ok(vu.includes("#5a3a22"), "pupilles pas recolorées");
+  assert.ok(!vu.includes("#000001"), "pupilles d'origine encore là");
+  assert.deepEqual(page.erreurs, []);
+  await page.close();
+});
+
+test("le vert de la nausée passe devant la teinte du corps", async () => {
+  const page = await sim.ouvrir();
+  await page.waitForFunction(() => SHEET_DATA.limace);
+  await page.evaluate(() => Apparence.appliquer({corps: "rose"}));
+  const vu = await couleursAffichees(page, "nausee");
+  assert.ok(vu.includes("#7fd46a"), "plus de vert pendant la nausée");
+  for (const c of ROSE) assert.ok(!vu.includes(c), `teinte ${c} pendant la nausée`);
+  await page.close();
+});
+
+test("les cheveux prennent leur teinte, et l'icône de la barre de menu montre l'apparence", async () => {
+  const page = await sim.ouvrir();
+  await page.waitForFunction(() => SHEET_DATA.limace);
+  await page.evaluate(async () => { cheveux = true; await hairLoad(); await Apparence.appliquer({corps: "rose", cheveux: "roux"}); });
+  const vu = await couleursAffichees(page, "repos");
+  assert.ok(vu.includes("#d2622e"), "cheveux pas roux");
+  const icone = await page.evaluate(async () => {
+    Horloge.demarrer(); CALLS.length = 0; await new Promise(r => setTimeout(r, 800));
+    const a = CALLS.filter(c => c[1] === "icone").pop()[2], im = new Image(); im.src = URL.createObjectURL(new Blob([a], {type: "image/png"})); await im.decode();
+    const cv = document.createElement("canvas"); cv.width = im.width; cv.height = im.height; const g = cv.getContext("2d"); g.drawImage(im, 0, 0);
+    const d = g.getImageData(0, 0, im.width, im.height).data, vu = new Set();
+    for (let k = 0; k < d.length; k += 4) if (d[k + 3]) vu.add([d[k], d[k + 1], d[k + 2]].join(","));
+    return [...vu];
+  });
+  assert.ok(icone.includes("255,156,198"), "l'icône n'est pas rose");
+  assert.ok(!icone.includes("99,155,255"), "l'icône est encore bleue");
+  assert.deepEqual(page.erreurs, []);
+  await page.close();
+});
+
+test("revenir à l'apparence d'origine rend la feuille pixel pour pixel", async () => {
+  const page = await sim.ouvrir();
+  await page.waitForFunction(() => SHEET_DATA.limace);
+  const r = await page.evaluate(async () => {
+    await Apparence.appliquer({corps: "citron", pupilles: "vert", bouche: "rouge"});
+    await Apparence.appliquer({});
+    const im = new Image(); im.src = "persos/limace/sheet.png"; await im.decode();
+    const meta = await (await fetch("persos/limace/sheet.json")).json(), cases = Object.values(meta.frames).map(f => f.frame);
+    const cv = document.createElement("canvas"); cv.width = im.width; cv.height = im.height; const g = cv.getContext("2d"); g.drawImage(im, 0, 0);
+    let diff = 0, faux = 0;
+    for (const [k, f] of SHEET_DATA.limace.frames.entries()) {
+      const a = g.getImageData(cases[k].x, cases[k].y, 64, 64).data, b = f.cv.getContext("2d").getImageData(0, 0, 64, 64).data;
+      for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) { diff++; break; }
+      if (Apparence.affichee(f.src) !== f.src) faux++;
+    }
+    return {diff, faux};
+  });
+  assert.deepEqual(r, {diff: 0, faux: 0});
+  await page.close();
+});
