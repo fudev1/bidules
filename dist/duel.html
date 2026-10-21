@@ -1,0 +1,85 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<style>
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:transparent;cursor:none;user-select:none;-webkit-user-select:none}
+canvas{display:block;width:100%;height:100%}
+</style></head>
+<body><canvas id="c"></canvas>
+<script src="js/duel-jeu.js"></script>
+<script>
+// Le duel en plein écran. L'hôte (window.DUEL.hote) fait tourner DuelJeu et envoie à l'invité ce qu'il doit voir ;
+// l'invité n'envoie que la hauteur de sa raquette. Chacun se voit à gauche. Échap : quitter.
+const T = window.__TAURI__, {hote, nom} = window.DUEL || {hote: true, nom: "?"};
+const {W, H, BALLE, BORD, EPAISSEUR, DEMI} = DuelJeu;
+const cv = document.getElementById("c"), g = cv.getContext("2d");
+const envoyer = m => T.core.invoke("duel_envoyer", {texte: JSON.stringify(m)});
+const etat = hote ? DuelJeu.nouveau() : null;
+let vue = etat ? DuelJeu.vue(etat, 0) : {balle: {x: W / 2, y: H / 2}, moi: H / 2, lui: H / 2, score: [0, 0], gagne: null};
+let moi = H / 2, fleche = 0, fin = null;              // fin : le texte affiché à la fin, puis la fenêtre se ferme
+
+// le terrain 16:9 le plus grand qui tient dans l'écran, centré
+function terrain() {
+  const w = innerWidth, h = innerHeight, k = Math.min(w / W, h / H);
+  return {k, x: (w - W * k) / 2, y: (h - H * k) / 2};
+}
+
+addEventListener("mousemove", e => { const t = terrain(); moi = (e.clientY - t.y) / t.k; });
+addEventListener("keydown", e => {
+  if (e.key === "Escape") { T.core.invoke("duel_quitter"); if (!fin) terminer("Duel quitté"); else T.core.invoke("duel_fermer"); }
+  if (e.key === "ArrowUp") fleche = -1;
+  if (e.key === "ArrowDown") fleche = 1;
+});
+addEventListener("keyup", e => { if ((e.key === "ArrowUp" && fleche < 0) || (e.key === "ArrowDown" && fleche > 0)) fleche = 0; });
+
+T.event.listen("duel-msg", e => {
+  const m = JSON.parse(e.payload);
+  if (hote && m.t === "raquette") DuelJeu.bouger(etat, 1, m.y);
+  if (!hote && m.t === "vue") vue = m.vue;
+});
+T.event.listen("duel-fin", e => { if (!fin) terminer(e.payload === "quitte" ? "Duel quitté" : "Duel interrompu"); });
+
+function terminer(texte) {
+  fin = texte;
+  setTimeout(() => { T.core.invoke("duel_quitter"); T.core.invoke("duel_fermer"); }, 2500);
+}
+
+function dessiner() {
+  const {k, x, y} = terrain(), r = (a, b, w, h) => g.fillRect(x + a * k, y + b * k, w * k, h * k);
+  cv.width = innerWidth * devicePixelRatio; cv.height = innerHeight * devicePixelRatio;
+  g.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0);
+  g.fillStyle = "rgba(20,16,32,.55)"; g.fillRect(0, 0, innerWidth, innerHeight);        // les bandes hors du terrain, plus sombres
+  g.clearRect(x, y, W * k, H * k); g.fillStyle = "rgba(20,16,32,.3)"; r(0, 0, W, H);   // le terrain, un peu assombri
+  g.fillStyle = "rgba(255,255,255,.35)";
+  for (let b = 2; b < H; b += 6) r(W / 2 - .4, b, .8, 3);                              // la ligne pointillée du milieu
+  g.fillStyle = "#fff";
+  r(BORD - EPAISSEUR / 2, vue.moi - DEMI, EPAISSEUR, DEMI * 2);
+  r(W - BORD - EPAISSEUR / 2, vue.lui - DEMI, EPAISSEUR, DEMI * 2);
+  if (!fin) r(vue.balle.x - BALLE / 2, vue.balle.y - BALLE / 2, BALLE, BALLE);
+  g.font = `700 ${Math.round(8 * k)}px ui-monospace, Menlo, monospace`; g.textAlign = "center"; g.textBaseline = "top";
+  g.fillText(vue.score[0], x + (W / 2 - 12) * k, y + 4 * k); g.fillText(vue.score[1], x + (W / 2 + 12) * k, y + 4 * k);
+  g.font = `600 ${Math.round(3 * k)}px -apple-system, system-ui, sans-serif`; g.fillStyle = "rgba(255,255,255,.7)";
+  g.fillText("Toi", x + (W / 2 - 12) * k, y + 13 * k); g.fillText(nom, x + (W / 2 + 12) * k, y + 13 * k);
+  const texte = fin || (vue.gagne === null ? null : vue.gagne ? "Gagné !" : "Perdu");
+  if (texte) { g.fillStyle = "#fff"; g.font = `700 ${Math.round(12 * k)}px -apple-system, system-ui, sans-serif`; g.textBaseline = "middle"; g.fillText(texte, x + W / 2 * k, y + H / 2 * k); }
+}
+
+let avant = performance.now();
+function image(t) {
+  const dt = Math.min(.05, (t - avant) / 1000); avant = t;
+  moi = Math.max(DEMI, Math.min(H - DEMI, moi + fleche * 110 * dt));
+  if (hote) {
+    DuelJeu.bouger(etat, 0, moi);
+    if (DuelJeu.pas(etat, dt).includes("fin") && !fin) setTimeout(() => terminer(etat.gagnant === 0 ? "Gagné !" : "Perdu"), 500);
+    vue = DuelJeu.vue(etat, 0);
+    envoyer({t: "vue", vue: DuelJeu.vue(etat, 1)});
+  } else {
+    vue.moi = moi;                                       // sa propre raquette sans attendre l'hôte
+    envoyer({t: "raquette", y: moi});
+    if (vue.gagne !== null && !fin) terminer(vue.gagne ? "Gagné !" : "Perdu");
+  }
+  dessiner();
+  requestAnimationFrame(image);
+}
+requestAnimationFrame(image);
+</script>
+</body></html>

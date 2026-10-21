@@ -45,6 +45,10 @@ img.dangle{transform-origin:50% 8%;animation:dangle 2s ease-in-out infinite}
 .pense{position:absolute;left:66px;top:50px;width:56px;height:36px;image-rendering:pixelated;transform-origin:90% 100%;transition:opacity .25s,scale .25s}
 .pense.off{opacity:0;scale:.6}
 .bub{position:absolute;left:50%;top:8px;transform:translateX(-50%);background:#fff;color:#2a2238;border:2px solid #2a2238;border-radius:8px;padding:2px 7px;font:700 13px -apple-system,system-ui,sans-serif;white-space:nowrap}
+.defi{position:absolute;left:4px;right:4px;top:4px;z-index:5;display:flex;flex-wrap:wrap;justify-content:center;gap:4px;background:#fff;color:#2a2238;border:2px solid #2a2238;border-radius:8px;padding:4px 5px;font:700 12px -apple-system,system-ui,sans-serif;text-align:center}
+.defi b{flex-basis:100%}
+.defi button{font:700 11px -apple-system,system-ui,sans-serif;border:2px solid #2a2238;border-radius:6px;background:#ffd84a;color:#2a2238;padding:2px 6px;cursor:pointer}
+.defi button+button{background:#fff}
 </style></head>
 <body><img id="b" alt=""><canvas id="el" width="176" height="210" hidden></canvas><div id="fx"></div>
 <script src="bidule64.js"></script>
@@ -62,4 +66,5 @@ img.dangle{transform-origin:50% 8%;animation:dangle 2s ease-in-out infinite}
 <script src="js/tenu.js"></script>
 <script src="js/souris.js"></script>
 <script src="js/claude.js"></script>
+<script src="js/duel-defi.js"></script>
 <script src="js/demarrage.js"></script></body></html>

@@ -10,6 +10,7 @@ tauri-build = { version = "2", features = [] }
 tauri = { version = "2", features = ["macos-private-api", "tray-icon", "image-png"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = { version = "1", features = ["preserve_order"] }
+tungstenite = { version = "0.24", default-features = false, features = ["handshake"] }
 
 # Pour garder l'icône de la barre de menus en surbrillance quand le panneau est ouvert (les mêmes versions que Tauri utilise déjà).
 [target.'cfg(target_os = "macos")'.dependencies]

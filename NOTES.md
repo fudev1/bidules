@@ -58,6 +58,11 @@ fait et ce qui reste à faire. La vision, l'installation et la stack sont dans l
     reforme ;
   - la vitesse de marche vient du dessin (plus lente qu'avant), gardée telle quelle pour l'instant.
 
+- Duel : un Pong entre deux collègues du même réseau local, en plein écran, chaque Bidule devenu raquette. Sans
+  serveur sur internet, l'hôte (celui qui lance le défi) fait foi ; voir
+  [l'ADR 0001](docs/adr/0001-duel-en-reseau-local-avec-hote.md) et le glossaire. Sans lien avec les tokens, les pièces
+  ni l'évolution. Réservé à la limace pour la première version.
+
 ## À trancher
 
 - **Récompense** : la règle de départ récompense le volume de tokens (100 tokens = 1 pièce), ce qui pousse à prompter
@@ -68,6 +73,12 @@ fait et ce qui reste à faire. La vision, l'installation et la stack sont dans l
 - **Personnages** : animer à la main les 6 monstres du moodboard, ou garder seulement la limace pour la v1.
 
 ## Fait
+
+- Duel, premier ticket : un duel minimal entre deux machines, en tapant l'adresse du collègue dans l'onglet « Jouer ».
+  Chaque Bidule attend les défis sur le port 47800 tant que « Accepter les défis » est activé ; la bulle du défi
+  s'affiche au-dessus du Bidule. Fenêtre transparente plein écran, raquettes en rectangles, balle carrée, premier à 5,
+  Échap pour quitter. Le transport est dans `duel.rs` (testé avec `cargo test`), les règles dans `dist/js/duel-jeu.js`
+  (testées avec `mise run tests`), l'affichage dans `dist/duel.html`.
 
 - Skills de Matt Pocock (`github.com/mattpocock/skills`, version 1.3.1) copiés dans `.claude/skills/` : les 27 du plugin
   officiel (grilling, tdd, diagnosing-bugs, to-spec, etc.). Pour les commits et les pull requests, nos skills `commit`

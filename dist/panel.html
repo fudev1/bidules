@@ -62,6 +62,7 @@ main{flex:1;overflow:auto;padding:0 12px 12px}
 .slot{display:grid;grid-template-columns:64px 1fr;gap:8px;align-items:center}
 .slot b{font:400 12px/1 var(--display);letter-spacing:.6px;color:var(--yellow)}
 .row{display:flex;gap:8px;flex-wrap:wrap}
+.champ{flex:1;min-width:0;font:600 12.5px/1 var(--text);color:var(--ink);background:var(--white);border:0;border-radius:14px;padding:9px 12px;outline:none}
 /* Onglet Tests : un bouton rond en pointillés au bout des onglets */
 .tab.lab{flex:none;width:30px;padding:0;display:grid;place-items:center;border:2px dashed rgba(255,255,255,.6)}
 .tab.lab svg{width:15px;height:15px}
@@ -181,6 +182,7 @@ main{flex:1;overflow:auto;padding:0 12px 12px}
     <button class="tab" role="tab" data-tab="piste" aria-selected="true">Piste</button>
     <button class="tab" role="tab" data-tab="evo" aria-selected="false">Évolution</button>
     <button class="tab" role="tab" data-tab="humeur" aria-selected="false">Humeur</button>
+    <button class="tab" role="tab" data-tab="jouer" aria-selected="false">Jouer</button>
     <button class="tab lab" role="tab" data-tab="tests" aria-selected="false" title="Tests : simuler Claude" aria-label="Tests"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6M10 3v6l-5 9a2 2 0 0 0 1.8 3h10.4a2 2 0 0 0 1.8-3l-5-9V3"/><path d="M7.5 15h9"/></svg></button>
   </nav>
   <main>
@@ -205,6 +207,13 @@ main{flex:1;overflow:auto;padding:0 12px 12px}
     <section class="pane" id="p-tests" hidden>
       <p class="hint">Pour voir chaque état de Claude dans la bulle, sans attendre qu'il arrive.</p>
       <div class="essais" id="essais"></div>
+    </section>
+    <section class="pane" id="p-jouer" hidden>
+      <p class="hint">Un duel de Pong avec un collègue du même réseau : vos deux Bidules deviennent les raquettes. Rien ne se gagne, et rien de Claude ne passe par le réseau.</p>
+      <p class="hint" id="jouerMoi"></p>
+      <div class="row"><input class="champ" id="adresse" placeholder="Adresse du collègue (ex. 192.168.1.42)" spellcheck="false" autocomplete="off"><button class="btn primary" id="defier">Défier</button></div>
+      <p class="hint" id="jouerEtat"></p>
+      <div class="now fini"><p class="hint">Accepter les défis : ton Bidule attend les défis de tes collègues sur le réseau local. Coupé, personne ne peut te défier.</p><button class="chip" id="accepterDefis">Activé</button></div>
     </section>
     <section class="pane" id="p-humeur" hidden>
       <p class="hint">Elle suit le rythme de ta journée, toutes sessions confondues : l'heure, le temps sans vraie pause, le nombre de sessions en même temps. Jamais en lisant tes messages. Tu peux la forcer ici.</p>
@@ -535,7 +544,7 @@ async function renderFini() {
 renderFini();
 document.addEventListener("click", e => {
   const b = e.target.closest("button"); if (!b || b.disabled) return;
-  if (b.dataset.tab) { document.querySelectorAll(".tab").forEach(t => t.setAttribute("aria-selected", t === b)); ["claude", "piste", "evo", "humeur", "tests"].forEach(k => $("p-" + k).hidden = k !== b.dataset.tab); placePill(); if (b.dataset.tab === "claude") { renderFini(); renderGraphes(); renderCout(); } }
+  if (b.dataset.tab) { document.querySelectorAll(".tab").forEach(t => t.setAttribute("aria-selected", t === b)); ["claude", "piste", "evo", "humeur", "jouer", "tests"].forEach(k => $("p-" + k).hidden = k !== b.dataset.tab); placePill(); if (b.dataset.tab === "claude") { renderFini(); renderGraphes(); renderCout(); } }
   else if (b.dataset.sim !== undefined) { sim = b.dataset.sim; applyEssai(); }
   else if (b.dataset.simpc !== undefined) { simPc = +b.dataset.simpc; if (!sim) sim = "pense"; applyEssai(); }
   else if (b.dataset.style) { send("style", b.dataset.style); if (st.cache && T) T.core.invoke("montrer_bidule", {oui:true}); if (!st.style && T) T.core.invoke("hide_panel"); }      // premier choix : le panneau se ferme, le Bidule tombe sur le bureau      // caché : cliquer dessus le fait revenir
@@ -547,8 +556,34 @@ document.addEventListener("click", e => {
   else if (b.id === "fini") T.core.invoke(finiEtat === "oui" ? "debrancher_hooks" : "brancher_hooks").then(renderFini, err => { $("finiTxt").textContent = "Pas pu le faire : " + err; });
   else if (b.id === "haptique") send("haptique", st.haptique === false);
   else if (b.id === "quit") { if (T) T.core.invoke("quit"); }
+  else if (b.id === "defier") defier();
+  else if (b.id === "accepterDefis") accepterDefis(localStorage.accepterDefis === "non");
 });
 document.addEventListener("keydown", e => { if (e.key === "Escape" && T) T.core.invoke("hide_panel"); });
+// Onglet Jouer : défier un collègue en tapant son adresse (le duel lui-même est dans duel.html, le transport dans duel.rs)
+const DUEL_ETAT = {refuse: "Défi refusé.", occupe: "Ce collègue est déjà en duel.", injoignable: "Personne à cette adresse : son Bidule est-il lancé, avec « Accepter les défis » activé ?",
+  "sans-reponse": "Pas de réponse au défi.", coupe: "La connexion a coupé.", quitte: "", "adversaire-parti": ""};
+function defier() {
+  const a = $("adresse").value.trim(); if (!a || !T) return;
+  if (st.style !== "limace") { $("jouerEtat").textContent = "Pour l'instant, seule la limace sait devenir raquette."; return; }
+  localStorage.adresseDuel = a;
+  $("jouerEtat").textContent = "Défi envoyé, en attente de sa réponse…"; $("defier").disabled = true;
+  T.core.invoke("duel_defier", {adresse: a});
+}
+function accepterDefis(oui) {
+  localStorage.accepterDefis = oui ? "oui" : "non";
+  $("accepterDefis").textContent = oui ? "Activé" : "Coupé"; $("accepterDefis").classList.toggle("on", oui);
+  if (T) T.core.invoke("duel_ecouter", {actif: oui}).catch(err => { $("jouerEtat").textContent = "Impossible d'attendre les défis : " + err; });
+}
+$("adresse").value = localStorage.adresseDuel || "";
+$("adresse").addEventListener("keydown", e => { if (e.key === "Enter") defier(); });
+accepterDefis(localStorage.accepterDefis !== "non");
+if (T) {
+  T.core.invoke("duel_infos").then(i => { $("jouerMoi").innerHTML = `Tu apparais comme <b>${i.nom}</b>` + (i.adresse ? `, ton adresse : <b>${i.adresse}</b>` : ""); });
+  T.event.listen("duel-reponse", e => { $("jouerEtat").textContent = DUEL_ETAT[e.payload] || ""; $("defier").disabled = false; });
+  T.event.listen("duel-fin", e => { $("jouerEtat").textContent = DUEL_ETAT[e.payload] ?? ""; $("defier").disabled = false; });
+  T.event.listen("duel-defi", () => { $("jouerEtat").textContent = ""; });
+}
 // le panneau s'ouvre sur l'onglet Claude dès qu'un Bidule est choisi (au premier lancement, sur la Piste pour le choisir)
 let ongletChoisi = false;
 if (T) { T.event.listen("etat", e => { st = e.payload; render(); if (st.style && !ongletChoisi) { ongletChoisi = true; document.querySelector('[data-tab="claude"]').click(); } }); send("demande-etat"); }
