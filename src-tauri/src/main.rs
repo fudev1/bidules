@@ -411,10 +411,14 @@ fn lire_apparences(app: AppHandle) -> Option<String> {
 }
 #[tauri::command]
 fn garder_apparences(app: AppHandle, apparences: String) {
-    let Some(p) = apparences_path(&app) else { return };
+    if let Some(p) = apparences_path(&app) { ecrire_entier(&p, &apparences); }
+}
+
+// Écrit un fichier à côté puis le renomme : jamais de fichier coupé, même si l'app s'arrête au milieu.
+fn ecrire_entier(p: &std::path::Path, texte: &str) {
     if let Some(d) = p.parent() { let _ = std::fs::create_dir_all(d); }
     let tmp = p.with_extension("json.tmp");
-    if std::fs::write(&tmp, apparences).is_ok() { let _ = std::fs::rename(tmp, p); }
+    if std::fs::write(&tmp, texte).is_ok() { let _ = std::fs::rename(tmp, p); }
 }
 
 // L'état du Bidule, gardé d'un lancement à l'autre (dist/js/demarrage.js : garder) : humeur choisie, parties, caché ou non, réglages, sa place à l'écran.
@@ -428,10 +432,7 @@ fn lire_etat(app: AppHandle) -> Option<String> {
 }
 #[tauri::command]
 fn garder_etat(app: AppHandle, etat: String) {
-    let Some(p) = etat_path(&app) else { return };
-    if let Some(d) = p.parent() { let _ = std::fs::create_dir_all(d); }
-    let tmp = p.with_extension("json.tmp");
-    if std::fs::write(&tmp, etat).is_ok() { let _ = std::fs::rename(tmp, p); }
+    if let Some(p) = etat_path(&app) { ecrire_entier(&p, &etat); }
 }
 
 // Le panneau prend toute la hauteur de l'écran sous la barre de menus, mais jamais plus que le plus petit écran branché :
