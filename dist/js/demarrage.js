@@ -18,13 +18,13 @@ async function chooseStyle(s) {
 }
 T.event.listen("style", e => chooseStyle(e.payload));
 // L'apparence de chaque Bidule (GLOSSARY.md), gardée par l'app (main.rs : apparences.json) : {limace:{corps:"rose", ...}}. Absente = l'apparence d'origine.
-// Le panneau l'envoie à chaque changement (aperçu en direct) ; {} pour « Remettre d'origine ». Seule la limace a des teintes pour l'instant.
+// Le panneau l'envoie à chaque changement (aperçu en direct) ; {} pour « Remettre d'origine ». Seuls les Bidules qui ont une apparence (Apparence.aUneApparence) la reçoivent.
 let apparences = {};
 T.event.listen("apparence", async e => {
   const a = e.payload || {};
   if (Object.keys(a).length) apparences[style] = a; else delete apparences[style];
   T.core.invoke("garder_apparences", {apparences:JSON.stringify(apparences)}).catch(err => say("apparence : " + err));
-  if (style === "limace") await Apparence.appliquer(a);
+  if (Apparence.aUneApparence(style)) await Apparence.appliquer(a);
   sendState();
 });
 T.event.listen("haptique", e => { hapticOn = !!e.payload; garder(); sendState(); if (hapticOn) haptic("clic"); });

@@ -61,7 +61,8 @@ fait et ce qui reste à faire. La vision, l'installation et la stack sont dans l
   la bouche), prise dans une liste fermée (10 corps, 6 cheveux, 5 pupilles, 4 bouches). Chaque partie est reconnue à ses
   couleurs et recolorée ton pour ton, une fois au chargement ou au changement d'apparence (`dist/js/apparence.js`) ; le
   contour reste noir, et les verts de la nausée passent devant. Les pupilles ont leur couleur à elles dans la feuille
-  (`#000001`, posée par `gen.py`). Les teintes sont provisoires, en attendant la planche validée (#72) ; la palette
+  (`#000001`, posée par `gen.py`), l'intérieur de la bouche aussi (`#3f3f75` : `#3f3f74` sert aussi aux éclaboussures
+  vertes, jamais teintes). Les teintes sont provisoires, en attendant la planche validée (#72) ; la palette
   fermée s'étend aux teintes proposées (`docs/adr/0001-la-palette-fermee-s-etend-aux-teintes.md`). Onglet « Apparence »
   du panneau (#70) : aperçu en direct, une rangée de teintes par partie, la grille des motifs et leur deuxième teinte,
   « Remettre d'origine ». Le panneau envoie l'apparence au Bidule (événement `apparence`) ; l'app la garde par Bidule
@@ -69,7 +70,8 @@ fait et ce qui reste à faire. La vision, l'installation et la stack sont dans l
 - Motifs du corps (#71) : rayures, pois, cœurs, vache (`Apparence.appliquer({motif, motifTeinte})`). Posés seulement
   sur les pixels du corps, fixes dans l'image 64 × 64 (ils ne suivent pas la déformation) ; fond = teinte du corps,
   dessin = deuxième teinte (une teinte du corps ; par défaut blanc, blanc, rose, noir doux), qui reprend le ton du pixel
-  recouvert. La nausée passe devant. L'icône le montre aussi ; la goutte tenue (dessinée par le code) ne l'a pas encore.
+  recouvert. La nausée passe devant. L'icône et la goutte tenue (dessinée par le code) le montrent aussi. Chaque sous-système
+  qui garde des images ou des couleurs de l'apparence s'y abonne (`Apparence.quandElleChange`).
 
 ## À trancher
 

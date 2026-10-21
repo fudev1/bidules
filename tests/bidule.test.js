@@ -314,3 +314,52 @@ test("« Remettre d'origine » rend la limace bleue sans motif, aussi au lanceme
   assert.deepEqual(page.erreurs, []);
   await page.close();
 });
+
+test("les cheveux teints gardent le contour du corps noir", async () => {
+  const page = await sim.ouvrir();
+  await page.waitForFunction(() => SHEET_DATA.limace);
+  await page.evaluate(async () => { cheveux = true; await hairLoad(); cheveux = false; });
+  const nu = await pixelsAffiches(page, "repos");
+  await page.evaluate(async () => { cheveux = true; await Apparence.appliquer({cheveux: "roux"}); });
+  const coiffe = await pixelsAffiches(page, "repos");
+  let meches = 0;
+  for (let k = 0; k < 64 * 64; k++) {
+    if (nu[k] === "#000000") assert.equal(coiffe[k], "#000000", `contour recoloré en ${k}`);
+    if (!nu[k] && coiffe[k]) { meches++; assert.equal(coiffe[k], "#d2622e", `mèche pas rousse en ${k}`); }
+  }
+  assert.ok(meches > 10, "pas de cheveux");
+  await page.close();
+});
+
+test("la teinte de la bouche ne touche que l'intérieur de la bouche, pas les éclaboussures vertes", async () => {
+  const page = await sim.ouvrir();
+  await page.waitForFunction(() => SHEET_DATA.limace);
+  const chute = await pixelsAffiches(page, "chute-vert", 1);
+  assert.ok(chute.includes("#3f3f74"), "l'éclaboussure n'a plus sa couleur sombre");
+  await page.evaluate(() => Apparence.appliquer({bouche: "rouge"}));
+  assert.deepEqual(await pixelsAffiches(page, "chute-vert", 1), chute);
+  assert.ok((await pixelsAffiches(page, "baille", 5)).includes("#9c2b3a"), "la bouche ouverte n'est pas rouge");
+  await page.close();
+});
+
+test("la goutte tenue a le motif, et verdit en entier quand on la secoue", async () => {
+  const page = await sim.ouvrir();
+  await page.waitForFunction(() => SHEET_DATA.limace);
+  await page.evaluate(() => Apparence.appliquer({corps: "rose", motif: "rayures", motifTeinte: "noir doux"}));
+  const lire = secoue => page.evaluate(async s => {
+    Horloge.arreter(); drag = {shaken: s, lastX: 0, lastY: 0}; swingStart(); swingDraw();
+    const im = new Image(); im.src = IMG_SRC.get.call(img); await im.decode();
+    const cv = document.createElement("canvas"); cv.width = im.width; cv.height = im.height; const g = cv.getContext("2d"); g.drawImage(im, 0, 0);
+    const d = g.getImageData(0, 0, im.width, im.height).data, vu = new Set();
+    for (let k = 0; k < d.length; k += 4) if (d[k + 3]) vu.add("#" + [d[k], d[k + 1], d[k + 2]].map(v => v.toString(16).padStart(2, "0")).join(""));
+    return [...vu];
+  }, secoue);
+  let vu = await lire(false);
+  assert.ok(ROSE.some(c => vu.includes(c)), "la goutte n'est pas rose");
+  assert.ok(NOIR_DOUX.some(c => vu.includes(c)), "la goutte n'a pas le motif");
+  vu = await lire(true);
+  assert.ok(vu.includes("#7fd46a"), "la goutte secouée ne verdit pas");
+  assert.ok(!NOIR_DOUX.some(c => vu.includes(c)), "le motif passe devant la nausée");
+  assert.deepEqual(page.erreurs, []);
+  await page.close();
+});

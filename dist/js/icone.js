@@ -5,6 +5,8 @@ const Icone = (() => {
   const T = window.__TAURI__, cv = document.createElement("canvas"), png = new Map(), imgs = new Map();
   cv.width = 64; cv.height = 36;
   let tag = "", i = 0, next = 0, montree = "";
+  // l'apparence a changé : les images déjà converties ne valent plus
+  Apparence.quandElleChange(() => { montree = ""; png.clear(); imgs.clear(); });
   function octets(src) {
     if (png.has(src)) return png.get(src);
     if (!imgs.has(src)) imgs.set(src, Object.assign(new Image(), {src}));
@@ -16,8 +18,7 @@ const Icone = (() => {
     return p;
   }
   return {
-    // tout : l'apparence a changé, les images déjà converties ne valent plus
-    oublier(tout) { montree = ""; if (tout) { png.clear(); imgs.clear(); } },
+    oublier() { montree = ""; },
     // D : la feuille de la limace ; voulu : la balise à jouer
     async pas(D, voulu) {
       const now = Date.now();

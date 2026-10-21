@@ -445,9 +445,10 @@ for h, (normal, alt) in HUMEURS.items():
 # les pupilles ont leur couleur à elles, presque noire (#000001), pour que l'app puisse les recolorer sans toucher au contour ni à la bouche
 # (apparence, dist/js/apparence.js) : les traits d'encre verticaux des yeux (eyes_of) et l'encre posée dans le blanc des grands yeux ouverts.
 # Les images de la nausée gardent leurs spirales d'encre.
-PUPILLE = (0, 0, 1, 255)
+# L'intérieur de la bouche a aussi sa couleur à lui (#3f3f75) : #3f3f74 sert aussi d'ombre aux éclaboussures des images vertes, jamais teintes.
+PUPILLE, BOUCHE, MOUTH_IN = (0, 0, 1, 255), (0x3f, 0x3f, 0x75, 255), (0x3f, 0x3f, 0x74, 255)
 def pupilles(f):
-    g = [row[:] for row in f]
+    g = [[BOUCHE if p == MOUTH_IN else p for p in row] for row in f]
     for e in eyes_of(f):
         for x, y in e: g[y][x] = PUPILLE
     for e in white_eyes(f):

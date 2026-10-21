@@ -146,6 +146,7 @@ const WALL_OVER = 22, WALL_SLIDE = 380; let wallV = 0, wallSide = 1, wallEnd = 0
 // (1 = deux fois plus longue, négatif = rentrée). L'image déformée a DEF_UP lignes de plus en haut, prises sur la marge de la fenêtre.
 let wallDef = 0, wallDefV = 0;
 const DEF_UP = 24, DEF_BASE = new Map(), DEF_CACHE = new Map();
+Apparence.quandElleChange(() => DEF_CACHE.clear());          // les images déformées gardées ont les couleurs de l'ancienne apparence
 function wallShape(on) {
   const base = DEF_BASE.get(img.src) || img.src, D = SHEET_DATA[style];
   const f = (D.bySrc || (D.bySrc = new Map(D.frames.map(f => [f.src, f])))).get(base);

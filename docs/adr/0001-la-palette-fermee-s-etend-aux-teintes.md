@@ -6,4 +6,4 @@ Un Bidule n'utilise que les couleurs de sa fiche (`moodboard/style-bidules.md`),
 
 - Ajouter une teinte, c'est ajouter des couleurs à la palette : même décision qu'une nouvelle couleur, avec la planche à l'appui.
 - Les teintes de `dist/js/apparence.js` sont provisoires tant que la planche n'est pas validée (#72).
-- Les pupilles ont leur propre couleur dans la feuille (`#000001`) pour être reconnues sans toucher au contour.
+- Les pupilles (`#000001`) et l'intérieur de la bouche (`#3f3f75`) ont leur propre couleur dans la feuille, pour être reconnus sans toucher au contour ni à l'ombre des éclaboussures vertes (`#3f3f74`).

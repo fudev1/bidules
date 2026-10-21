@@ -9,7 +9,8 @@
 # Pour simuler des commandes lentes (la lecture des journaux) : window.DELAI = {sessions: 2000}, en ms, avant le chargement de la page (addInitScript).
 # Les appels aux commandes Rust (hors "log") et les déplacements de la fenêtre (setPosition, setSize) sont gardés dans CALLS ; LISTEN[nom] liste les fonctions qui écoutent un événement, pour en simuler un :
 #   LISTEN["bonbon-clic"].forEach(f => f({payload: 1}))
-# L'apparence de la limace : await Apparence.appliquer({corps: "rose", cheveux: "roux", pupilles: "brun", bouche: "rouge"}) ; {} pour l'apparence d'origine (teintes : Apparence.TEINTES).
+# L'apparence de la limace : await Apparence.appliquer({corps: "rose", cheveux: "roux", pupilles: "brun", bouche: "rouge", motif: "pois", motifTeinte: "blanc"}) ;
+#   {} pour l'apparence d'origine (teintes : Apparence.TEINTES ; motifs : Apparence.MOTIFS, motifTeinte est une teinte du corps, absente : celle du motif).
 # La souris : T.window.cursorPosition = async () => ({x: ..., y: ...}), l'horloge la relit toute seule.
 import os, sys
 DIST = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "dist")

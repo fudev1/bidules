@@ -9,11 +9,13 @@ const hair = {px:null, a:0, v:0, pose:2, shock:0, last:null, cache:new Map()};
 const IMG_SRC = Object.getOwnPropertyDescriptor(HTMLImageElement.prototype, "src");
 let logicalSrc = "";
 Object.defineProperty(img, "src", {get() { return logicalSrc || IMG_SRC.get.call(img); }, set(v) { logicalSrc = v; hairPaint(); }});
+// une nouvelle apparence : les cheveux reprennent leurs pixels d'origine (hair.px0) aux nouvelles couleurs (hair.px), et les images coiffées sont refaites
+Apparence.quandElleChange(() => { if (hair.px0) hair.px = Apparence.teindreCheveux(hair.px0); hair.cache.clear(); hairPaint(); });
 async function hairLoad() {
   if (hair.px || hair.loading || !cheveux) return; hair.loading = true;
   const im = new Image(); im.src = "persos/limace/cheveux-poses.png"; await im.decode();
   const cv = document.createElement("canvas"); cv.width = im.width; cv.height = im.height; const g = cv.getContext("2d"); g.drawImage(im, 0, 0);
-  hair.px0 = g.getImageData(0, 0, im.width, im.height).data; hair.px = hair.px0; hair.pw = im.width; Apparence.cheveuxTeints();
+  hair.px0 = g.getImageData(0, 0, im.width, im.height).data; hair.px = Apparence.teindreCheveux(hair.px0); hair.pw = im.width;
 }
 // le sommet de la tête d'une image de la feuille : au-dessus des yeux (l'encre loin du bord du corps), le milieu de la ligne du haut ; null sans corps
 function hairAnchor(f) {
