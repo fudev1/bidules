@@ -225,3 +225,35 @@ test("revenir à l'apparence d'origine rend la feuille pixel pour pixel", async 
   assert.deepEqual(r, {diff: 0, faux: 0});
   await page.close();
 });
+
+// Enregistrement : le panneau envoie l'apparence (événement « apparence »), l'app la garde (simulée dans la page de test) et la rend au lancement
+const envoyer = (page, app) => page.evaluate(a => Promise.all(LISTEN.apparence.map(f => f({payload: a}))), app);
+test("l'apparence choisie dans le panneau revient après un rechargement", async () => {
+  const page = await sim.ouvrir();
+  await page.waitForFunction(() => SHEET_DATA.limace);
+  await envoyer(page, {corps: "rose", cheveux: "roux"});
+  await page.reload({waitUntil: "domcontentloaded"});
+  await page.waitForFunction(() => chosen && SHEET_DATA.limace);
+  assert.deepEqual(await page.evaluate(() => Apparence.courante), {corps: "rose", cheveux: "roux"});
+  const vu = await couleursAffichees(page, "repos");
+  for (const c of ROSE) assert.ok(vu.includes(c), `ton ${c} absent après rechargement`);
+  assert.deepEqual(page.erreurs, []);
+  await page.close();
+});
+
+test("« Remettre d'origine » rend la limace bleue, aussi au lancement suivant", async () => {
+  const page = await sim.ouvrir();
+  await page.waitForFunction(() => SHEET_DATA.limace);
+  await envoyer(page, {corps: "rose", pupilles: "brun"});
+  await envoyer(page, {});
+  let vu = await couleursAffichees(page, "repos");
+  for (const c of BLEU) assert.ok(vu.includes(c), `bleu ${c} absent`);
+  assert.ok(vu.includes("#000001") && !vu.includes("#5a3a22"), "pupilles pas revenues");
+  await page.reload({waitUntil: "domcontentloaded"});
+  await page.waitForFunction(() => chosen && SHEET_DATA.limace);
+  assert.deepEqual(await page.evaluate(() => Apparence.courante), {});
+  vu = await couleursAffichees(page, "repos");
+  for (const c of ROSE) assert.ok(!vu.includes(c), `rose ${c} revenu après rechargement`);
+  assert.deepEqual(page.erreurs, []);
+  await page.close();
+});

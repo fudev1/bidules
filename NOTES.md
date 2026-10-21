@@ -62,8 +62,10 @@ fait et ce qui reste à faire. La vision, l'installation et la stack sont dans l
   couleurs et recolorée ton pour ton, une fois au chargement ou au changement d'apparence (`dist/js/apparence.js`) ; le
   contour reste noir, et les verts de la nausée passent devant. Les pupilles ont leur couleur à elles dans la feuille
   (`#000001`, posée par `gen.py`). Les teintes sont provisoires, en attendant la planche validée (#72) ; la palette
-  fermée s'étend aux teintes proposées (`docs/adr/0001-la-palette-fermee-s-etend-aux-teintes.md`). Pas encore d'onglet
-  dans le panneau ni d'enregistrement : `Apparence.appliquer` dans la page de test.
+  fermée s'étend aux teintes proposées (`docs/adr/0001-la-palette-fermee-s-etend-aux-teintes.md`). Onglet « Apparence »
+  du panneau (#70) : aperçu en direct, une rangée de teintes par partie, « Remettre d'origine ». Le panneau envoie
+  l'apparence au Bidule (événement `apparence`) ; l'app la garde par Bidule dans `apparences.json` et la rend au
+  lancement (`lire_apparences`, `garder_apparences`, simulés dans la page de test). Les motifs (#71) restent à faire.
 
 ## À trancher
 

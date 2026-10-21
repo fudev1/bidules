@@ -17,6 +17,16 @@ async function chooseStyle(s) {
   sendState();
 }
 T.event.listen("style", e => chooseStyle(e.payload));
+// L'apparence de chaque Bidule (GLOSSARY.md), gardée par l'app (main.rs : apparences.json) : {limace:{corps:"rose", ...}}. Absente = l'apparence d'origine.
+// Le panneau l'envoie à chaque changement (aperçu en direct) ; {} pour « Remettre d'origine ». Seule la limace a des teintes pour l'instant.
+let apparences = {};
+T.event.listen("apparence", async e => {
+  const a = e.payload || {};
+  if (Object.keys(a).length) apparences[style] = a; else delete apparences[style];
+  T.core.invoke("garder_apparences", {apparences:JSON.stringify(apparences)}).catch(err => say("apparence : " + err));
+  if (style === "limace") await Apparence.appliquer(a);
+  sendState();
+});
 T.event.listen("haptique", e => { hapticOn = !!e.payload; garder(); sendState(); if (hapticOn) haptic("clic"); });
 // Demi-tour : avec un perso dessiné, on joue son animation "turn" au lieu de retourner l'image.
 function turnTo(nd, ready) {
@@ -99,6 +109,8 @@ img.addEventListener("contextmenu", async e => {
     let saved = null, E = {};
     try { saved = await T.core.invoke("lire_choix"); } catch (e) { say("choix : " + e); }
     try { E = JSON.parse(await T.core.invoke("lire_etat") || "{}") || {}; } catch (e) { say("etat : " + e); }
+    try { apparences = JSON.parse(await T.core.invoke("lire_apparences") || "{}") || {}; } catch (e) { say("apparence : " + e); }
+    if (apparences.limace) await Apparence.appliquer(apparences.limace);          // avant le chargement de la feuille : elle ne sera teinte qu'une fois
     // ce qu'on avait choisi la dernière fois (les anciens réglages du navigateur, s'il n'y a pas encore d'état gardé)
     if (E.parties) for (const k in E.parties) partsBy[k] = E.parties[k];
     if (typeof E.cheveux === "boolean") cheveux = E.cheveux;

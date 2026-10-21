@@ -22,7 +22,9 @@ STUB = """<script>
 window.LOG = []; window.CALLS = []; window.LISTEN = {}; window.DELAI = window.DELAI || {};
 const noop = async () => {};
 window.__TAURI__ = {
-  core: {invoke: async (c, a) => { if (c === "log") LOG.push([Date.now(), a.msg]); else CALLS.push([Date.now(), c, a]); if (DELAI[c]) await new Promise(r => setTimeout(r, DELAI[c])); return c === "prompt_times" ? [] : c === "lire_choix" ? "limace" : null; }},
+  core: {invoke: async (c, a) => { if (c === "log") LOG.push([Date.now(), a.msg]); else CALLS.push([Date.now(), c, a]); if (DELAI[c]) await new Promise(r => setTimeout(r, DELAI[c]));
+    if (c === "garder_apparences") localStorage.setItem("apparences", a.apparences);          // l'enregistrement de l'app, simulé : il survit au rechargement
+    return c === "prompt_times" ? [] : c === "lire_choix" ? "limace" : c === "lire_apparences" ? localStorage.getItem("apparences") : null; }},
   event: {emit: noop, listen: async (n, f) => { (LISTEN[n] = LISTEN[n] || []).push(f); return () => {}; }},
   dpi: {LogicalPosition: function (x, y) { this.x = x; this.y = y; }, LogicalSize: function (w, h) { this.w = w; this.h = h; }},
   window: {cursorPosition: async () => ({x: -5000, y: -5000}),

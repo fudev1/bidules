@@ -401,6 +401,22 @@ fn garder_choix(app: AppHandle, style: String) {
     let _ = std::fs::write(p, style);
 }
 
+// L'apparence de chaque Bidule (dist/js/demarrage.js), gardée comme le choix du Bidule : un texte JSON {limace:{corps:"rose", ...}} que l'app ne lit pas.
+fn apparences_path(app: &AppHandle) -> Option<PathBuf> {
+    app.path().app_data_dir().ok().map(|d| d.join("apparences.json"))
+}
+#[tauri::command]
+fn lire_apparences(app: AppHandle) -> Option<String> {
+    std::fs::read_to_string(apparences_path(&app)?).ok()
+}
+#[tauri::command]
+fn garder_apparences(app: AppHandle, apparences: String) {
+    let Some(p) = apparences_path(&app) else { return };
+    if let Some(d) = p.parent() { let _ = std::fs::create_dir_all(d); }
+    let tmp = p.with_extension("json.tmp");
+    if std::fs::write(&tmp, apparences).is_ok() { let _ = std::fs::rename(tmp, p); }
+}
+
 // L'état du Bidule, gardé d'un lancement à l'autre (dist/js/demarrage.js : garder) : humeur choisie, parties, caché ou non, réglages, sa place à l'écran.
 // Un texte JSON, que l'app ne lit pas : seule la fenêtre du Bidule s'en sert. Écrit à côté puis renommé, pour ne jamais laisser un fichier coupé.
 fn etat_path(app: &AppHandle) -> Option<PathBuf> {
@@ -872,7 +888,7 @@ async fn usage() -> Vec<Releves> { a_part(usage_lire).await }
 
 fn main() {
     tauri::Builder::default()
-        .invoke_handler(tauri::generate_handler![log, quit, cadre, hide_panel, prompt_times, contexte, icone, session_active, haptique, hooks_etat, brancher_hooks, debrancher_hooks, sessions, limites, usage, prompts_semaine, depenses, montrer_bidule, ouvrir_panneau, lire_choix, garder_choix, lire_etat, garder_etat, bonbon_poser, bonbon_retirer, bonbon_clic])
+        .invoke_handler(tauri::generate_handler![log, quit, cadre, hide_panel, prompt_times, contexte, icone, session_active, haptique, hooks_etat, brancher_hooks, debrancher_hooks, sessions, limites, usage, prompts_semaine, depenses, montrer_bidule, ouvrir_panneau, lire_choix, garder_choix, lire_apparences, garder_apparences, lire_etat, garder_etat, bonbon_poser, bonbon_retirer, bonbon_clic])
         .setup(|app| {
             #[cfg(target_os = "macos")]
             app.set_activation_policy(tauri::ActivationPolicy::Accessory);
