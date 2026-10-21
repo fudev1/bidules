@@ -219,6 +219,7 @@ main{flex:1;overflow:auto;padding:0 12px 12px}
       <p class="hint" id="apparenceHint">Une teinte pour chaque partie. Tout est disponible tout de suite.</p>
       <div class="ground apercu"><img id="apercu" class="mon" alt="Aperçu"></div>
       <div id="teintes" class="slots"></div>
+      <div id="motifs" class="slots"></div>
       <div class="row"><button class="btn" id="origine">Remettre d'origine</button></div>
     </section>
   </main>
@@ -237,6 +238,7 @@ const SLOTS = [["tete", "Tête", [["antennes", "Antennes"], ["cornes", "Cornes"]
   ["bras", "Bras", [["bras", "Petits bras"], ["pinces", "Pinces"]]], ["pattes", "Pattes", [["longues", "Longues"], ["palmees", "Palmées"]]],
   ["dos", "Dos", [["ailes", "Ailes"], ["fourrure", "Fourrure"]]], ["queue", "Queue", [["touffue", "Touffue"], ["lezard", "Lézard"]]]];
 const PARTIES = [["corps", "Corps"], ["cheveux", "Cheveux"], ["pupilles", "Pupilles"], ["bouche", "Intérieur de la bouche"]];          // la première teinte de chaque partie est celle d'origine
+const MOTIF_NOM = {rayures:"Rayures", pois:"Pois", coeurs:"Cœurs", vache:"Vache"};
 const $ = id => document.getElementById(id);
 let st = {mood:null, moodMode:"auto", moodReason:"", style:"limace", partsBy:{classique:{tete:"antennes", pattes:"longues", bras:"bras", queue:"touffue"}, ...Object.fromEntries(Object.keys(MONSTRES).map(id => [id, {}])), limace:{}, candy:{}}, thumb:""};
 const send = (ev, payload) => { if (T) T.event.emit(ev, payload); else console.log(ev, payload); };
@@ -268,6 +270,11 @@ function render() {
   $("origine").disabled = !teintes || !Object.keys(app).length;
   $("teintes").innerHTML = teintes ? PARTIES.map(([p, label]) => `<div class="slot"><b>${label}</b><div class="teintes">${Object.entries(teintes[p]).map(([nom, tons], i) =>
     `<button class="teinte ${(app[p] || (i ? "" : nom)) === nom ? "on" : ""}" data-teinte="${p}:${nom}" title="${nom}" aria-label="${label} : ${nom}" style="background:${tons[tons.length > 1 ? 1 : 0]}"></button>`).join("")}</div></div>`).join("") : "";
+  // les motifs du corps (sans motif, ou l'un d'eux), puis la deuxième teinte, celle du dessin (prise parmi les teintes du corps, par défaut celle du motif)
+  const motifs = teintes && st.motifs, mt = app.motif && motifs && (app.motifTeinte || motifs[app.motif]);
+  $("motifs").innerHTML = motifs ? `<div class="slot"><b>Motif</b><div class="chips">${[["", "Aucun"], ...Object.keys(motifs).map(m => [m, MOTIF_NOM[m] || m])].map(([m, nom]) =>
+    `<button class="chip ${(app.motif || "") === m ? "on" : ""}" data-motif="${m}">${nom}</button>`).join("")}</div></div>` + (mt ? `<div class="slot"><b>Teinte du motif</b><div class="teintes">${Object.entries(teintes.corps).map(([nom, tons]) =>
+    `<button class="teinte ${mt === nom ? "on" : ""}" data-motifteinte="${nom}" title="${nom}" aria-label="Teinte du motif : ${nom}" style="background:${tons[1]}"></button>`).join("")}</div></div>` : "") : "";
   placePill();          // au cas où le panneau était caché au chargement (onglets pas encore mesurés)
 }
 // La pastille jaune se pose sous l'onglet choisi, et glisse de l'un à l'autre (sans glisser à l'ouverture du panneau).
@@ -561,6 +568,8 @@ document.addEventListener("click", e => {
   else if (b.dataset.part) send("evo", "part:" + b.dataset.part);
   else if (b.dataset.mood) send("mood", b.dataset.mood);
   else if (b.dataset.teinte) { const [p, nom] = b.dataset.teinte.split(":"); send("apparence", {...st.apparence, [p]:nom}); }          // le Bidule l'applique, la garde et renvoie son état (aperçu)
+  else if (b.dataset.motif !== undefined) { const {motif, motifTeinte, ...a} = st.apparence || {}; send("apparence", b.dataset.motif ? {...a, motif:b.dataset.motif} : a); }          // nouveau motif : sa deuxième teinte par défaut
+  else if (b.dataset.motifteinte) send("apparence", {...st.apparence, motifTeinte:b.dataset.motifteinte});
   else if (b.id === "origine") send("apparence", {});
   else if (b.id === "random") send("evo", "evo:random");
   else if (b.id === "reset") send("evo", "evo:reset");
