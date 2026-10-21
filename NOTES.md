@@ -64,6 +64,10 @@ fait et ce qui reste à faire. La vision, l'installation et la stack sont dans l
   (`#000001`, posée par `gen.py`). Les teintes sont provisoires, en attendant la planche validée (#72) ; la palette
   fermée s'étend aux teintes proposées (`docs/adr/0001-la-palette-fermee-s-etend-aux-teintes.md`). Pas encore d'onglet
   dans le panneau ni d'enregistrement : `Apparence.appliquer` dans la page de test.
+- Motifs du corps (#71) : rayures, pois, cœurs, vache (`Apparence.appliquer({motif, motifTeinte})`). Posés seulement
+  sur les pixels du corps, fixes dans l'image 64 × 64 (ils ne suivent pas la déformation) ; fond = teinte du corps,
+  dessin = deuxième teinte (une teinte du corps ; par défaut blanc, blanc, rose, noir doux), qui reprend le ton du pixel
+  recouvert. La nausée passe devant. L'icône le montre aussi ; la goutte tenue (dessinée par le code) ne l'a pas encore.
 
 ## À trancher
 

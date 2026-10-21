@@ -225,3 +225,59 @@ test("revenir à l'apparence d'origine rend la feuille pixel pour pixel", async 
   assert.deepEqual(r, {diff: 0, faux: 0});
   await page.close();
 });
+
+// Motifs : on lit les pixels d'une image affichée avec leur position
+async function pixelsAffiches(page, tag, i = 0) {
+  return page.evaluate(async ([tag, i]) => {
+    Horloge.arreter(); img.src = SHEET_DATA.limace.tags[tag][i].src;
+    const im = new Image(); im.src = IMG_SRC.get.call(img); await im.decode();
+    const cv = document.createElement("canvas"); cv.width = cv.height = 64; const g = cv.getContext("2d"); g.drawImage(im, 0, 0);
+    const d = g.getImageData(0, 0, 64, 64).data, px = [];
+    for (let k = 0; k < d.length; k += 4) px.push(d[k + 3] ? "#" + [d[k], d[k + 1], d[k + 2]].map(v => v.toString(16).padStart(2, "0")).join("") : "");
+    return px;
+  }, [tag, i]);
+}
+const NOIR_DOUX = ["#7a7a90", "#4e4e62", "#34343f"];
+
+test("un motif n'est posé que sur le corps et garde ses ombres", async () => {
+  const page = await sim.ouvrir();
+  await page.waitForFunction(() => SHEET_DATA.limace);
+  const avant = await pixelsAffiches(page, "repos");
+  for (const motif of ["rayures", "pois", "coeurs", "vache"]) {
+    await page.evaluate(m => Apparence.appliquer({corps: "rose", motif: m, motifTeinte: "noir doux"}), motif);
+    const apres = await pixelsAffiches(page, "repos");
+    let dessin = 0;
+    const tons = new Set();
+    for (let k = 0; k < 64 * 64; k++) {
+      const o = BLEU.indexOf(avant[k]);
+      if (o < 0) { assert.equal(apres[k], avant[k], `${motif} : pixel hors du corps changé en ${k}`); continue; }
+      const n = NOIR_DOUX.indexOf(apres[k]);
+      if (n >= 0) { dessin++; tons.add(n); assert.equal(n, o, `${motif} : le dessin ne reprend pas l'ombre en ${k}`); }
+      else assert.equal(apres[k], ROSE[o], `${motif} : fond pas à la teinte du corps en ${k}`);
+    }
+    assert.ok(dessin > 20, `${motif} : presque pas de dessin (${dessin})`);
+    assert.ok(tons.size >= 2, `${motif} : le dessin n'a qu'un ton`);
+  }
+  assert.deepEqual(page.erreurs, []);
+  await page.close();
+});
+
+test("chaque motif a une deuxième teinte par défaut", async () => {
+  const page = await sim.ouvrir();
+  await page.waitForFunction(() => SHEET_DATA.limace);
+  await page.evaluate(() => Apparence.appliquer({motif: "vache"}));
+  const vu = await pixelsAffiches(page, "repos");
+  assert.ok(NOIR_DOUX.some(c => vu.includes(c)), "la vache n'est pas noire par défaut");
+  await page.close();
+});
+
+test("la nausée passe devant le motif, et sans motif rien ne change", async () => {
+  const page = await sim.ouvrir();
+  await page.waitForFunction(() => SHEET_DATA.limace);
+  const nausee = await pixelsAffiches(page, "nausee"), repos = await pixelsAffiches(page, "repos");
+  await page.evaluate(() => Apparence.appliquer({motif: "pois"}));
+  assert.deepEqual(await pixelsAffiches(page, "nausee"), nausee);
+  await page.evaluate(() => Apparence.appliquer({motif: null}));
+  assert.deepEqual(await pixelsAffiches(page, "repos"), repos);
+  await page.close();
+});
