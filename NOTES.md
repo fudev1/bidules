@@ -113,6 +113,13 @@ Décidé le 22 octobre 2026. La spec est l'issue #76, les étapes « Jeu 1 » à
 
 ## Fait
 
+- Jeu 2 (#78) : les besoins, la maladie et le squelette. Une faim (de 0 à 100) monte avec le temps où l'app tourne
+  (plafonné à chaque passage : l'app fermée ou en veille ne compte pas) et avec les tokens (sauf ceux du premier relevé,
+  faits app fermée) ; chaque repas (bonbon, fichier déposé) l'enlève en partie. Faim haute : il est ronchon (humeur
+  devinée). À 100 il tombe malade : vaseux et corps vert pâle (la limace) ; il guérit quand la faim redescend, sinon,
+  malade 6 h, il devient un squelette (corps couleur os), part dans la collection, puis un nouvel œuf éclot (pas encore
+  dessiné : il se reforme et repart à zéro). Le temps malade compte dans les stats. Besoins et collection gardés dans
+  `etat.json` ; seuils et vitesses dans `REGLAGES.besoins`. Le panneau montre la faim, l'étape et la collection.
 - Jeu 1 (#77) : les stats de la saison. Repas (bonbon de Candy, fichier déposé), secousses, bonnes habitudes (pause de
   20 min à 2 h entre deux prompts), soirées tardives (un prompt entre 20 h et 7 h, une par soirée), temps de travail
   (même règle que le panneau) et tokens (entrée + sortie, sans le cache) montent ; temps malade et mini-jeux restent à 0.
@@ -428,7 +435,7 @@ Décidé le 22 octobre 2026. La spec est l'issue #76, les étapes « Jeu 1 » à
 - Sauvegarder aussi les pièces et la collection, quand elles existeront (dans `etat.json`, voir « Fait »).
 - Fichier "maître" des sprints, lu au démarrage.
 - Œuf et éclosion en début de sprint, Bidule figé dans la collection en fin de sprint.
-- Le jeu (récompenses, besoins, évolution) : les étapes « Jeu 2 » à « Jeu 6 » (#78 à #82), voir plus haut. Jeu 1 est fait.
+- Le jeu (récompenses, besoins, évolution) : les étapes « Jeu 3 » à « Jeu 6 » (#79 à #82), voir plus haut. Jeu 1 et Jeu 2 sont faits.
 - Parties sur la limace : points d'accroche sur chaque image (voir la spec).
 - Chambre, accessoires.
 

@@ -23,6 +23,8 @@ const Apparence = (() => {
     bouche: {prune:["#3f3f75"], rose:["#a8476e"], rouge:["#9c2b3a"], brun:["#5e3a3a"]},
   };
   const ORIGINE = {corps:"bleu", cheveux:"encre", pupilles:"noir", bouche:"prune"};
+  // l'état du jeu (jeu.js : besoins) passe devant la teinte et le motif du corps, sans toucher à l'apparence gardée ; à part de TEINTES, que le panneau propose
+  const ETATS = {malade:["#d4e8b0", "#a8c878", "#7c9a52"], squelette:["#f4f0e0", "#d8d0b8", "#a8a088"]};
   // les motifs du corps : nom affiché, deuxième teinte par défaut (une teinte du corps, celle du dessin ; le fond reste la teinte du corps)
   // et dessin : (x, y) dans l'image 64 x 64 -> vrai si le pixel est dans le dessin. Fixes dans l'image, ils ne suivent pas la déformation.
   const COEUR = [".x.x.", "xxxxx", "xxxxx", ".xxx.", "..x.."];
@@ -34,7 +36,7 @@ const Apparence = (() => {
     vache: {nom:"Vache", teinte:"noir doux", dessin:(x, y) => TACHES.some(([cx, cy, rx, ry]) => ((x - cx) / rx) ** 2 + ((y - cy) / ry) ** 2 + 0.25 * Math.sin(x * 1.7 + y) <= 1)},
   };
   const rgb = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16)), cleCouleur = (r, g, b) => r << 16 | g << 8 | b;
-  let choisie = {}, chargement = 0;
+  let choisie = {}, etat = "", chargement = 0;
   const imagesTeintes = new Map();          // image de la feuille -> image teinte (absente : la même)
   const abonnes = [];
   // les remplacements de couleurs de quelques parties pour une apparence : clé de la couleur d'origine -> ton ; vide pour l'apparence d'origine
@@ -69,7 +71,8 @@ const Apparence = (() => {
   // Puis chaque abonné refait ce qu'il avait gardé.
   async function preparer() {
     const D = SHEET_DATA.limace; if (!D) return;
-    const n = ++chargement, remp = remplacements(choisie, ["corps", "pupilles", "bouche"]), motif = motifPose(choisie);
+    const n = ++chargement, remp = remplacements(choisie, ["corps", "pupilles", "bouche"]), motif = etat ? null : motifPose(choisie);
+    if (etat) TEINTES.corps[ORIGINE.corps].forEach((h, k) => { const [r, g, b] = rgb(h); remp.set(cleCouleur(r, g, b), rgb(ETATS[etat][k])); });
     for (const [k, f] of D.frames.entries()) {
       if (k % 40 === 39) { await new Promise(r => setTimeout(r)); if (n !== chargement) return; }
       const g = f.cv.getContext("2d", {willReadFrequently:true});
@@ -91,6 +94,7 @@ const Apparence = (() => {
     // un ton du corps dessiné par le code (k : 0 lumière, 1 base, 2 ombre), au pixel (x, y) de l'image 64 x 64 : la teinte du corps, ou le motif ;
     // sans (x, y) : la teinte du corps seule
     tonDuCorps(k, x, y) {
+      if (etat) return rgb(ETATS[etat][k]);
       const motif = MOTIFS[choisie.motif];
       if (motif && x !== undefined && motif.dessin(x, y)) return rgb((TEINTES.corps[choisie.motifTeinte] || TEINTES.corps[motif.teinte])[k]);
       return rgb((TEINTES.corps[choisie.corps] || TEINTES.corps[ORIGINE.corps])[k]);
@@ -98,6 +102,8 @@ const Apparence = (() => {
     // apparence : {corps, cheveux, pupilles, bouche}, chaque valeur un nom de TEINTES ; une partie absente garde sa teinte d'origine.
     // motif : un nom de MOTIFS (absent ou null : aucun motif) ; motifTeinte : sa deuxième teinte, un nom de TEINTES.corps (absente : celle du motif)
     appliquer(apparence) { choisie = Object.assign({}, apparence || {}); return preparer(); },
+    // "malade", "squelette" ou "" (sa teinte)
+    etat(e) { if (e === etat) return; etat = e; return preparer(); },
     get courante() { return Object.assign({}, choisie); },
   };
 })();

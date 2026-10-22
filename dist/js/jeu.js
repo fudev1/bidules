@@ -6,6 +6,9 @@ const REGLAGES = {
   travail: {ecart:1200, reprise:300},           // temps de travail (s) : les écarts de moins de 20 min entre deux prompts, plus 5 min par reprise (comme le panneau)
   pause: {min:1200, max:7200},                  // bonne habitude : une pause de 20 min à 2 h entre deux prompts
   releve: {prompts:60000, tokens:300000},       // ms entre deux relevés des journaux
+  // la faim, de 0 à malade : elle monte avec le temps de l'app (par heure) et les tokens (par million) ; un repas l'enlève.
+  // À haut il a faim, à malade il tombe malade ; il guérit sous guerit ; malade plus de squelette secondes, il devient un squelette.
+  besoins: {pas:10000, parHeure:10, parMillionTokens:10, repas:35, haut:60, malade:100, guerit:50, squelette:3600 * 6},
   // la valeur d'une barre pleine dans le tableau du panneau, pour une saison ; servira aussi à trouver la stat dominante
   plein: {repas:40, secousses:20, malade:3600 * 24, jeux:20, habitudes:30, tard:6, travail:3600 * 60, tokens:20e6},
 };
@@ -25,6 +28,50 @@ function saisonCourante() {
 }
 function saisonFin() { const d = saisonDebut(); d.setDate(d.getDate() + REGLAGES.saison.jours); return d; }
 function compter(nom, n = 1) { saisonCourante(); stats[nom] += n; garder(); sendState(false); }
+// Les besoins (gardés dans etat.json) : malade = null s'il va bien, sinon les secondes passées malade. collection : les squelettes, {style, apparence, quand}.
+let besoins = {faim:0, malade:null}, collection = [], besoinsVu = 0, tokensLus = false;
+function etapeBesoins() { return besoins.malade !== null ? "malade" : besoins.faim >= REGLAGES.besoins.haut ? "faim" : ""; }
+// la tâche « besoins » : l'écart avec son dernier passage, plafonné, pour que l'app fermée ou en veille ne compte pas
+function pasBesoins() {
+  const now = Date.now(), s = besoinsVu ? Math.min(now - besoinsVu, 2 * REGLAGES.besoins.pas) / 1000 : 0;
+  besoinsVu = now; avancerBesoins(s);
+}
+// s secondes de vie, app ouverte
+function avancerBesoins(s) {
+  const B = REGLAGES.besoins, avant = etapeBesoins();
+  besoins.faim = Math.min(B.malade, besoins.faim + s * B.parHeure / 3600);
+  if (besoins.malade === null && besoins.faim >= B.malade) besoins.malade = 0;
+  else if (besoins.malade !== null) { besoins.malade += s; compter("malade", s); }
+  if (besoins.malade >= B.squelette) return squelette();
+  changerEtape(avant);
+}
+function nourrir() {
+  const B = REGLAGES.besoins, avant = etapeBesoins();
+  besoins.faim = Math.max(0, besoins.faim - B.repas);
+  if (besoins.malade !== null && besoins.faim <= B.guerit) besoins.malade = null;
+  compter("repas"); changerEtape(avant);
+}
+function changerEtape(avant) {
+  const e = etapeBesoins();
+  if (e !== avant) {
+    say("besoins : " + (e || "bien"));
+    if (e === "faim" && avant === "") bubble("J'ai faim !", 1400);
+    if (e === "malade") bubble("Je suis malade...", 1600);
+    if (avant === "malade") bubble("Ça va mieux !", 1400);
+    Apparence.etat(e === "malade" ? "malade" : "");
+  }
+  garder(); sendState(false);
+}
+// Malade trop longtemps : il devient un squelette et part dans la collection, puis un nouvel œuf éclot (pas encore dessiné : il se reforme).
+function squelette() {
+  collection.push({style, apparence:apparences[style] || {}, quand:Date.now()});
+  besoins = {faim:0, malade:null}; say("il devient un squelette");
+  Apparence.etat("squelette"); bubble("...", 2000); garder(); sendState(false);
+  setTimeout(() => {
+    Apparence.etat(""); if (isSheet()) playInPlace("reforme");
+    bubble("Un nouvel œuf a éclos !", 2000);
+  }, 6000);
+}
 // les prompts arrivés depuis le dernier relevé (main.rs : prompt_times, ceux des 5 dernières heures)
 async function releverPrompts() {
   saisonCourante();
@@ -47,5 +94,7 @@ async function releverPrompts() {
 async function releverTokens() {
   const a = saisonCourante().getTime() / 1000;
   const n = ((await T.core.invoke("depenses")) || []).filter(x => x.heure >= a).reduce((s, x) => s + x.tokens[0] + x.tokens[1], 0);
-  if (n > stats.tokens) { stats.tokens = n; garder(); sendState(false); }
+  // la faim prend les tokens arrivés pendant que l'app tourne : pas ceux du premier relevé, faits app fermée
+  if (n > stats.tokens) { if (tokensLus) besoins.faim = Math.min(REGLAGES.besoins.malade, besoins.faim + (n - stats.tokens) / 1e6 * REGLAGES.besoins.parMillionTokens); stats.tokens = n; garder(); sendState(false); }
+  tokensLus = true;
 }

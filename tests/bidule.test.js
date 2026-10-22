@@ -395,3 +395,61 @@ test("les stats survivent à une relance et repartent à zéro à la saison suiv
   assert.deepEqual(page.erreurs, []);
   await page.close();
 });
+
+// Les besoins (jeu.js) : on avance le temps en donnant les secondes de vie à avancerBesoins
+test("la faim monte avec le temps de l'app et les tokens, pas app fermée, et un repas la fait baisser", async () => {
+  const page = await sim.ouvrir();
+  const r = await page.evaluate(async () => {
+    Horloge.arreter(); const B = REGLAGES.besoins, o = {};
+    besoins = {faim: 0, malade: null};
+    avancerBesoins(3600); o.uneHeure = besoins.faim;
+    besoinsVu = Date.now() - 8 * 3600e3; pasBesoins(); o.apresFermeture = besoins.faim - o.uneHeure;
+    window.DEPENSES = [{heure: Date.now() / 1000, tokens: [1e6, 1e6, 0, 0, 0]}];
+    tokensLus = false; stats.tokens = 0; await releverTokens(); o.premierReleve = besoins.faim;
+    window.DEPENSES[0].tokens = [2e6, 1e6, 0, 0, 0]; await releverTokens(); o.millionDePlus = besoins.faim - o.premierReleve;
+    nourrir(); o.repas = besoins.faim;
+    return {o, B};
+  });
+  assert.equal(r.o.uneHeure, r.B.parHeure);
+  assert.ok(r.o.apresFermeture <= 2 * r.B.pas / 1000 * r.B.parHeure / 3600 + 1e-9, "le temps app fermée compte");
+  assert.equal(r.o.premierReleve, r.o.uneHeure + r.o.apresFermeture);
+  assert.ok(Math.abs(r.o.millionDePlus - r.B.parMillionTokens) < 1e-9);
+  assert.ok(Math.abs(r.o.repas - Math.max(0, r.o.premierReleve + r.o.millionDePlus - r.B.repas)) < 1e-9);
+  assert.deepEqual(page.erreurs, []);
+  await page.close();
+});
+
+test("négligé, il a faim, tombe malade, guérit si on le soigne, sinon devient un squelette et un œuf arrive", async () => {
+  const page = await sim.ouvrir();
+  const r = await page.evaluate(async () => {
+    Horloge.arreter(); const B = REGLAGES.besoins, o = {}, h = s => s * 3600 / B.parHeure;
+    besoins = {faim: 0, malade: null}; collection = []; stats.malade = 0;
+    avancerBesoins(h(B.haut)); o.faim = [etapeBesoins(), (await guessMood())[0]];
+    avancerBesoins(h(B.malade - B.haut)); avancerBesoins(600);
+    o.malade = [etapeBesoins(), (await guessMood())[0], Apparence.tonDuCorps(1).join(), stats.malade];
+    nourrir(); nourrir(); o.gueri = [etapeBesoins(), Apparence.tonDuCorps(1).join()];
+    avancerBesoins(h(B.malade)); avancerBesoins(B.squelette);
+    o.squelette = [collection.length, collection[0].style, etapeBesoins(), besoins.faim, Apparence.tonDuCorps(1).join()];
+    return o;
+  });
+  assert.deepEqual(r.faim, ["faim", "ronchon"]);
+  assert.deepEqual(r.malade, ["malade", "vaseux", "168,200,120", 600]);
+  assert.deepEqual(r.gueri, ["", "99,155,255"]);
+  assert.deepEqual(r.squelette, [1, "limace", "", 0, "216,208,184"]);
+  await page.waitForFunction(() => Apparence.tonDuCorps(1).join() === "99,155,255", null, {timeout: 9000});
+  assert.deepEqual(page.erreurs, []);
+  await page.close();
+});
+
+test("les besoins et la collection survivent à une relance, et le temps malade arrive au panneau", async () => {
+  const page = await sim.ouvrir();
+  await page.evaluate(() => { Horloge.arreter(); T.event.emit = (n, p) => { if (n === "etat") window.ETAT = p.jeu; }; besoins = {faim: 0, malade: null}; collection = [{style: "limace", apparence: {}, quand: 1}]; avancerBesoins(3600 * REGLAGES.besoins.malade / REGLAGES.besoins.parHeure); avancerBesoins(60); });
+  await page.waitForFunction(() => CALLS.some(c => c[1] === "garder_etat" && JSON.parse(c[2].etat).besoins.malade === 60));
+  const etat = await page.evaluate(() => ETAT);
+  assert.deepEqual([etat.etape, etat.stats.malade, etat.collection], ["malade", 60, 1]);
+  await page.reload({waitUntil: "domcontentloaded"});
+  await page.waitForFunction(() => chosen);
+  assert.deepEqual(await page.evaluate(() => [besoins.malade, collection.length, Apparence.tonDuCorps(1).join()]), [60, 1, "168,200,120"]);
+  assert.deepEqual(page.erreurs, []);
+  await page.close();
+});

@@ -402,12 +402,15 @@ $("cout").addEventListener("change", e => { if (e.target.id === "abo") { try { l
 // Les stats de la saison (jeu.js), envoyées par le Bidule. Niveaux et pièces à zéro tant qu'ils n'existent pas.
 const STATS = [["repas", "Repas"], ["secousses", "Secousses"], ["malade", "Temps malade"], ["jeux", "Mini-jeux"], ["habitudes", "Bonnes habitudes"],
   ["tard", "Soirées tardives"], ["travail", "Temps de travail"], ["tokens", "Tokens"]];
+const ETAPES = {"":"Va bien", faim:"A faim", malade:"Malade"};
 function statTxt(k, v) { return k === "travail" || k === "malade" ? hm(v / 60) : k === "tokens" && v >= 1000 ? tokensTxt(v) : v; }
 function renderSaison() {
   const j = st.jeu; $("saison").hidden = !j;
   if (!j) return;
   $("saison").innerHTML = `<h3>Cette saison</h3><p>Jusqu'au ${new Date(j.fin - 1).toLocaleDateString("fr-FR", {weekday:"long", day:"numeric", month:"long"})}</p>`
     + `<div class="compteurs"><span>Niveau du Bidule<b>0</b></span><span>Ton niveau<b>0</b></span><span>Pièces<b>0</b></span></div>`
+    + `<div class="stats"><span>Faim</span><u><i style="width:${Math.min(100, j.besoins.faim / j.reglages.malade * 100)}%"></i></u><b>${ETAPES[j.etape]}</b></div>`
+    + `<p>Collection : ${j.collection ? j.collection + (j.collection > 1 ? " squelettes" : " squelette") : "vide"}</p>`
     + `<div class="stats">${STATS.map(([k, nom]) => `<span>${nom}</span><u><i style="width:${Math.min(100, j.stats[k] / j.plein[k] * 100)}%"></i></u><b>${statTxt(k, j.stats[k])}</b>`).join("")}</div>`;
 }
 // La bulle du Bidule, dans l'en-tête : ce que fait Claude (toutes sessions confondues), depuis quand, et le contexte de la session en vue

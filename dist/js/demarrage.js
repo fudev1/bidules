@@ -1,11 +1,11 @@
 // L'état gardé, le choix du Bidule, l'évolution, le menu du clic droit, et le démarrage (la boucle unique, voir horloge.js).
-// L'état gardé d'un lancement à l'autre (main.rs : etat.json) : l'humeur choisie, les parties, les cheveux, caché ou non, le toucher, les stats de la saison (jeu.js), et sa place
+// L'état gardé d'un lancement à l'autre (main.rs : etat.json) : l'humeur choisie, les parties, les cheveux, caché ou non, le toucher, les stats de la saison, les besoins et la collection (jeu.js), et sa place
 // à l'écran (il revient au sol, au même endroit). Écrit une demi-seconde après chaque changement ; sa place, toutes les 5 s si elle a changé.
 let gardeT = 0, gardeX = null;
 function garder() {
   clearTimeout(gardeT);
   gardeT = setTimeout(() => { if (mode === "walk") gardeX = Math.round(x);
-    T.core.invoke("garder_etat", {etat:JSON.stringify({humeur:moodMode, parties:partsBy, cheveux, cache:bidHidden, haptique:hapticOn, x:gardeX, stats})}).catch(e => say("etat : " + e)); }, 500);
+    T.core.invoke("garder_etat", {etat:JSON.stringify({humeur:moodMode, parties:partsBy, cheveux, cache:bidHidden, haptique:hapticOn, x:gardeX, stats, besoins, collection})}).catch(e => say("etat : " + e)); }, 500);
 }
 // Le Bidule choisi : chargé, affiché, et gardé pour le prochain lancement (main.rs : garder_choix).
 async function chooseStyle(s) {
@@ -110,6 +110,9 @@ img.addEventListener("contextmenu", async e => {
     try { saved = await T.core.invoke("lire_choix"); } catch (e) { say("choix : " + e); }
     try { E = JSON.parse(await T.core.invoke("lire_etat") || "{}") || {}; } catch (e) { say("etat : " + e); }
     try { apparences = JSON.parse(await T.core.invoke("lire_apparences") || "{}") || {}; } catch (e) { say("apparence : " + e); }
+    if (E.besoins) besoins = {...besoins, ...E.besoins};
+    if (Array.isArray(E.collection)) collection = E.collection;
+    if (besoins.malade !== null) Apparence.etat("malade");
     if (apparences.limace) await Apparence.appliquer(apparences.limace);          // avant le chargement de la feuille : elle ne sera teinte qu'une fois
     // ce qu'on avait choisi la dernière fois (les anciens réglages du navigateur, s'il n'y a pas encore d'état gardé)
     if (E.parties) for (const k in E.parties) partsBy[k] = E.parties[k];
@@ -131,6 +134,7 @@ img.addEventListener("contextmenu", async e => {
   Horloge.tache("icone", 40, () => Icone.pas(SHEET_DATA.limace, claudeWaits ? "intrigue" : claudeIdle ? "dort" : "crawl"), () => SHEET_DATA.limace && !bidHidden);          // la feuille a déjà le visage de l'humeur (moodTags)
   Horloge.tache("prompts", REGLAGES.releve.prompts, releverPrompts);
   Horloge.tache("tokens", REGLAGES.releve.tokens, releverTokens);
+  Horloge.tache("besoins", REGLAGES.besoins.pas, pasBesoins, () => chosen);
   Horloge.tache("garder", 5000, garder, () => chosen && mode === "walk" && Math.abs(Math.round(x) - gardeX) > 20);
   Horloge.demarrer(16, (nom, e) => say(nom + " : " + e));
   Fenetre.surErreur((quoi, e) => say(quoi + " : " + e));
