@@ -54,7 +54,7 @@ function penseStep() {
   const right = dir > 0, body = right ? PENSE_BODY.map((r, j) => j < 12 ? r : [...r].reverse().join("")) : PENSE_BODY;
   // le haut de sa tête dans l'image du moment : la bulle se pose juste au-dessus, les pastilles au-dessus de la tête
   const top = spriteTop(), hx = 24 + (right ? top.x : 63 - top.x) * 2;
-  pense.style.top = Math.max(0, 128 - 36 + 48 - (64 - top.y) * 2 - 6) + "px";
+  pense.style.top = Math.max(0, 128 - 36 + 48 - (64 - top.y) * 2 - 6 - 22) + "px";          // au-dessus des jauges (jeu.js)
   pense.style.left = Math.max(0, Math.min(176 - 56, right ? hx - 50 : hx - 6)) + "px"; pense.style.transformOrigin = right ? "90% 100%" : "10% 100%";
   paint(body, 0, 0); paint(f, 9, 2);
   pense.title = PENSE_LABEL[icon];
@@ -108,8 +108,8 @@ async function guessMood() {
   let start = lastT;
   for (let i = times.length - 1; i > 0; i--) { if (times[i] - times[i - 1] > 1200) break; start = times[i - 1]; }
   const sessionH = lastT && now - lastT < 1200 ? (lastT - start) / 3600 : 0;
-  if (besoins.malade !== null) return ["vaseux", "il est malade"];
-  if (besoins.faim >= REGLAGES.besoins.haut) return ["ronchon", "il a faim"];
+  if (besoins.malade) return ["vaseux", "il est malade"];
+  if (etapeBesoins()) return ["ronchon", "il a " + etapeBesoins()];
   if (h >= 20 || h < 7) return ["vaseux", "il est tard"];
   if (sessionH >= 3) return ["vaseux", `tu travailles depuis ${Math.floor(sessionH)} h sans vraie pause`];
   if (busy >= 4) return ["stresse", `${busy} sessions de Claude en même temps`];

@@ -110,9 +110,9 @@ img.addEventListener("contextmenu", async e => {
     try { saved = await T.core.invoke("lire_choix"); } catch (e) { say("choix : " + e); }
     try { E = JSON.parse(await T.core.invoke("lire_etat") || "{}") || {}; } catch (e) { say("etat : " + e); }
     try { apparences = JSON.parse(await T.core.invoke("lire_apparences") || "{}") || {}; } catch (e) { say("apparence : " + e); }
-    if (E.besoins) besoins = {...besoins, ...E.besoins};
+    if (E.besoins && "vie" in E.besoins) besoins = {...besoins, ...E.besoins};
     if (Array.isArray(E.collection)) collection = E.collection;
-    if (besoins.malade !== null) Apparence.etat("malade");
+    if (besoins.malade) Apparence.etat("malade");
     if (apparences.limace) await Apparence.appliquer(apparences.limace);          // avant le chargement de la feuille : elle ne sera teinte qu'une fois
     // ce qu'on avait choisi la dernière fois (les anciens réglages du navigateur, s'il n'y a pas encore d'état gardé)
     if (E.parties) for (const k in E.parties) partsBy[k] = E.parties[k];
@@ -135,6 +135,7 @@ img.addEventListener("contextmenu", async e => {
   Horloge.tache("prompts", REGLAGES.releve.prompts, releverPrompts);
   Horloge.tache("tokens", REGLAGES.releve.tokens, releverTokens);
   Horloge.tache("besoins", REGLAGES.besoins.pas, pasBesoins, () => chosen);
+  Horloge.tache("jauges", 450, jaugesStep, () => chosen && !bidHidden);
   Horloge.tache("garder", 5000, garder, () => chosen && mode === "walk" && Math.abs(Math.round(x) - gardeX) > 20);
   Horloge.demarrer(16, (nom, e) => say(nom + " : " + e));
   Fenetre.surErreur((quoi, e) => say(quoi + " : " + e));

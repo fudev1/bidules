@@ -6,9 +6,11 @@ const REGLAGES = {
   travail: {ecart:1200, reprise:300},           // temps de travail (s) : les écarts de moins de 20 min entre deux prompts, plus 5 min par reprise (comme le panneau)
   pause: {min:1200, max:7200},                  // bonne habitude : une pause de 20 min à 2 h entre deux prompts
   releve: {prompts:60000, tokens:300000},       // ms entre deux relevés des journaux
-  // la faim, de 0 à malade : elle monte avec le temps de l'app (par heure) et les tokens (par million) ; un repas l'enlève.
-  // À haut il a faim, à malade il tombe malade ; il guérit sous guerit ; malade plus de squelette secondes, il devient un squelette.
-  besoins: {pas:10000, parHeure:10, parMillionTokens:10, repas:35, haut:60, malade:100, guerit:50, squelette:3600 * 6},
+  // trois jauges de 100 (plein, il va bien) à 0. La faim descend avec le temps de l'app (faim par heure) et les tokens (par million) ; un repas la remplit.
+  // La soif descend quand tu travailles (soif par heure) et remonte pendant tes pauses (boit par heure, après pause secondes sans prompt).
+  // Sous bas il a faim ou soif ; une jauge à 0 le rend malade, il guérit quand les deux repassent au-dessus de guerit.
+  // Malade, la vie se vide en squelette secondes, puis il devient un squelette ; sinon elle remonte (soin par heure).
+  besoins: {pas:10000, faim:10, parMillionTokens:10, repas:35, soif:20, boit:60, pause:600, bas:40, guerit:50, squelette:3600 * 6, soin:10},
   // la valeur d'une barre pleine dans le tableau du panneau, pour une saison ; servira aussi à trouver la stat dominante
   plein: {repas:40, secousses:20, malade:3600 * 24, jeux:20, habitudes:30, tard:6, travail:3600 * 60, tokens:20e6},
 };
@@ -28,10 +30,11 @@ function saisonCourante() {
 }
 function saisonFin() { const d = saisonDebut(); d.setDate(d.getDate() + REGLAGES.saison.jours); return d; }
 function compter(nom, n = 1) { saisonCourante(); stats[nom] += n; garder(); sendState(false); }
-// Les besoins (gardés dans etat.json) : malade = null s'il va bien, sinon les secondes passées malade ; essai : posé par l'onglet Tests, rien ne compte dans les stats.
+// Les besoins (gardés dans etat.json) : les trois jauges et malade ; essai : posé par l'onglet Tests, rien ne compte dans les stats.
 // collection : les squelettes, {style, apparence, quand} (essai : vrai pour ceux de l'onglet Tests).
-let besoins = {faim:0, malade:null}, collection = [], besoinsVu = 0, tokensLus = false;
-function etapeBesoins() { return besoins.malade !== null ? "malade" : besoins.faim >= REGLAGES.besoins.haut ? "faim" : ""; }
+const BESOINS_PLEINS = {faim:100, soif:100, vie:100, malade:false};
+let besoins = {...BESOINS_PLEINS}, collection = [], besoinsVu = 0, tokensLus = false;
+function etapeBesoins() { const B = REGLAGES.besoins; return besoins.malade ? "malade" : besoins.faim < B.bas ? "faim" : besoins.soif < B.bas ? "soif" : ""; }
 // la tâche « besoins » : l'écart avec son dernier passage, plafonné, pour que l'app fermée ou en veille ne compte pas
 function pasBesoins() {
   const now = Date.now(), s = besoinsVu ? Math.min(now - besoinsVu, 2 * REGLAGES.besoins.pas) / 1000 : 0;
@@ -39,17 +42,24 @@ function pasBesoins() {
 }
 // s secondes de vie, app ouverte
 function avancerBesoins(s) {
-  const B = REGLAGES.besoins, avant = etapeBesoins();
-  besoins.faim = Math.min(B.malade, besoins.faim + s * B.parHeure / 3600);
-  if (besoins.malade === null && besoins.faim >= B.malade) besoins.malade = 0;
-  else if (besoins.malade !== null) { besoins.malade += s; if (!besoins.essai) compter("malade", s); }
-  if (besoins.malade >= B.squelette) return squelette();
+  const B = REGLAGES.besoins, avant = etapeBesoins(), travaille = Date.now() / 1000 - stats.vu < B.pause;
+  besoins.faim = Math.max(0, besoins.faim - s * B.faim / 3600);
+  besoins.soif = Math.max(0, Math.min(100, besoins.soif + s * (travaille ? -B.soif : B.boit) / 3600));
+  if (besoins.malade) { besoins.vie -= s * 100 / B.squelette; if (!besoins.essai) compter("malade", s); }
+  else besoins.vie = Math.min(100, besoins.vie + s * B.soin / 3600);
+  guerir();
+  if (besoins.vie <= 0) return squelette();
   changerEtape(avant);
 }
+function guerir() {
+  const B = REGLAGES.besoins;
+  if (!besoins.malade && (besoins.faim <= 0 || besoins.soif <= 0)) besoins.malade = true;
+  else if (besoins.malade && besoins.faim >= B.guerit && besoins.soif >= B.guerit) besoins.malade = false;
+}
 function nourrir(compte = true) {
-  const B = REGLAGES.besoins, avant = etapeBesoins();
-  besoins.faim = Math.max(0, besoins.faim - B.repas);
-  if (besoins.malade !== null && besoins.faim <= B.guerit) besoins.malade = null;
+  const avant = etapeBesoins();
+  besoins.faim = Math.min(100, besoins.faim + REGLAGES.besoins.repas);
+  guerir();
   if (compte) compter("repas");
   changerEtape(avant);
 }
@@ -58,6 +68,7 @@ function changerEtape(avant) {
   if (e !== avant) {
     say("besoins : " + (e || "bien"));
     if (e === "faim" && avant === "") bubble("J'ai faim !", 1400);
+    if (e === "soif" && avant !== "malade") bubble("J'ai soif !", 1400);
     if (e === "malade") bubble("Je suis malade...", 1600);
     if (avant === "malade") bubble("Ça va mieux !", 1400);
     Apparence.etat(e === "malade" ? "malade" : "");
@@ -68,10 +79,10 @@ function changerEtape(avant) {
 // Malade trop longtemps : il devient un squelette et part dans la collection, puis un nouvel œuf éclot (pas encore dessiné : il se reforme).
 function squelette() {
   collection.push({style, apparence:apparences[style] || {}, quand:Date.now(), ...(besoins.essai && {essai:true})});
-  besoins = {faim:0, malade:null}; say("il devient un squelette");
+  besoins = {...BESOINS_PLEINS, vie:0}; say("il devient un squelette");
   Apparence.etat("squelette"); bubble("...", 2000); garder(); sendState(false);
   setTimeout(() => {
-    Apparence.etat(""); if (isSheet()) playInPlace("reforme");
+    besoins.vie = 100; Apparence.etat(""); if (isSheet()) playInPlace("reforme");
     bubble("Un nouvel œuf a éclos !", 2000);
   }, 6000);
 }
@@ -97,8 +108,8 @@ async function releverPrompts() {
 T.event.listen("besoins", e => {
   const B = REGLAGES.besoins, avant = etapeBesoins();
   if (e.payload === "nourrir") return nourrir(false);
-  if (e.payload === "zero") { besoins = {faim:0, malade:null}; collection = collection.filter(c => !c.essai); return changerEtape(avant); }
-  besoins = {faim:e.payload === "faim" ? B.haut : B.malade, malade:{faim:null, malade:0, squelette:B.squelette}[e.payload], essai:true};
+  if (e.payload === "zero") { besoins = {...BESOINS_PLEINS}; collection = collection.filter(c => !c.essai); return changerEtape(avant); }
+  besoins = {...BESOINS_PLEINS, ...{faim:{faim:B.bas / 2}, soif:{soif:B.bas / 2}, malade:{faim:0, malade:true}, squelette:{faim:0, malade:true, vie:0}}[e.payload], essai:true};
   if (e.payload === "squelette") squelette(); else changerEtape(avant);
 });
 // les tokens de la saison, entrée + sortie sans le cache (main.rs : depenses, par heure) ; jamais en baisse si Claude Code efface de vieux journaux
@@ -106,6 +117,22 @@ async function releverTokens() {
   const a = saisonCourante().getTime() / 1000;
   const n = ((await T.core.invoke("depenses")) || []).filter(x => x.heure >= a).reduce((s, x) => s + x.tokens[0] + x.tokens[1], 0);
   // la faim prend les tokens arrivés pendant que l'app tourne : pas ceux du premier relevé, faits app fermée
-  if (n > stats.tokens) { if (tokensLus) besoins.faim = Math.min(REGLAGES.besoins.malade, besoins.faim + (n - stats.tokens) / 1e6 * REGLAGES.besoins.parMillionTokens); stats.tokens = n; garder(); sendState(false); }
+  if (n > stats.tokens) { if (tokensLus) besoins.faim = Math.max(0, besoins.faim - (n - stats.tokens) / 1e6 * REGLAGES.besoins.parMillionTokens); stats.tokens = n; garder(); sendState(false); }
   tokensLus = true;
+}
+// Les jauges au-dessus de sa tête, en pixels : faim, soif, vie (une barre de 22 × 2 par jauge, bordées de sombre)
+const JAUGES = [["faim", "#f0a030"], ["soif", "#4aa8e0"], ["vie", "#e04848"]];
+const jauges = document.createElement("canvas"); jauges.width = 24; jauges.height = 10; jauges.className = "jauges"; fx.appendChild(jauges);
+function jaugesStep() {
+  jauges.hidden = drag || pull.on;
+  if (jauges.hidden) return;
+  const g = jauges.getContext("2d"), top = spriteTop(), hx = 24 + (dir > 0 ? top.x : 63 - top.x) * 2;
+  g.fillStyle = "#2a2238"; g.fillRect(0, 0, 24, 10);
+  JAUGES.forEach(([k, c], i) => {
+    const w = Math.round(besoins[k] / 100 * 22);
+    g.fillStyle = "#e8e0f0"; g.fillRect(1, 1 + i * 3, 22, 2);
+    g.fillStyle = c; g.fillRect(1, 1 + i * 3, w, 2);
+  });
+  jauges.style.left = Math.max(0, Math.min(176 - 48, hx - 24)) + "px";
+  jauges.style.top = Math.max(0, 48 + top.y * 2 - 24) + "px";
 }
