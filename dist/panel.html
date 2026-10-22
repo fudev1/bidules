@@ -559,9 +559,11 @@ async function renderLimites() {
 }
 setInterval(() => { icFrame++; renderClaude(); }, 450);
 // Onglet Tests : simuler chaque état de Claude, pour voir la bulle
+const BESOINS_ESSAI = [["faim", "Faim haute"], ["malade", "Malade"], ["squelette", "Squelette"], ["nourrir", "Nourrir"], ["zero", "Remettre à zéro"]];
 function applyEssai() {
   $("essais").innerHTML = "<h3>Simuler Claude (pour voir chaque état)</h3>" + SIMS.map(([id, name]) => `<button class="chip ${sim === id ? "on" : ""}" data-sim="${id}">${name}</button>`).join("")
-    + PLEINS.map(([pc, name]) => `<button class="chip ${simPc === pc ? "on" : ""}" data-simpc="${pc}">${name}</button>`).join("");
+    + PLEINS.map(([pc, name]) => `<button class="chip ${simPc === pc ? "on" : ""}" data-simpc="${pc}">${name}</button>`).join("")
+    + "<h3>Simuler les besoins (ne compte pas dans les stats)</h3>" + BESOINS_ESSAI.map(([id, name]) => `<button class="chip" data-besoins="${id}">${name}</button>`).join("");
   renderClaude();
 }
 applyEssai();
@@ -586,6 +588,7 @@ document.addEventListener("click", e => {
   const b = e.target.closest("button"); if (!b || b.disabled) return;
   if (b.dataset.tab) { document.querySelectorAll(".tab").forEach(t => t.setAttribute("aria-selected", t === b)); ["claude", "piste", "evo", "humeur", "apparence", "tests"].forEach(k => $("p-" + k).hidden = k !== b.dataset.tab); placePill(); if (b.dataset.tab === "claude") { renderFini(); renderGraphes(); renderCout(); } }
   else if (b.dataset.sim !== undefined) { sim = b.dataset.sim; applyEssai(); }
+  else if (b.dataset.besoins) send("besoins", b.dataset.besoins);
   else if (b.dataset.simpc !== undefined) { simPc = +b.dataset.simpc; if (!sim) sim = "pense"; applyEssai(); }
   else if (b.dataset.style) { send("style", b.dataset.style); if (st.cache && T) T.core.invoke("montrer_bidule", {oui:true}); if (!st.style && T) T.core.invoke("hide_panel"); }      // premier choix : le panneau se ferme, le Bidule tombe sur le bureau      // caché : cliquer dessus le fait revenir
   else if (b.dataset.part) send("evo", "part:" + b.dataset.part);

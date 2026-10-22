@@ -120,6 +120,7 @@ Décidé le 22 octobre 2026. La spec est l'issue #76, les étapes « Jeu 1 » à
   malade 6 h, il devient un squelette (corps couleur os), part dans la collection, puis un nouvel œuf éclot (pas encore
   dessiné : il se reforme et repart à zéro). Le temps malade compte dans les stats. Besoins et collection gardés dans
   `etat.json` ; seuils et vitesses dans `REGLAGES.besoins`. Le panneau montre la faim, l'étape et la collection.
+  L'onglet Tests a des boutons pour sauter aux étapes (faim haute, malade, squelette, nourrir, remettre à zéro), hors stats.
 - Jeu 1 (#77) : les stats de la saison. Repas (bonbon de Candy, fichier déposé), secousses, bonnes habitudes (pause de
   20 min à 2 h entre deux prompts), soirées tardives (un prompt entre 20 h et 7 h, une par soirée), temps de travail
   (même règle que le panneau) et tokens (entrée + sortie, sans le cache) montent ; temps malade et mini-jeux restent à 0.

@@ -28,7 +28,8 @@ function saisonCourante() {
 }
 function saisonFin() { const d = saisonDebut(); d.setDate(d.getDate() + REGLAGES.saison.jours); return d; }
 function compter(nom, n = 1) { saisonCourante(); stats[nom] += n; garder(); sendState(false); }
-// Les besoins (gardés dans etat.json) : malade = null s'il va bien, sinon les secondes passées malade. collection : les squelettes, {style, apparence, quand}.
+// Les besoins (gardés dans etat.json) : malade = null s'il va bien, sinon les secondes passées malade ; essai : posé par l'onglet Tests, rien ne compte dans les stats.
+// collection : les squelettes, {style, apparence, quand} (essai : vrai pour ceux de l'onglet Tests).
 let besoins = {faim:0, malade:null}, collection = [], besoinsVu = 0, tokensLus = false;
 function etapeBesoins() { return besoins.malade !== null ? "malade" : besoins.faim >= REGLAGES.besoins.haut ? "faim" : ""; }
 // la tâche « besoins » : l'écart avec son dernier passage, plafonné, pour que l'app fermée ou en veille ne compte pas
@@ -41,15 +42,16 @@ function avancerBesoins(s) {
   const B = REGLAGES.besoins, avant = etapeBesoins();
   besoins.faim = Math.min(B.malade, besoins.faim + s * B.parHeure / 3600);
   if (besoins.malade === null && besoins.faim >= B.malade) besoins.malade = 0;
-  else if (besoins.malade !== null) { besoins.malade += s; compter("malade", s); }
+  else if (besoins.malade !== null) { besoins.malade += s; if (!besoins.essai) compter("malade", s); }
   if (besoins.malade >= B.squelette) return squelette();
   changerEtape(avant);
 }
-function nourrir() {
+function nourrir(compte = true) {
   const B = REGLAGES.besoins, avant = etapeBesoins();
   besoins.faim = Math.max(0, besoins.faim - B.repas);
   if (besoins.malade !== null && besoins.faim <= B.guerit) besoins.malade = null;
-  compter("repas"); changerEtape(avant);
+  if (compte) compter("repas");
+  changerEtape(avant);
 }
 function changerEtape(avant) {
   const e = etapeBesoins();
@@ -59,12 +61,13 @@ function changerEtape(avant) {
     if (e === "malade") bubble("Je suis malade...", 1600);
     if (avant === "malade") bubble("Ça va mieux !", 1400);
     Apparence.etat(e === "malade" ? "malade" : "");
+    if (e === "") delete besoins.essai;
   }
   garder(); sendState(false);
 }
 // Malade trop longtemps : il devient un squelette et part dans la collection, puis un nouvel œuf éclot (pas encore dessiné : il se reforme).
 function squelette() {
-  collection.push({style, apparence:apparences[style] || {}, quand:Date.now()});
+  collection.push({style, apparence:apparences[style] || {}, quand:Date.now(), ...(besoins.essai && {essai:true})});
   besoins = {faim:0, malade:null}; say("il devient un squelette");
   Apparence.etat("squelette"); bubble("...", 2000); garder(); sendState(false);
   setTimeout(() => {
@@ -90,6 +93,14 @@ async function releverPrompts() {
   }
   if (n) { garder(); sendState(false); }
 }
+// Onglet Tests du panneau : sauter à une étape sans attendre ; « zero » remet tout à zéro et retire les squelettes des essais
+T.event.listen("besoins", e => {
+  const B = REGLAGES.besoins, avant = etapeBesoins();
+  if (e.payload === "nourrir") return nourrir(false);
+  if (e.payload === "zero") { besoins = {faim:0, malade:null}; collection = collection.filter(c => !c.essai); return changerEtape(avant); }
+  besoins = {faim:e.payload === "faim" ? B.haut : B.malade, malade:{faim:null, malade:0, squelette:B.squelette}[e.payload], essai:true};
+  if (e.payload === "squelette") squelette(); else changerEtape(avant);
+});
 // les tokens de la saison, entrée + sortie sans le cache (main.rs : depenses, par heure) ; jamais en baisse si Claude Code efface de vieux journaux
 async function releverTokens() {
   const a = saisonCourante().getTime() / 1000;

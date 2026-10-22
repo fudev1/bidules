@@ -453,3 +453,20 @@ test("les besoins et la collection survivent à une relance, et le temps malade 
   assert.deepEqual(page.erreurs, []);
   await page.close();
 });
+
+test("les essais de l'onglet Tests sautent aux étapes sans compter dans les stats", async () => {
+  const page = await sim.ouvrir();
+  const r = await page.evaluate(() => {
+    Horloge.arreter(); const o = {}, essai = q => LISTEN.besoins.forEach(f => f({payload: q}));
+    besoins = {faim: 0, malade: null}; collection = [{style: "limace", apparence: {}, quand: 1}]; stats.malade = 0; stats.repas = 0;
+    essai("faim"); o.faim = etapeBesoins();
+    essai("malade"); avancerBesoins(600); o.malade = [etapeBesoins(), stats.malade];
+    essai("nourrir"); essai("nourrir"); o.gueri = [etapeBesoins(), stats.repas, besoins.essai];
+    essai("squelette"); o.squelette = collection.length;
+    essai("malade"); essai("zero"); o.zero = [etapeBesoins(), besoins.faim, collection.length];
+    return o;
+  });
+  assert.deepEqual(r, {faim: "faim", malade: ["malade", 0], gueri: ["", 0, undefined], squelette: 2, zero: ["", 0, 1]});
+  assert.deepEqual(page.erreurs, []);
+  await page.close();
+});
