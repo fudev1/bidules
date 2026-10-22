@@ -64,7 +64,7 @@ img.addEventListener("pointermove", e => {
       drag.rev = drag.rev.filter(r => t - r < 1200); drag.rev.push(t); haptic("clic");
       if (drag.asleep && drag.rev.length >= 3) { drag.asleep = false; setMode("held"); struggle(true); holdByHead(); bubble("Hein ?!", 900); say("reveille : secoue"); calm = 0; wake = 0; }
       if (drag.rev.length >= 5 && !drag.shaken) {
-        drag.shaken = true; say("il se fait secouer"); bubble("Ouaaah !", 1100);
+        drag.shaken = true; say("il se fait secouer"); bubble("Ouaaah !", 1100); compter("secousses");
         clearInterval(flap); if (!isSheet()) flap = setInterval(() => { img.src = img.src === FR.n1 ? FR.n2 : FR.n1; }, 90);
       }
     }
@@ -155,7 +155,7 @@ try {
     else if (p.type === "drop") {
       const paths = p.paths || [], name = (paths[0] || "").split("/").pop();
       say(`il fait semblant de manger ${name}${paths.length > 1 ? ` et ${paths.length - 1} autre(s)` : ""} (fichier non touche)`);
-      disturb(); react("eat", tagDur("mange") || 1800, FR.rire, ""); playOnce("mange"); bubble("Miam !", 1000);
+      disturb(); react("eat", tagDur("mange") || 1800, FR.rire, ""); playOnce("mange"); bubble("Miam !", 1000); compter("repas");
     }
   });
 } catch (e) { say("drag-drop: " + e); }

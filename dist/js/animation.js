@@ -152,7 +152,7 @@ function startEat() {
   sweetRemove(s);   // sa fenêtre se ferme : le bonbon est maintenant dessiné dans ses mains
   idleUntil = 0; disturb();
   react("eat", (tagDur(tag) || 1800) + 400, FR.rire, ""); playOnce(tag); bubble("Miam !", 1000);
-  say(`elle mange un bonbon ${s.color}`);
+  say(`elle mange un bonbon ${s.color}`); compter("repas");
 }
 let moodMode = "auto", mood = null, moodReason = "";
 const MOOD_LABEL = {guilleret:"Guilleret", ronchon:"Ronchon", vaseux:"Vaseux", stresse:"Stressé", lune:"Dans la lune"};
