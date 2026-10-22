@@ -113,8 +113,9 @@ Décidé le 22 octobre 2026. La spec est l'issue #76, les étapes « Jeu 1 » à
 
 ## Fait
 
-- Jeu 2 (#78) : les besoins, la maladie et le squelette. Trois jauges de 100 (plein, il va bien) à 0, dessinées en
-  pixels au-dessus de sa tête (faim orange, soif bleue, vie rouge) et en barres dans le panneau. La faim descend avec le
+- Jeu 2 (#78) : les besoins, la maladie et le squelette. Trois jauges de 100 (plein, il va bien) à 0, dans l'en-tête
+  du panneau à côté du Bidule (faim orange, soif bleue, vie rouge ; elles clignotent sous 40). Pas au-dessus de sa tête
+  sur le bureau : Matteo n'en veut pas. La faim descend avec le
   temps où l'app tourne (plafonné à chaque passage : l'app fermée ou en veille ne compte pas) et avec les tokens (sauf
   ceux du premier relevé, faits app fermée) ; chaque repas (bonbon, fichier déposé) la remplit en partie. La soif descend
   quand tu travailles (un prompt il y a moins de 10 min) et remonte pendant tes pauses. Sous 40, il dit « J'ai faim ! »

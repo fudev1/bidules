@@ -156,6 +156,11 @@ main{flex:1;overflow:auto;padding:0 12px 12px}
 .fini .hint{flex:1}
 .moods{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
 #sub b{color:var(--yellow)}
+#vie{display:grid;grid-template-columns:auto 1fr;gap:3px 6px;align-items:center;max-width:170px;margin-top:4px;font-size:10.5px}
+#vie u{height:7px;border-radius:999px;background:rgba(255,255,255,.18);overflow:hidden}
+#vie u i{display:block;height:100%;border-radius:999px;transition:width .4s}
+#vie .bas{animation:clignote 1s steps(2) infinite}
+@keyframes clignote{50%{opacity:.35}}
 .moods .chip{border-radius:14px;text-align:left;padding:9px 12px}
 .now{border-radius:14px;padding:10px 12px;font-size:12.5px}
 /* coût équivalent API (onglet Claude) : barres empilées par modèle, une couleur par famille */
@@ -186,7 +191,7 @@ main{flex:1;overflow:auto;padding:0 12px 12px}
 </style></head>
 <body>
 <div class="panel">
-  <header><button id="quit" aria-label="Éteindre le Bidule" title="Éteindre le Bidule"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round"><path d="M12 3v8"/><path d="M6.3 7.3a8 8 0 1 0 11.4 0"/></svg></button><div class="nom"><p class="kicker">Ton Bidule</p><h1 id="title">Bidule</h1><p id="sub"></p></div><div class="ground stage"><img id="thumb" class="mon" alt=""></div><div class="bulle-bd" id="bulleBD"></div></header>
+  <header><button id="quit" aria-label="Éteindre le Bidule" title="Éteindre le Bidule"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round"><path d="M12 3v8"/><path d="M6.3 7.3a8 8 0 1 0 11.4 0"/></svg></button><div class="nom"><p class="kicker">Ton Bidule</p><h1 id="title">Bidule</h1><p id="sub"></p><div id="vie"></div></div><div class="ground stage"><img id="thumb" class="mon" alt=""></div><div class="bulle-bd" id="bulleBD"></div></header>
   <nav class="tabs" role="tablist">
     <span class="pill instant" id="pill"></span>
     <button class="tab" role="tab" data-tab="claude" aria-selected="false">Claude</button>
@@ -268,7 +273,7 @@ function render() {
   $("evoHint").textContent = evoLimace ? "Premier essai d'évolution : un clic lui donne trois cheveux, un second les lui retire." : noParts ? "Les parties arriveront avec les animations dessinées de ce Bidule." : "Un clic ajoute la partie, un second clic la retire. Une partie du même emplacement remplace l'ancienne.";
   $("evoCheveux").hidden = !evoLimace; $("slots").hidden = $("random").parentElement.hidden = noParts;
   $("cheveux").classList.toggle("on", !!st.cheveux);
-  renderSaison();
+  renderSaison(); renderVie();
   $("random").disabled = $("reset").disabled = noParts;
   $("slots").innerHTML = SLOTS.map(([slot, label, opts]) => `<div class="slot"><b>${label}</b><div class="chips">${opts.map(([p, name]) =>
     `<button class="chip ${parts[slot] === p ? "on" : ""}" data-part="${slot}:${p}" ${noParts ? "disabled" : ""}>${name}</button>`).join("")}</div></div>`).join("");
@@ -404,6 +409,13 @@ const STATS = [["repas", "Repas"], ["secousses", "Secousses"], ["malade", "Temps
   ["tard", "Soirées tardives"], ["travail", "Temps de travail"], ["tokens", "Tokens"]];
 const ETAPES = {"":"Va bien", faim:"A faim", soif:"A soif", malade:"Malade"};
 function statTxt(k, v) { return k === "travail" || k === "malade" ? hm(v / 60) : k === "tokens" && v >= 1000 ? tokensTxt(v) : v; }
+// Les trois jauges dans l'en-tête, près du Bidule : elles clignotent sous le seuil où il le dit dans sa bulle
+const JAUGES = [["faim", "Faim", "#f0a030"], ["soif", "Soif", "#4aa8e0"], ["vie", "Vie", "#ff5a5f"]];
+function renderVie() {
+  const j = st.jeu; $("vie").hidden = !j || !st.style;
+  if ($("vie").hidden) return;
+  $("vie").innerHTML = JAUGES.map(([k, nom, c]) => `<span>${nom}</span><u class="${j.besoins[k] < j.reglages.bas ? "bas" : ""}"><i style="width:${j.besoins[k]}%;background:${c}"></i></u>`).join("");
+}
 function renderSaison() {
   const j = st.jeu; $("saison").hidden = !j;
   if (!j) return;

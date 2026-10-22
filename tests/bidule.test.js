@@ -485,18 +485,3 @@ test("les essais de l'onglet Tests sautent aux étapes sans compter dans les sta
   assert.deepEqual(page.erreurs, []);
   await page.close();
 });
-
-test("les jauges suivent sa tête et se vident avec les besoins", async () => {
-  const page = await sim.ouvrir();
-  const r = await page.evaluate(() => {
-    Horloge.arreter(); besoins = {...BESOINS_PLEINS, soif: 50}; jaugesStep();
-    const d = jauges.getContext("2d").getImageData(0, 0, 24, 10).data, px = (x, y) => [...d.slice((y * 24 + x) * 4, (y * 24 + x) * 4 + 3)].join();
-    return {visible: !jauges.hidden, faimPleine: px(22, 1), soifMoitie: [px(11, 4), px(12, 4)], haut: parseInt(jauges.style.top)};
-  });
-  assert.deepEqual(r.visible, true);
-  assert.equal(r.faimPleine, "240,160,48");
-  assert.deepEqual(r.soifMoitie, ["74,168,224", "232,224,240"]);
-  assert.ok(r.haut > 0 && r.haut < 176 - 20);
-  assert.deepEqual(page.erreurs, []);
-  await page.close();
-});

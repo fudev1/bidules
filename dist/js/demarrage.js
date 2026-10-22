@@ -135,7 +135,6 @@ img.addEventListener("contextmenu", async e => {
   Horloge.tache("prompts", REGLAGES.releve.prompts, releverPrompts);
   Horloge.tache("tokens", REGLAGES.releve.tokens, releverTokens);
   Horloge.tache("besoins", REGLAGES.besoins.pas, pasBesoins, () => chosen);
-  Horloge.tache("jauges", 450, jaugesStep, () => chosen && !bidHidden);
   Horloge.tache("garder", 5000, garder, () => chosen && mode === "walk" && Math.abs(Math.round(x) - gardeX) > 20);
   Horloge.demarrer(16, (nom, e) => say(nom + " : " + e));
   Fenetre.surErreur((quoi, e) => say(quoi + " : " + e));

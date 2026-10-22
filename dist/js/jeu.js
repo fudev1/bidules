@@ -38,7 +38,7 @@ function etapeBesoins() { const B = REGLAGES.besoins; return besoins.malade ? "m
 // la tâche « besoins » : l'écart avec son dernier passage, plafonné, pour que l'app fermée ou en veille ne compte pas
 function pasBesoins() {
   const now = Date.now(), s = besoinsVu ? Math.min(now - besoinsVu, 2 * REGLAGES.besoins.pas) / 1000 : 0;
-  besoinsVu = now; avancerBesoins(s);
+  besoinsVu = now; avancerBesoins(s); sendState(false);
 }
 // s secondes de vie, app ouverte
 function avancerBesoins(s) {
@@ -119,20 +119,4 @@ async function releverTokens() {
   // la faim prend les tokens arrivés pendant que l'app tourne : pas ceux du premier relevé, faits app fermée
   if (n > stats.tokens) { if (tokensLus) besoins.faim = Math.max(0, besoins.faim - (n - stats.tokens) / 1e6 * REGLAGES.besoins.parMillionTokens); stats.tokens = n; garder(); sendState(false); }
   tokensLus = true;
-}
-// Les jauges au-dessus de sa tête, en pixels : faim, soif, vie (une barre de 22 × 2 par jauge, bordées de sombre)
-const JAUGES = [["faim", "#f0a030"], ["soif", "#4aa8e0"], ["vie", "#e04848"]];
-const jauges = document.createElement("canvas"); jauges.width = 24; jauges.height = 10; jauges.className = "jauges"; fx.appendChild(jauges);
-function jaugesStep() {
-  jauges.hidden = drag || pull.on;
-  if (jauges.hidden) return;
-  const g = jauges.getContext("2d"), top = spriteTop(), hx = 24 + (dir > 0 ? top.x : 63 - top.x) * 2;
-  g.fillStyle = "#2a2238"; g.fillRect(0, 0, 24, 10);
-  JAUGES.forEach(([k, c], i) => {
-    const w = Math.round(besoins[k] / 100 * 22);
-    g.fillStyle = "#e8e0f0"; g.fillRect(1, 1 + i * 3, 22, 2);
-    g.fillStyle = c; g.fillRect(1, 1 + i * 3, w, 2);
-  });
-  jauges.style.left = Math.max(0, Math.min(176 - 48, hx - 24)) + "px";
-  jauges.style.top = Math.max(0, 48 + top.y * 2 - 24) + "px";
 }
