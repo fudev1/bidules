@@ -155,7 +155,7 @@ try {
     else if (p.type === "drop") {
       const paths = p.paths || [], name = (paths[0] || "").split("/").pop();
       say(`il fait semblant de manger ${name}${paths.length > 1 ? ` et ${paths.length - 1} autre(s)` : ""} (fichier non touche)`);
-      disturb(); react("eat", tagDur("mange") || 1800, FR.rire, ""); playOnce("mange"); bubble("Miam !", 1000); compter("repas");
+      disturb(); react("eat", tagDur("mange") || 1800, FR.rire, ""); playOnce("mange"); bubble("Miam !", 1000); nourrir();
     }
   });
 } catch (e) { say("drag-drop: " + e); }
