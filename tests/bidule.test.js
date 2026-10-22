@@ -363,3 +363,35 @@ test("la goutte tenue a le motif, et verdit en entier quand on la secoue", async
   assert.deepEqual(page.erreurs, []);
   await page.close();
 });
+
+// Les stats de la saison (jeu.js) : les prompts et les tokens viennent des journaux simulés (window.PROMPTS, window.DEPENSES)
+test("les stats de la saison montent : repas, secousses, travail, pauses, soirées tardives, tokens", async () => {
+  const page = await sim.ouvrir();
+  const s = await page.evaluate(async () => {
+    Horloge.arreter();
+    const d0 = saisonCourante(), a = d0.getTime() / 1000;
+    const h = (j, hh, mm = 0) => { const d = new Date(d0); d.setDate(d.getDate() + j); d.setHours(hh, mm); return d.getTime() / 1000; };
+    compter("repas"); compter("repas"); compter("secousses");
+    // 21 h, 21 h 10, puis trois pauses de 50 à 90 min jusqu'à 1 h du matin (une seule soirée), puis 10 h le lendemain
+    window.PROMPTS = [h(1, 21), h(1, 21, 10), h(1, 22), h(1, 23, 30), h(2, 1), h(2, 10)];
+    window.DEPENSES = [{heure: a - 3600, tokens: [1000, 1000, 5, 5, 5]}, {heure: a + 3600, tokens: [100, 20, 999, 999, 999]}, {heure: a + 7200, tokens: [5, 5, 0, 0, 0]}];
+    await releverPrompts(); await releverPrompts(); await releverTokens();
+    return stats;
+  });
+  assert.deepEqual([s.repas, s.secousses, s.travail, s.habitudes, s.tard, s.tokens], [2, 1, 300 + 600 + 300 * 4, 3, 1, 130]);
+  assert.deepEqual(page.erreurs, []);
+  await page.close();
+});
+
+test("les stats survivent à une relance et repartent à zéro à la saison suivante", async () => {
+  const page = await sim.ouvrir();
+  await page.evaluate(() => { compter("repas"); compter("tokens", 500); });
+  await page.waitForFunction(() => CALLS.some(c => c[1] === "garder_etat" && JSON.parse(c[2].etat).stats.repas === 1));
+  await page.reload({waitUntil: "domcontentloaded"});
+  await page.waitForFunction(() => chosen);
+  assert.deepEqual(await page.evaluate(() => [stats.repas, stats.tokens]), [1, 500]);
+  const s = await page.evaluate(() => { stats.saison = "2020-01-01"; saisonCourante(); return stats; });
+  assert.deepEqual([s.repas, s.tokens, s.saison], [0, 0, await page.evaluate(() => cleJour(saisonDebut()))]);
+  assert.deepEqual(page.erreurs, []);
+  await page.close();
+});

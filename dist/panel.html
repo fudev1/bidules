@@ -145,6 +145,14 @@ main{flex:1;overflow:auto;padding:0 12px 12px}
 .axe.heures{text-align:left}
 .axe b{font-weight:700;opacity:1}
 .fini{display:flex;align-items:center;gap:10px}
+/* stats de la saison (onglet Évolution) : les trois compteurs du jeu, puis une barre par stat, pleine à la valeur de REGLAGES.plein (jeu.js) */
+.saison .compteurs{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.saison .compteurs span{background:rgba(255,255,255,.12);border-radius:10px;padding:6px 8px;font-size:11px;display:grid;gap:3px}
+.saison .compteurs b{font:400 18px/1 var(--display);color:var(--yellow)}
+.saison .stats{display:grid;grid-template-columns:auto 1fr auto;gap:5px 8px;align-items:center;font-size:11.5px}
+.saison .stats u{height:8px;border-radius:999px;background:rgba(255,255,255,.18);overflow:hidden}
+.saison .stats u i{display:block;height:100%;background:var(--lime);border-radius:999px}
+.saison .stats b{text-align:right;font-weight:700}
 .fini .hint{flex:1}
 .moods{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
 #sub b{color:var(--yellow)}
@@ -202,6 +210,7 @@ main{flex:1;overflow:auto;padding:0 12px 12px}
       <div class="now fini"><p class="hint">Au toucher : sur le trackpad du Mac, tu le sens quand tu l'attrapes, le tires, le secoues ou le caresses, et quand il cogne un bord.</p><button class="chip" id="haptique">Activé</button></div>
     </section>
     <section class="pane" id="p-evo" hidden>
+      <div class="graphe saison" id="saison" hidden></div>
       <p class="hint" id="evoHint"></p>
       <div class="row"><button class="btn primary" id="random">Gagner une partie au hasard</button><button class="btn" id="reset">Revenir au départ</button></div>
       <div id="slots" class="slots"></div>
@@ -259,6 +268,7 @@ function render() {
   $("evoHint").textContent = evoLimace ? "Premier essai d'évolution : un clic lui donne trois cheveux, un second les lui retire." : noParts ? "Les parties arriveront avec les animations dessinées de ce Bidule." : "Un clic ajoute la partie, un second clic la retire. Une partie du même emplacement remplace l'ancienne.";
   $("evoCheveux").hidden = !evoLimace; $("slots").hidden = $("random").parentElement.hidden = noParts;
   $("cheveux").classList.toggle("on", !!st.cheveux);
+  renderSaison();
   $("random").disabled = $("reset").disabled = noParts;
   $("slots").innerHTML = SLOTS.map(([slot, label, opts]) => `<div class="slot"><b>${label}</b><div class="chips">${opts.map(([p, name]) =>
     `<button class="chip ${parts[slot] === p ? "on" : ""}" data-part="${slot}:${p}" ${noParts ? "disabled" : ""}>${name}</button>`).join("")}</div></div>`).join("");
@@ -389,6 +399,17 @@ async function renderCout() {
 }
 $("cout").addEventListener("click", e => { const b = e.target.closest("[data-pas]"); if (b) { coutPas = b.dataset.pas; renderCout(); } });
 $("cout").addEventListener("change", e => { if (e.target.id === "abo") { try { localStorage.setItem("abonnement", e.target.value); } catch (err) {} } });
+// Les stats de la saison (jeu.js), envoyées par le Bidule. Niveaux et pièces à zéro tant qu'ils n'existent pas.
+const STATS = [["repas", "Repas"], ["secousses", "Secousses"], ["malade", "Temps malade"], ["jeux", "Mini-jeux"], ["habitudes", "Bonnes habitudes"],
+  ["tard", "Soirées tardives"], ["travail", "Temps de travail"], ["tokens", "Tokens"]];
+function statTxt(k, v) { return k === "travail" || k === "malade" ? hm(v / 60) : k === "tokens" && v >= 1000 ? tokensTxt(v) : v; }
+function renderSaison() {
+  const j = st.jeu; $("saison").hidden = !j;
+  if (!j) return;
+  $("saison").innerHTML = `<h3>Cette saison</h3><p>Jusqu'au ${new Date(j.fin - 1).toLocaleDateString("fr-FR", {weekday:"long", day:"numeric", month:"long"})}</p>`
+    + `<div class="compteurs"><span>Niveau du Bidule<b>0</b></span><span>Ton niveau<b>0</b></span><span>Pièces<b>0</b></span></div>`
+    + `<div class="stats">${STATS.map(([k, nom]) => `<span>${nom}</span><u><i style="width:${Math.min(100, j.stats[k] / j.plein[k] * 100)}%"></i></u><b>${statTxt(k, j.stats[k])}</b>`).join("")}</div>`;
+}
 // La bulle du Bidule, dans l'en-tête : ce que fait Claude (toutes sessions confondues), depuis quand, et le contexte de la session en vue
 function renderClaude() {
   const j = claudeNow(), e = lireEtat(j), B = $("bulleBD");

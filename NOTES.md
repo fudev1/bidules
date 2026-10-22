@@ -113,6 +113,13 @@ Décidé le 22 octobre 2026. La spec est l'issue #76, les étapes « Jeu 1 » à
 
 ## Fait
 
+- Jeu 1 (#77) : les stats de la saison. Repas (bonbon de Candy, fichier déposé), secousses, bonnes habitudes (pause de
+  20 min à 2 h entre deux prompts), soirées tardives (un prompt entre 20 h et 7 h, une par soirée), temps de travail
+  (même règle que le panneau) et tokens (entrée + sortie, sans le cache) montent ; temps malade et mini-jeux restent à 0.
+  Gardées dans `etat.json`, remises à zéro à chaque saison. En attendant le fichier « maître », une saison dure 14 jours
+  à partir du lundi 19 octobre 2026 (date locale). Tous les chiffres du jeu dans `REGLAGES` (`dist/js/jeu.js`), dont la
+  valeur d'une barre pleine. Le panneau (onglet Évolution) montre « Cette saison » : le niveau du Bidule, le niveau du
+  joueur et les pièces (à 0 pour l'instant) et une barre par stat.
 - Skills de Matt Pocock (`github.com/mattpocock/skills`, version 1.3.1) copiés dans `.claude/skills/` : les 27 du plugin
   officiel (grilling, tdd, diagnosing-bugs, to-spec, etc.). Pour les commits et les pull requests, nos skills `commit`
   et `pull-request` restent prioritaires sur `pr`. Ce qu'ils produisent est écrit en français, et quand ils parlent de
@@ -421,7 +428,7 @@ Décidé le 22 octobre 2026. La spec est l'issue #76, les étapes « Jeu 1 » à
 - Sauvegarder aussi les pièces et la collection, quand elles existeront (dans `etat.json`, voir « Fait »).
 - Fichier "maître" des sprints, lu au démarrage.
 - Œuf et éclosion en début de sprint, Bidule figé dans la collection en fin de sprint.
-- Le jeu (récompenses, besoins, évolution) : les étapes « Jeu 1 » à « Jeu 6 » (#77 à #82), voir plus haut.
+- Le jeu (récompenses, besoins, évolution) : les étapes « Jeu 2 » à « Jeu 6 » (#78 à #82), voir plus haut. Jeu 1 est fait.
 - Parties sur la limace : points d'accroche sur chaque image (voir la spec).
 - Chambre, accessoires.
 

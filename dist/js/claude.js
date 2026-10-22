@@ -2,7 +2,7 @@
 let bidHidden = false;          // caché par un clic droit (main.rs : montrer_bidule)
 let chosen = false;          // un Bidule a été choisi (au premier lancement, pas encore)
 let claudeJ = null;          // la dernière jauge lue (contexte), envoyée au panneau
-function sendState(avecClaude = true) { T.event.emit("etat", {style:chosen ? style : null, partsBy, cheveux, thumb:hairComposite(FR.normal, 2), mood, moodMode, moodReason, cache:bidHidden, haptique:hapticOn, apparence:apparences[style] || {}, aUneApparence:Apparence.aUneApparence(style), teintes:Apparence.TEINTES, origine:Apparence.ORIGINE, motifs:Object.fromEntries(Object.entries(Apparence.MOTIFS).map(([m, d]) => [m, {nom:d.nom, teinte:d.teinte}]))}); if (avecClaude) T.event.emit("claude", claudeJ); }
+function sendState(avecClaude = true) { T.event.emit("etat", {style:chosen ? style : null, partsBy, cheveux, thumb:hairComposite(FR.normal, 2), mood, moodMode, moodReason, cache:bidHidden, haptique:hapticOn, apparence:apparences[style] || {}, aUneApparence:Apparence.aUneApparence(style), teintes:Apparence.TEINTES, origine:Apparence.ORIGINE, motifs:Object.fromEntries(Object.entries(Apparence.MOTIFS).map(([m, d]) => [m, {nom:d.nom, teinte:d.teinte}])), jeu:{stats, plein:REGLAGES.plein, fin:saisonFin().getTime()}}); if (avecClaude) T.event.emit("claude", claudeJ); }
 function refreshSprite() {
   const cur = {sleep:"dort", carried:"dort", dizzy:"d1", nausea:"n1", pet:"content", laugh:"rire", angry:"fache",
     sulk:"fache", eat:"rire", ooh:"ooh", drowsy:"baille", waking:"baille", fly:"p1", held:"p1"}[mode];
