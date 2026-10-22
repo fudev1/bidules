@@ -8,9 +8,9 @@ Statut : prototype, testé sur Mac. Windows est prévu. Où en est le projet (d�
 
 - **Rendre l'usage de Claude visible d'un coup d'œil.** Le Bidule montre ce que tu consommes (fenêtre de 5 h, semaine, sprint) et te prévient avant d'atteindre une limite, sans ouvrir de tableau de bord.
 - **Être utile pendant le travail.** Il te prévient quand Claude a fini ou attend ta réponse, et remarque les longues sessions ou le travail tard le soir.
-- **Ne pas pousser à consommer.** Le jeu récompense la bonne utilisation, pas le volume de tokens : prompter pour rien ne rapporte rien, et il n'y a pas de classement des tokens entre collègues.
+- **Donner envie de jouer.** On gagne des pièces en travaillant (tokens, temps de travail, bonus pour les bonnes habitudes), des coffres et de l'expérience dans les mini-jeux. Pas de classement des tokens entre collègues.
 - **Respecter la vie privée.** Le Bidule lit seulement les métadonnées des journaux de Claude Code (heures, quantités), jamais le texte des messages. Les fonctions d'équipe éventuelles seront en option, avec des totaux seulement.
-- **Rester discret et attachant.** Il se fait oublier quand on travaille, on peut le prendre, le lancer, le caresser. Pendant le sprint, il évolue (le système d'évolution reste à définir). À la fin du sprint, il rejoint une collection.
+- **Rester discret et attachant.** Il se fait oublier quand on travaille, on peut le prendre, le lancer, le caresser. Pendant le sprint, ses stats décident de la forme qu'il prendra à la fin. À la fin du sprint, il rejoint une collection.
 
 Inspiration : l'app "Claude Usage" (PokéBurn), sans le thème Pokémon.
 

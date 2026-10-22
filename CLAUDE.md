@@ -25,7 +25,6 @@ Compagnon de bureau pour les utilisateurs de Claude Code. La vision et l'install
 ## Règles du projet
 
 - **Vie privée** : ne jamais lire le texte des messages de Claude Code. Seulement les métadonnées : heures, quantités de tokens, outils utilisés.
-- **Ne pas pousser à consommer** : rien ne doit récompenser le volume brut de tokens (voir "À trancher" dans `NOTES.md`).
 - **Pixel art 64 × 64**, jamais de vectoriel. Le format des animations est dans la spec (`moodboard/animations-des-bidules.html`).
 - **NOTES.md** : quand une décision ou l'état du projet change, le mettre à jour dans la même pull request.
 - **Git** : suivre `.claude/rules/git-flux.md` (branche, puis `test`, puis `main`) et `.claude/rules/pas-de-mention-claude.md`. Pour les commits : le skill `commit`. Pour les pull requests : le skill `pull-request` (pas `pr`, qui vient des skills de Matt Pocock).
