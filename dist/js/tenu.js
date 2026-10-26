@@ -28,6 +28,13 @@ const SW_N = 128, SW_WIN = SW_N * 2, SW_H = [SW_N / 2, SW_N / 2];
 const swing = {on:false, b:[0, 0], vb:[0, 0], pw:[0, 0], pv:[0, 0], aw:[0, 0], skip:0, cv:null, parts:null, durs:[], armPx:null};
 const SW_COL = {ink:[0, 0, 0], base:[99, 155, 255], shade:[69, 119, 224], light:[164, 198, 255]};
 const SW_GREEN = {"99,155,255":[127, 212, 106], "69,119,224":[79, 174, 69], "164,198,255":[198, 240, 176]};     // les verts de la nausée (gen.py : TO_VERT)
+// Le visage, les bras et la sueur qui suivent la boule (tag attrape-boule-parts) : aux couleurs de l'apparence (swing.parts), et d'origine
+// (swing.partsVert) pour la goutte secouée, qui verdit en entier comme la nausée de la feuille (SW_GREEN ne connaît que les bleus d'origine).
+function swingParties(P) {
+  const images = src => P ? P.map(f => Object.assign(new Image(), {src:src(f)})) : null;
+  swing.parts = images(f => Apparence.affichee(f.src)); swing.partsVert = images(f => f.src); swing.durs = P ? P.map(f => f.dur) : [];
+}
+Apparence.quandElleChange(() => { if (Apparence.aUneApparence(style) && SHEET_DATA[style]) swingParties(SHEET_DATA[style].tags["attrape-boule-parts"]); });
 // Les bras se débattent si vite qu'on les voit flous, comme un bras d'anime qui s'agite : à chaque image, tout l'éventail du balayage est dessiné en
 // poses fantômes (bleu pâle, tramées), avec des arcs de vitesse au bout des mains, et le bras de l'instant en plein par-dessus. L'éventail ne dépend
 // pas de la cadence d'affichage : même si la fenêtre est rafraîchie lentement, le flou se voit. Ce sont les bras dessinés dans attrape-boule
@@ -61,14 +68,14 @@ function swingArm(d, A, side, sx, sy, delta, ghost, dither) {
     d[o] = c[0]; d[o + 1] = c[1]; d[o + 2] = c[2]; d[o + 3] = 255;
   }
 }
-function swingArms(d, B, ms) {
+function swingArms(d, B, ms, ton) {          // ton(k, X, Y) : la couleur du corps (k : 0 lumière, 1 base, 2 ombre) au pixel X, Y
   const A = swing.armPx; if (!A) return;
   const sx = Math.round(B[0] - SW_B0[0]), sy = Math.round(B[1] - SW_B0[1]);      // les bras suivent la boule
   const F = SW_FLAIL, lo = F.mid - F.ampl, hi = F.mid + F.ampl, rad = e => (e - F.e0) * Math.PI / 180;
   const now = F.mid + F.ampl * Math.sin(2 * Math.PI * ms / F.T);                  // élévation du bras à cet instant, en degrés (positif = vers le haut)
   for (let side = 0; side < 2; side++) {
     // l'éventail : les poses du balayage entier, en bleu pâle, tramées une sur deux en alternance (le flou)
-    for (let k = 0; k < F.fan; k++) swingArm(d, A, side, sx, sy, rad(lo + (hi - lo) * k / (F.fan - 1)), SW_COL.light, (k + Math.floor(ms / 60)) % 2);
+    for (let k = 0; k < F.fan; k++) swingArm(d, A, side, sx, sy, rad(lo + (hi - lo) * k / (F.fan - 1)), ton(0), (k + Math.floor(ms / 60)) % 2);
     // les arcs de vitesse, juste au-delà des mains, sur tout le balayage
     const h = swing.hand || (swing.hand = swingHand(A));
     if (h) {
@@ -78,7 +85,7 @@ function swingArms(d, B, ms) {
         const X = Math.floor(P1[0] + (h.r + dr) * Math.cos(th)), Y = Math.floor(P1[1] - (h.r + dr) * Math.sin(th));
         if (X < 0 || Y < 0 || X >= SW_N || Y >= SW_N || (X + Y + (dr > 3 ? 1 : 0)) % 2) continue;
         const o = (Y * SW_N + X) * 4; if (d[o + 3]) continue;
-        d[o] = SW_COL.shade[0]; d[o + 1] = SW_COL.shade[1]; d[o + 2] = SW_COL.shade[2]; d[o + 3] = 255;
+        const c = ton(2); d[o] = c[0]; d[o + 1] = c[1]; d[o + 2] = c[2]; d[o + 3] = 255;
       }
     }
   }
@@ -133,21 +140,25 @@ function swingDraw() {
   let t0 = N, b0 = 0, xa = N, xb = 0;
   for (let i = 0; i < N * N; i++) if (mask[i]) { const X = i % N, Y = (i - X) / N; t0 = Math.min(t0, Y); b0 = Math.max(b0, Y); xa = Math.min(xa, X); xb = Math.max(xb, X); }
   const c0 = (xa + xb) / 2, green = !!(drag && drag.shaken);
+  // les tons du corps : ceux de l'apparence et son motif (fixe dans l'image 64 x 64 de la goutte, qui suit la boule), ou les bleus d'origine si elle va verdir
+  const ox = Math.round(B[0] - SW_B0[0]), oy = Math.round(B[1] - SW_B0[1]);
+  const ton = (k, X, Y) => green ? [SW_COL.light, SW_COL.base, SW_COL.shade][k] : Apparence.tonDuCorps(k, X === undefined ? X : X - ox, Y === undefined ? Y : Y - oy);
   const cv = swing.cv || (swing.cv = document.createElement("canvas")); cv.width = cv.height = N;
   const g = cv.getContext("2d", {willReadFrequently:true}), imd = g.createImageData(N, N), d = imd.data;
-  swingArms(d, B, Date.now());                                    // les bras d'abord : ils passent derrière la boule
+  swingArms(d, B, Date.now(), ton);                                    // les bras d'abord : ils passent derrière la boule
   for (let Y = t0; Y <= b0; Y++) for (let X = xa; X <= xb; X++) {      // les couleurs de styleRender : contour, ombre, reflet
     if (!mask[Y * N + X]) continue;
-    let c = SW_COL.base;
-    if (!inner(X, Y)) c = SW_COL.ink;
-    else if (!inner(X, Y + 3) || !inner(X + 2, Y)) c = SW_COL.shade;
-    else if ((!inner(X - 3, Y - 1) && X < c0 && Y < b0 - 7) || (!inner(X - 1, Y - 3) && X < c0 + 3 && Y < t0 + 6)) c = SW_COL.light;
+    let c = 1;
+    if (!inner(X, Y)) c = -1;
+    else if (!inner(X, Y + 3) || !inner(X + 2, Y)) c = 2;
+    else if ((!inner(X - 3, Y - 1) && X < c0 && Y < b0 - 7) || (!inner(X - 1, Y - 3) && X < c0 + 3 && Y < t0 + 6)) c = 0;
+    c = c < 0 ? SW_COL.ink : ton(c, X, Y);
     const i = (Y * N + X) * 4; d[i] = c[0]; d[i + 1] = c[1]; d[i + 2] = c[2]; d[i + 3] = 255;
   }
   g.putImageData(imd, 0, 0);
   if (swing.parts && swing.parts.length) {      // le visage, les bras et la sueur d'attrape, qui suivent la boule
     const tot = swing.durs.reduce((a, v) => a + v, 0); let ms = Date.now() % tot, k = 0; while (k < swing.durs.length - 1 && ms >= swing.durs[k]) { ms -= swing.durs[k]; k++; }
-    g.imageSmoothingEnabled = false; g.drawImage(swing.parts[k], Math.round(B[0] - SW_B0[0]), Math.round(B[1] - SW_B0[1]));
+    g.imageSmoothingEnabled = false; g.drawImage((green ? swing.partsVert : swing.parts)[k], Math.round(B[0] - SW_B0[0]), Math.round(B[1] - SW_B0[1]));
   }
   if (green) {      // secoué : il verdit
     const o = g.getImageData(0, 0, N, N), od = o.data;

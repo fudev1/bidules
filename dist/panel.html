@@ -146,9 +146,22 @@ main{flex:1;overflow:auto;padding:0 12px 12px}
 .axe.heures{text-align:left}
 .axe b{font-weight:700;opacity:1}
 .fini{display:flex;align-items:center;gap:10px}
+/* stats de la saison (onglet Évolution) : les trois compteurs du jeu, puis une barre par stat, pleine à la valeur de REGLAGES.plein (jeu.js) */
+.saison .compteurs{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.saison .compteurs span{background:rgba(255,255,255,.12);border-radius:10px;padding:6px 8px;font-size:11px;display:grid;gap:3px}
+.saison .compteurs b{font:400 18px/1 var(--display);color:var(--yellow)}
+.saison .stats{display:grid;grid-template-columns:auto 1fr auto;gap:5px 8px;align-items:center;font-size:11.5px}
+.saison .stats u{height:8px;border-radius:999px;background:rgba(255,255,255,.18);overflow:hidden}
+.saison .stats u i{display:block;height:100%;background:var(--lime);border-radius:999px}
+.saison .stats b{text-align:right;font-weight:700}
 .fini .hint{flex:1}
 .moods{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
 #sub b{color:var(--yellow)}
+#vie{display:grid;grid-template-columns:auto 1fr;gap:3px 6px;align-items:center;max-width:170px;margin-top:4px;font-size:10.5px}
+#vie u{height:7px;border-radius:999px;background:rgba(255,255,255,.18);overflow:hidden}
+#vie u i{display:block;height:100%;border-radius:999px;transition:width .4s}
+#vie .bas{animation:clignote 1s steps(2) infinite}
+@keyframes clignote{50%{opacity:.35}}
 .moods .chip{border-radius:14px;text-align:left;padding:9px 12px}
 .now{border-radius:14px;padding:10px 12px;font-size:12.5px}
 /* coût équivalent API (onglet Claude) : barres empilées par modèle, une couleur par famille */
@@ -172,16 +185,21 @@ main{flex:1;overflow:auto;padding:0 12px 12px}
 .parts div u{grid-column:1/-1;height:4px;border-radius:2px;background:rgba(255,255,255,.12);text-decoration:none;display:block}
 .parts div u i{display:block;height:100%;border-radius:2px}
 .now b{color:var(--yellow)}
+.apercu{display:grid;place-items:center;height:96px}.apercu img{width:128px;height:128px;image-rendering:pixelated;margin-top:-32px}
+.teintes{display:flex;flex-wrap:wrap;gap:6px}
+.teinte{width:24px;height:24px;border-radius:50%;border:2px solid rgba(255,255,255,.35);padding:0}
+.teinte.on{border-color:var(--yellow);box-shadow:0 0 0 2px var(--yellow)}
 </style></head>
 <body>
 <div class="panel">
-  <header><button id="quit" aria-label="Éteindre le Bidule" title="Éteindre le Bidule"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round"><path d="M12 3v8"/><path d="M6.3 7.3a8 8 0 1 0 11.4 0"/></svg></button><div class="nom"><p class="kicker">Ton Bidule</p><h1 id="title">Bidule</h1><p id="sub"></p></div><div class="ground stage"><img id="thumb" class="mon" alt=""></div><div class="bulle-bd" id="bulleBD"></div></header>
+  <header><button id="quit" aria-label="Éteindre le Bidule" title="Éteindre le Bidule"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round"><path d="M12 3v8"/><path d="M6.3 7.3a8 8 0 1 0 11.4 0"/></svg></button><div class="nom"><p class="kicker">Ton Bidule</p><h1 id="title">Bidule</h1><p id="sub"></p><div id="vie"></div></div><div class="ground stage"><img id="thumb" class="mon" alt=""></div><div class="bulle-bd" id="bulleBD"></div></header>
   <nav class="tabs" role="tablist">
     <span class="pill instant" id="pill"></span>
     <button class="tab" role="tab" data-tab="claude" aria-selected="false">Claude</button>
     <button class="tab" role="tab" data-tab="piste" aria-selected="true">Piste</button>
     <button class="tab" role="tab" data-tab="evo" aria-selected="false">Évolution</button>
     <button class="tab" role="tab" data-tab="humeur" aria-selected="false">Humeur</button>
+    <button class="tab" role="tab" data-tab="apparence" aria-selected="false">Apparence</button>
     <button class="tab" role="tab" data-tab="jouer" aria-selected="false">Jouer</button>
     <button class="tab lab" role="tab" data-tab="tests" aria-selected="false" title="Tests : simuler Claude" aria-label="Tests"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6M10 3v6l-5 9a2 2 0 0 0 1.8 3h10.4a2 2 0 0 0 1.8-3l-5-9V3"/><path d="M7.5 15h9"/></svg></button>
   </nav>
@@ -199,6 +217,7 @@ main{flex:1;overflow:auto;padding:0 12px 12px}
       <div class="now fini"><p class="hint">Au toucher : sur le trackpad du Mac, tu le sens quand tu l'attrapes, le tires, le secoues ou le caresses, et quand il cogne un bord.</p><button class="chip" id="haptique">Activé</button></div>
     </section>
     <section class="pane" id="p-evo" hidden>
+      <div class="graphe saison" id="saison" hidden></div>
       <p class="hint" id="evoHint"></p>
       <div class="row"><button class="btn primary" id="random">Gagner une partie au hasard</button><button class="btn" id="reset">Revenir au départ</button></div>
       <div id="slots" class="slots"></div>
@@ -219,6 +238,13 @@ main{flex:1;overflow:auto;padding:0 12px 12px}
       <p class="hint">Elle suit le rythme de ta journée, toutes sessions confondues : l'heure, le temps sans vraie pause, le nombre de sessions en même temps. Jamais en lisant tes messages. Tu peux la forcer ici.</p>
       <div class="moods" id="moods"></div>
     </section>
+    <section class="pane" id="p-apparence" hidden>
+      <p class="hint" id="apparenceHint">Une teinte pour chaque partie. Tout est disponible tout de suite.</p>
+      <div class="ground apercu"><img id="apercu" class="mon" alt="Aperçu"></div>
+      <div id="teintes" class="slots"></div>
+      <div id="motifs" class="slots"></div>
+      <div class="row"><button class="btn" id="origine">Remettre d'origine</button></div>
+    </section>
   </main>
 </div>
 <script src="bidule64.js"></script>
@@ -234,6 +260,7 @@ const SHEETS = new Set(["limace", "candy"]);
 const SLOTS = [["tete", "Tête", [["antennes", "Antennes"], ["cornes", "Cornes"]]], ["bouche", "Bouche", [["crocs", "Crocs"], ["langue", "Langue"]]],
   ["bras", "Bras", [["bras", "Petits bras"], ["pinces", "Pinces"]]], ["pattes", "Pattes", [["longues", "Longues"], ["palmees", "Palmées"]]],
   ["dos", "Dos", [["ailes", "Ailes"], ["fourrure", "Fourrure"]]], ["queue", "Queue", [["touffue", "Touffue"], ["lezard", "Lézard"]]]];
+const PARTIES = [["corps", "Corps"], ["cheveux", "Cheveux"], ["pupilles", "Pupilles"], ["bouche", "Intérieur de la bouche"]];
 const $ = id => document.getElementById(id);
 let st = {mood:null, moodMode:"auto", moodReason:"", style:"limace", partsBy:{classique:{tete:"antennes", pattes:"longues", bras:"bras", queue:"touffue"}, ...Object.fromEntries(Object.keys(MONSTRES).map(id => [id, {}])), limace:{}, candy:{}}, thumb:""};
 const send = (ev, payload) => { if (T) T.event.emit(ev, payload); else console.log(ev, payload); };
@@ -255,9 +282,22 @@ function render() {
   $("evoHint").textContent = evoLimace ? "Premier essai d'évolution : un clic lui donne trois cheveux, un second les lui retire." : noParts ? "Les parties arriveront avec les animations dessinées de ce Bidule." : "Un clic ajoute la partie, un second clic la retire. Une partie du même emplacement remplace l'ancienne.";
   $("evoCheveux").hidden = !evoLimace; $("slots").hidden = $("random").parentElement.hidden = noParts;
   $("cheveux").classList.toggle("on", !!st.cheveux);
+  renderSaison(); renderVie();
   $("random").disabled = $("reset").disabled = noParts;
   $("slots").innerHTML = SLOTS.map(([slot, label, opts]) => `<div class="slot"><b>${label}</b><div class="chips">${opts.map(([p, name]) =>
     `<button class="chip ${parts[slot] === p ? "on" : ""}" data-part="${slot}:${p}" ${noParts ? "disabled" : ""}>${name}</button>`).join("")}</div></div>`).join("");
+  // Apparence : l'aperçu en direct (l'image envoyée par le Bidule, déjà teinte) et une rangée de teintes par partie (dist/js/apparence.js)
+  const teintes = st.aUneApparence && st.teintes, app = st.apparence || {};
+  $("apparenceHint").textContent = teintes ? "Une teinte pour chaque partie. Tout est disponible tout de suite." : "L'apparence arrivera avec les animations dessinées de ce Bidule.";
+  $("apercu").hidden = !st.style; if (st.style) $("apercu").src = $("thumb").src;
+  $("origine").disabled = !teintes || !Object.keys(app).length;
+  $("teintes").innerHTML = teintes ? PARTIES.map(([p, label]) => `<div class="slot"><b>${label}</b><div class="teintes">${Object.entries(teintes[p]).map(([nom, tons]) =>
+    `<button class="teinte ${(app[p] || st.origine[p]) === nom ? "on" : ""}" data-partie="${p}" data-teinte="${nom}" title="${nom}" aria-label="${label} : ${nom}" style="background:${tons[tons.length > 1 ? 1 : 0]}"></button>`).join("")}</div></div>`).join("") : "";
+  // les motifs du corps (sans motif, ou l'un d'eux), puis la deuxième teinte, celle du dessin (prise parmi les teintes du corps, par défaut celle du motif)
+  const motifs = teintes && st.motifs, mt = app.motif && motifs && (app.motifTeinte || motifs[app.motif]?.teinte);
+  $("motifs").innerHTML = motifs ? `<div class="slot"><b>Motif</b><div class="chips">${[["", "Aucun"], ...Object.keys(motifs).map(m => [m, motifs[m].nom])].map(([m, nom]) =>
+    `<button class="chip ${(app.motif || "") === m ? "on" : ""}" data-motif="${m}">${nom}</button>`).join("")}</div></div>` + (mt ? `<div class="slot"><b>Teinte du motif</b><div class="teintes">${Object.entries(teintes.corps).map(([nom, tons]) =>
+    `<button class="teinte ${mt === nom ? "on" : ""}" data-motifteinte="${nom}" title="${nom}" aria-label="Teinte du motif : ${nom}" style="background:${tons[1]}"></button>`).join("")}</div></div>` : "") : "";
   placePill();          // au cas où le panneau était caché au chargement (onglets pas encore mesurés)
 }
 // La pastille jaune se pose sous l'onglet choisi, et glisse de l'un à l'autre (sans glisser à l'ouverture du panneau).
@@ -373,6 +413,28 @@ async function renderCout() {
 }
 $("cout").addEventListener("click", e => { const b = e.target.closest("[data-pas]"); if (b) { coutPas = b.dataset.pas; renderCout(); } });
 $("cout").addEventListener("change", e => { if (e.target.id === "abo") { try { localStorage.setItem("abonnement", e.target.value); } catch (err) {} } });
+// Les stats de la saison (jeu.js), envoyées par le Bidule. Niveaux et pièces à zéro tant qu'ils n'existent pas.
+const STATS = [["repas", "Repas"], ["secousses", "Secousses"], ["malade", "Temps malade"], ["jeux", "Mini-jeux"], ["habitudes", "Bonnes habitudes"],
+  ["tard", "Soirées tardives"], ["travail", "Temps de travail"], ["tokens", "Tokens"]];
+const ETAPES = {"":"Va bien", faim:"A faim", soif:"A soif", malade:"Malade"};
+function statTxt(k, v) { return k === "travail" || k === "malade" ? hm(v / 60) : k === "tokens" && v >= 1000 ? tokensTxt(v) : v; }
+// Les trois jauges dans l'en-tête, près du Bidule : elles clignotent sous le seuil où il le dit dans sa bulle
+const JAUGES = [["faim", "Faim", "#f0a030"], ["soif", "Soif", "#4aa8e0"], ["vie", "Vie", "#ff5a5f"]];
+function renderVie() {
+  const j = st.jeu; $("vie").hidden = !j || !st.style;
+  if ($("vie").hidden) return;
+  $("vie").innerHTML = JAUGES.map(([k, nom, c]) => `<span>${nom}</span><u class="${j.besoins[k] < j.reglages.bas ? "bas" : ""}"><i style="width:${j.besoins[k]}%;background:${c}"></i></u>`).join("");
+}
+function renderSaison() {
+  const j = st.jeu; $("saison").hidden = !j;
+  if (!j) return;
+  $("saison").innerHTML = `<h3>Cette saison</h3><p>Jusqu'au ${new Date(j.fin - 1).toLocaleDateString("fr-FR", {weekday:"long", day:"numeric", month:"long"})}</p>`
+    + `<div class="compteurs"><span>Niveau du Bidule<b>0</b></span><span>Ton niveau<b>0</b></span><span>Pièces<b>0</b></span></div>`
+    + `<div class="stats">${[["faim", "Faim"], ["soif", "Soif"], ["vie", "Vie"]].map(([k, nom]) => `<span>${nom}</span><u><i style="width:${j.besoins[k]}%"></i></u><b>${Math.round(j.besoins[k])}</b>`).join("")}</div>`
+    + `<p>${ETAPES[j.etape]}</p>`
+    + `<p>Collection : ${j.collection ? j.collection + (j.collection > 1 ? " squelettes" : " squelette") : "vide"}</p>`
+    + `<div class="stats">${STATS.map(([k, nom]) => `<span>${nom}</span><u><i style="width:${Math.min(100, j.stats[k] / j.plein[k] * 100)}%"></i></u><b>${statTxt(k, j.stats[k])}</b>`).join("")}</div>`;
+}
 // La bulle du Bidule, dans l'en-tête : ce que fait Claude (toutes sessions confondues), depuis quand, et le contexte de la session en vue
 function renderClaude() {
   const j = claudeNow(), e = lireEtat(j), B = $("bulleBD");
@@ -519,9 +581,11 @@ async function renderLimites() {
 }
 setInterval(() => { icFrame++; renderClaude(); }, 450);
 // Onglet Tests : simuler chaque état de Claude, pour voir la bulle
+const BESOINS_ESSAI = [["faim", "Faim haute"], ["soif", "Soif haute"], ["malade", "Malade"], ["squelette", "Squelette"], ["nourrir", "Nourrir"], ["zero", "Remettre à zéro"]];
 function applyEssai() {
   $("essais").innerHTML = "<h3>Simuler Claude (pour voir chaque état)</h3>" + SIMS.map(([id, name]) => `<button class="chip ${sim === id ? "on" : ""}" data-sim="${id}">${name}</button>`).join("")
-    + PLEINS.map(([pc, name]) => `<button class="chip ${simPc === pc ? "on" : ""}" data-simpc="${pc}">${name}</button>`).join("");
+    + PLEINS.map(([pc, name]) => `<button class="chip ${simPc === pc ? "on" : ""}" data-simpc="${pc}">${name}</button>`).join("")
+    + "<h3>Simuler les besoins (ne compte pas dans les stats)</h3>" + BESOINS_ESSAI.map(([id, name]) => `<button class="chip" data-besoins="${id}">${name}</button>`).join("");
   renderClaude();
 }
 applyEssai();
@@ -544,12 +608,17 @@ async function renderFini() {
 renderFini();
 document.addEventListener("click", e => {
   const b = e.target.closest("button"); if (!b || b.disabled) return;
-  if (b.dataset.tab) { document.querySelectorAll(".tab").forEach(t => t.setAttribute("aria-selected", t === b)); ["claude", "piste", "evo", "humeur", "jouer", "tests"].forEach(k => $("p-" + k).hidden = k !== b.dataset.tab); placePill(); if (b.dataset.tab === "claude") { renderFini(); renderGraphes(); renderCout(); } }
+  if (b.dataset.tab) { document.querySelectorAll(".tab").forEach(t => t.setAttribute("aria-selected", t === b)); ["claude", "piste", "evo", "humeur", "apparence", "jouer", "tests"].forEach(k => $("p-" + k).hidden = k !== b.dataset.tab); placePill(); if (b.dataset.tab === "claude") { renderFini(); renderGraphes(); renderCout(); } }
   else if (b.dataset.sim !== undefined) { sim = b.dataset.sim; applyEssai(); }
+  else if (b.dataset.besoins) send("besoins", b.dataset.besoins);
   else if (b.dataset.simpc !== undefined) { simPc = +b.dataset.simpc; if (!sim) sim = "pense"; applyEssai(); }
   else if (b.dataset.style) { send("style", b.dataset.style); if (st.cache && T) T.core.invoke("montrer_bidule", {oui:true}); if (!st.style && T) T.core.invoke("hide_panel"); }      // premier choix : le panneau se ferme, le Bidule tombe sur le bureau      // caché : cliquer dessus le fait revenir
   else if (b.dataset.part) send("evo", "part:" + b.dataset.part);
   else if (b.dataset.mood) send("mood", b.dataset.mood);
+  else if (b.dataset.teinte) send("apparence", {...st.apparence, [b.dataset.partie]:b.dataset.teinte});          // le Bidule l'applique, la garde et renvoie son état (aperçu)
+  else if (b.dataset.motif !== undefined) { const {motif, motifTeinte, ...a} = st.apparence || {}; send("apparence", b.dataset.motif ? {...a, motif:b.dataset.motif} : a); }          // nouveau motif : sa deuxième teinte par défaut
+  else if (b.dataset.motifteinte) send("apparence", {...st.apparence, motifTeinte:b.dataset.motifteinte});
+  else if (b.id === "origine") send("apparence", {});
   else if (b.id === "random") send("evo", "evo:random");
   else if (b.id === "reset") send("evo", "evo:reset");
   else if (b.id === "cheveux") send("evo", "evo:cheveux");

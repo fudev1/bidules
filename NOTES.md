@@ -1,6 +1,6 @@
 # Notes du projet
 
-Mise à jour : 16 octobre 2026. Ce fichier suit l'état du projet : ce qui est décidé, ce qui reste à trancher, ce qui est
+Mise à jour : 22 octobre 2026. Ce fichier suit l'état du projet : ce qui est décidé, ce qui reste à trancher, ce qui est
 fait et ce qui reste à faire. La vision, l'installation et la stack sont dans le [README](README.md).
 
 ## Décisions
@@ -9,7 +9,7 @@ fait et ce qui reste à faire. La vision, l'installation et la stack sont dans l
 - Les tokens se comptent comme dans PokéBurn : entrée + sortie, sans le cache.
 - Une saison = un sprint (3 ou 4 semaines), avec les dates dans un fichier de configuration "maître". À la fin du
   sprint, le Bidule est figé dans la collection et un nouvel œuf arrive. La chambre et les accessoires restent.
-- Pendant le sprint, le Bidule évolue. Le système d'évolution reste à définir.
+- Pendant le sprint, le Bidule évolue : voir « Le jeu : récompenses, besoins, évolution » plus bas.
 - Chambre à 5 emplacements fixes. Accessoires sur 3 emplacements : tête, visage, cou.
 - Direction artistique : le moodboard de Matteo, en pixel art 64 × 64, jamais de vectoriel.
 - Pour l'instant, seule la limace est jouable : les autres Bidules restent visibles mais grisés dans le panneau («
@@ -57,20 +57,64 @@ fait et ce qui reste à faire. La vision, l'installation et la stack sont dans l
   - grande chute (au moins les deux tiers de l'écran) : elle a peur, s'écrase, reste en flaque 1,5 à 3 s, puis se
     reforme ;
   - la vitesse de marche vient du dessin (plus lente qu'avant), gardée telle quelle pour l'instant.
+- Apparence de la limace (spec #57, première étape #73) : une teinte par partie (corps, cheveux, pupilles, intérieur de
+  la bouche), prise dans une liste fermée (10 corps, 6 cheveux, 5 pupilles, 4 bouches). Chaque partie est reconnue à ses
+  couleurs et recolorée ton pour ton, une fois au chargement ou au changement d'apparence (`dist/js/apparence.js`) ; le
+  contour reste noir, et les verts de la nausée passent devant. Les pupilles ont leur couleur à elles dans la feuille
+  (`#000001`, posée par `gen.py`), l'intérieur de la bouche aussi (`#3f3f75` : `#3f3f74` sert aussi aux éclaboussures
+  vertes, jamais teintes). Les teintes sont provisoires, en attendant la planche validée (#72) ; la palette
+  fermée s'étend aux teintes proposées (`docs/adr/0001-la-palette-fermee-s-etend-aux-teintes.md`). Onglet « Apparence »
+  du panneau (#70) : aperçu en direct, une rangée de teintes par partie, la grille des motifs et leur deuxième teinte,
+  « Remettre d'origine ». Le panneau envoie l'apparence au Bidule (événement `apparence`) ; l'app la garde par Bidule
+  dans `apparences.json` et la rend au lancement (`lire_apparences`, `garder_apparences`, simulés dans la page de test).
+- Motifs du corps (#71) : rayures, pois, cœurs, vache (`Apparence.appliquer({motif, motifTeinte})`). Posés seulement
+  sur les pixels du corps, fixes dans l'image 64 × 64 (ils ne suivent pas la déformation) ; fond = teinte du corps,
+  dessin = deuxième teinte (une teinte du corps ; par défaut blanc, blanc, rose, noir doux), qui reprend le ton du pixel
+  recouvert. La nausée passe devant. L'icône et la goutte tenue (dessinée par le code) le montrent aussi. Chaque sous-système
+  qui garde des images ou des couleurs de l'apparence s'y abonne (`Apparence.quandElleChange`).
 
 - Duel : un Pong entre deux collègues du même réseau local, en plein écran, chaque Bidule devenu raquette. Sans
   serveur sur internet, l'hôte (celui qui lance le défi) fait foi ; voir
-  [l'ADR 0001](docs/adr/0001-duel-en-reseau-local-avec-hote.md) et le glossaire. Sans lien avec les tokens, les pièces
+  [l'ADR 0002](docs/adr/0002-duel-en-reseau-local-avec-hote.md) et le glossaire. Sans lien avec les tokens, les pièces
   ni l'évolution. Réservé à la limace pour la première version.
 
 ## À trancher
 
-- **Récompense** : la règle de départ récompense le volume de tokens (100 tokens = 1 pièce), ce qui pousse à prompter
-  pour rien. Proposition : le Bidule montre l'usage et récompense la bonne utilisation.
-- **Besoins** (faim, soif, saleté) : ils montent avec les tokens, ou avec le temps ? Avec les tokens, ils poussent aussi
-  à consommer.
-- **Évolution** : ce qui la déclenche pendant le sprint.
 - **Personnages** : animer à la main les 6 monstres du moodboard, ou garder seulement la limace pour la v1.
+
+## Le jeu : récompenses, besoins, évolution
+
+Décidé le 22 octobre 2026. La spec est l'issue #76, les étapes « Jeu 1 » à « Jeu 6 » les issues #77 à #82.
+
+- **Pièces** : elles viennent des tokens, du temps de travail et de bonus pour les bonnes habitudes (pauses, rester
+  sous la limite, pas de soirée tardive). Pas de plafond : l'ancienne règle « ne pas récompenser le volume de tokens »
+  est abandonnée.
+- **Mini-jeux** : on joue quand on veut. Une partie rapporte un coffre et de l'expérience. Coffres commun, rare ou
+  épique, avec une ouverture animée par rareté et des surprises ; le score fait monter la rareté.
+- **Niveaux** : l'expérience et le niveau du Bidule repartent à zéro à chaque saison. Le niveau du joueur est
+  permanent et débloque des choses durables.
+- **Besoins** : ils montent avec le temps et avec les tokens. Le temps ne compte que quand l'app tourne.
+- **Négligence** : par étapes. Le Bidule tombe malade ; une maladie trop longue le change en squelette, qui part dans
+  la collection, et un nouvel œuf arrive. Il ne meurt pas vraiment.
+- **Stats de la saison** : repas, secousses, temps malade, mini-jeux joués, bonnes habitudes, soirées tardives, temps
+  de travail, tokens. Un tableau en barres dans le panneau, avec le niveau du Bidule, le niveau du joueur et les pièces.
+- **Évolution** : une seule, en fin de saison, selon la stat dominante : gros (très nourri), limace folle (secouée),
+  squelette (négligée), sportive (mini-jeux), sage (bonnes habitudes), vampire (soirées tardives), normale (équilibrée).
+  D'abord des variations de la limace (couleurs, accessoires, corps étiré par le code, une ou deux animations à elles),
+  les formes qui marchent seront redessinées ensuite.
+- **Interrupteurs** : l'évolution est construite mais coupée pour les joueurs tant que les dessins ne sont pas prêts.
+  Le fichier « maître » en ligne porte les dates de saison et les interrupteurs (`evolution: false`...) ; un réglage
+  local les force pendant le développement.
+- **Réglages** : tous les chiffres du jeu (gains, vitesses des besoins, seuils, durées) dans une seule table, ajustée
+  en jouant.
+- **Stockage** : tout en local, dans `etat.json`. Pas de serveur ; tricher est accepté.
+- **Où se jouent les mini-jeux** : sur le bureau avec le Bidule, ou dans une fenêtre à part, selon le jeu.
+- **Premier mini-jeu, « Attrape-tout »** : 45 s, de la nourriture tombe sur le bureau et le Bidule la rattrape en bas
+  de l'écran. Bonne nourriture, étoile rare (points doublés), bonbon pourri à éviter. Souris, ou flèches et A/D :
+  pendant la partie, la fenêtre du jeu prend le focus pour que les touches n'aillent à aucune autre app (pas de
+  raccourci global), Échap quitte, et le focus revient à l'app d'avant à la fin.
+- **Ordre** : stats et tableau, besoins et maladie, premier mini-jeu avec coffre et expérience, pièces et boutique,
+  niveau du joueur, évolution de fin de saison.
 
 ## Fait
 
@@ -80,6 +124,25 @@ fait et ce qui reste à faire. La vision, l'installation et la stack sont dans l
   Échap pour quitter. Le transport est dans `duel.rs` (testé avec `cargo test`), les règles dans `dist/js/duel-jeu.js`
   (testées avec `mise run tests`), l'affichage dans `dist/duel.html`.
 
+- Jeu 2 (#78) : les besoins, la maladie et le squelette. Trois jauges de 100 (plein, il va bien) à 0, dans l'en-tête
+  du panneau à côté du Bidule (faim orange, soif bleue, vie rouge ; elles clignotent sous 40). Pas au-dessus de sa tête
+  sur le bureau : Matteo n'en veut pas. La faim descend avec le
+  temps où l'app tourne (plafonné à chaque passage : l'app fermée ou en veille ne compte pas) et avec les tokens (sauf
+  ceux du premier relevé, faits app fermée) ; chaque repas (bonbon, fichier déposé) la remplit en partie. La soif descend
+  quand tu travailles (un prompt il y a moins de 10 min) et remonte pendant tes pauses. Sous 40, il dit « J'ai faim ! »
+  ou « J'ai soif ! » dans sa bulle et devient ronchon (humeur devinée). Une jauge à 0 le rend malade : vaseux et corps
+  vert pâle (la limace) ; il guérit quand faim et soif repassent au-dessus de 50. Malade, sa vie se vide en 6 h, sinon
+  elle remonte ; vide, il devient un squelette (corps couleur os), part dans la collection, puis un nouvel œuf éclot (pas
+  encore dessiné : il se reforme et repart à zéro). Le temps malade compte dans les stats. Besoins et collection gardés
+  dans `etat.json` ; seuils et vitesses dans `REGLAGES.besoins`. L'onglet Tests a des boutons pour sauter aux étapes
+  (faim haute, soif haute, malade, squelette, nourrir, remettre à zéro), hors stats.
+- Jeu 1 (#77) : les stats de la saison. Repas (bonbon de Candy, fichier déposé), secousses, bonnes habitudes (pause de
+  20 min à 2 h entre deux prompts), soirées tardives (un prompt entre 20 h et 7 h, une par soirée), temps de travail
+  (même règle que le panneau) et tokens (entrée + sortie, sans le cache) montent ; temps malade et mini-jeux restent à 0.
+  Gardées dans `etat.json`, remises à zéro à chaque saison. En attendant le fichier « maître », une saison dure 14 jours
+  à partir du lundi 19 octobre 2026 (date locale). Tous les chiffres du jeu dans `REGLAGES` (`dist/js/jeu.js`), dont la
+  valeur d'une barre pleine. Le panneau (onglet Évolution) montre « Cette saison » : le niveau du Bidule, le niveau du
+  joueur et les pièces (à 0 pour l'instant) et une barre par stat.
 - Skills de Matt Pocock (`github.com/mattpocock/skills`, version 1.3.1) copiés dans `.claude/skills/` : les 27 du plugin
   officiel (grilling, tdd, diagnosing-bugs, to-spec, etc.). Pour les commits et les pull requests, nos skills `commit`
   et `pull-request` restent prioritaires sur `pr`. Ce qu'ils produisent est écrit en français, et quand ils parlent de
@@ -278,8 +341,7 @@ fait et ce qui reste à faire. La vision, l'installation et la stack sont dans l
   souris le coupe). Elle laisse des bonbons en marchant quand elle est guilleret (3 au plus par terre, un petit bonbon
   menthe, rose ou jaune de la taille de ses pieds, dans sa propre petite fenêtre `bonbon.html` car la sienne la suit
   partout) ; ils restent jusqu'à ce qu'on clique sur l'un d'eux : elle vient alors le manger (animation `mange`, une par
-  couleur ; elle sert aussi quand on lui glisse un fichier). Les bonbons ne comptent rien et ne servent à rien d'autre
-  (voir "Récompense" dans "À trancher"). Pas encore : rot, évolution, parties.
+  couleur ; elle sert aussi quand on lui glisse un fichier). Les bonbons ne comptent rien et ne servent à rien d'autre. Pas encore : rot, évolution, parties.
 - Lien avec Claude : la conversation en cours est celle de Claude Desktop (onglet Code) qui a eu le focus en dernier
   (`~/Library/Application Support/Claude/claude-code-sessions/…/local_*.json`, champs `cliSessionId` et `lastFocusedAt`)
   ; sinon le journal Claude Code du terminal modifié dans la dernière demi-heure. Dans son journal
@@ -377,11 +439,9 @@ fait et ce qui reste à faire. La vision, l'installation et la stack sont dans l
 
 ### Garde-fous contre les dérives
 
-- Ne plus récompenser le volume brut de tokens (voir "À trancher").
-- Plafond par jour : au-delà d'une journée de travail normale, plus rien ne se gagne.
 - Ne compter que le vrai travail, lu dans les métadonnées : outils utilisés, fichiers modifiés, sessions qui
   aboutissent. Toujours sans lire le texte.
-- Récompenser la bonne utilisation : rester sous la limite, bon usage du cache, pauses, pas de soirées tardives.
+- Bonus pour la bonne utilisation : rester sous la limite, bon usage du cache, pauses, pas de soirées tardives.
 - Pas de classement des tokens entre collègues.
 - Fonctions d'équipe en option seulement, avec des totaux, jamais de contenu.
 - Une page "comment le Bidule compte", pour que la règle soit claire.
@@ -391,9 +451,9 @@ fait et ce qui reste à faire. La vision, l'installation et la stack sont dans l
 - Sauvegarder aussi les pièces et la collection, quand elles existeront (dans `etat.json`, voir « Fait »).
 - Fichier "maître" des sprints, lu au démarrage.
 - Œuf et éclosion en début de sprint, Bidule figé dans la collection en fin de sprint.
-- Système d'évolution pendant le sprint.
+- Le jeu (récompenses, besoins, évolution) : les étapes « Jeu 3 » à « Jeu 6 » (#79 à #82), voir plus haut. Jeu 1 et Jeu 2 sont faits.
 - Parties sur la limace : points d'accroche sur chaque image (voir la spec).
-- Besoins, pièces, boutique, chambre, accessoires.
+- Chambre, accessoires.
 
 ### Animations (Thibault)
 

@@ -55,6 +55,7 @@ async function loadSheet(id) {
   for (const n in tags) if ((n === "nausee" || n.startsWith("crawl@")) && tags.crawl && tags[n].length === tags.crawl.length) tags[n].forEach((b, i) => { b.step = tags.crawl[i].step; });
   SHEET_DATA[id] = {frames, all:tags, tags, front, axis};
   moodTags(id);
+  if (id === "limace") await Apparence.preparer();          // l'apparence choisie, appliquée une fois au chargement
   say(`perso ${id} : ${frames.length} images, ${Object.keys(tags).length} animations`);
 }
 const SHEET_LOADING = {};          // un seul chargement par perso, même si on le choisit deux fois pendant qu'il charge

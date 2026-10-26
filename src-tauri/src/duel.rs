@@ -1,4 +1,4 @@
-// Le transport du duel entre deux Bidules du réseau local (voir docs/adr/0001-duel-en-reseau-local-avec-hote.md).
+// Le transport du duel entre deux Bidules du réseau local (voir docs/adr/0002-duel-en-reseau-local-avec-hote.md).
 // Il ne connaît pas le jeu : il reçoit les défis, se connecte, fait passer les messages du duel tels quels et dit quand c'est fini.
 
 use serde_json::{json, Value};

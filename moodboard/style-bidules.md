@@ -29,7 +29,7 @@ Une goutte bleue sans bras, qui rampe de profil et se tourne de face pour regard
 | lumière | `#a4c6ff` |
 | base | `#639bff` |
 | ombre | `#4577e0` |
-| intérieur de la bouche | `#3f3f74` |
+| intérieur de la bouche | `#3f3f74` (`#3f3f75` dans la feuille de la limace, pour sa teinte) |
 | blanc des yeux, dents | `#ffffff` |
 | nausée (lumière, base, ombre) | `#c6f0b0`, `#7fd46a`, `#4fae45` |
 | bulle du sommeil | `#dbeeff`, `#9fc9f5`, `#7fb6f0`, `#3357b8` |

@@ -147,3 +147,341 @@ test("les réglages du panneau passent sans erreur", async () => {
   assert.deepEqual(await page.evaluate(() => LOG.map(l => l[1]).filter(m => /erreur|init:|: [A-Z]\w*Error/.test(m))), []);
   await page.close();
 });
+
+// Apparence : on applique une apparence, puis on lit les couleurs de la limace affichée
+const ROSE = ["#ffd6e8", "#ff9cc6", "#e0679f"], BLEU = ["#a4c6ff", "#639bff", "#4577e0"];
+async function couleursAffichees(page, tag, i = 0) {
+  return page.evaluate(async ([tag, i]) => {
+    Horloge.arreter(); img.src = SHEET_DATA.limace.tags[tag][i].src;
+    const im = new Image(); im.src = IMG_SRC.get.call(img); await im.decode();
+    const cv = document.createElement("canvas"); cv.width = cv.height = 64; const g = cv.getContext("2d"); g.drawImage(im, 0, 0);
+    const d = g.getImageData(0, 0, 64, 64).data, vu = new Set();
+    for (let k = 0; k < d.length; k += 4) if (d[k + 3]) vu.add("#" + [d[k], d[k + 1], d[k + 2]].map(v => v.toString(16).padStart(2, "0")).join(""));
+    return [...vu];
+  }, [tag, i]);
+}
+
+test("une apparence recolore le corps avec ses trois tons, change les pupilles et garde le contour noir", async () => {
+  const page = await sim.ouvrir();
+  await page.waitForFunction(() => SHEET_DATA.limace);
+  await page.evaluate(() => Apparence.appliquer({corps: "rose", pupilles: "brun"}));
+  const vu = await couleursAffichees(page, "repos");
+  for (const c of ROSE) assert.ok(vu.includes(c), `ton ${c} absent`);
+  for (const c of BLEU) assert.ok(!vu.includes(c), `bleu d'origine ${c} encore là`);
+  assert.ok(vu.includes("#000000"), "le contour n'est plus noir");
+  assert.ok(vu.includes("#5a3a22"), "pupilles pas recolorées");
+  assert.ok(!vu.includes("#000001"), "pupilles d'origine encore là");
+  assert.deepEqual(page.erreurs, []);
+  await page.close();
+});
+
+test("le vert de la nausée passe devant la teinte du corps", async () => {
+  const page = await sim.ouvrir();
+  await page.waitForFunction(() => SHEET_DATA.limace);
+  await page.evaluate(() => Apparence.appliquer({corps: "rose"}));
+  const vu = await couleursAffichees(page, "nausee");
+  assert.ok(vu.includes("#7fd46a"), "plus de vert pendant la nausée");
+  for (const c of ROSE) assert.ok(!vu.includes(c), `teinte ${c} pendant la nausée`);
+  await page.close();
+});
+
+test("les cheveux prennent leur teinte, et l'icône de la barre de menu montre l'apparence", async () => {
+  const page = await sim.ouvrir();
+  await page.waitForFunction(() => SHEET_DATA.limace);
+  await page.evaluate(async () => { cheveux = true; await hairLoad(); await Apparence.appliquer({corps: "rose", cheveux: "roux"}); });
+  const vu = await couleursAffichees(page, "repos");
+  assert.ok(vu.includes("#d2622e"), "cheveux pas roux");
+  const icone = await page.evaluate(async () => {
+    Horloge.demarrer(); CALLS.length = 0; await new Promise(r => setTimeout(r, 800));
+    const a = CALLS.filter(c => c[1] === "icone").pop()[2], im = new Image(); im.src = URL.createObjectURL(new Blob([a], {type: "image/png"})); await im.decode();
+    const cv = document.createElement("canvas"); cv.width = im.width; cv.height = im.height; const g = cv.getContext("2d"); g.drawImage(im, 0, 0);
+    const d = g.getImageData(0, 0, im.width, im.height).data, vu = new Set();
+    for (let k = 0; k < d.length; k += 4) if (d[k + 3]) vu.add([d[k], d[k + 1], d[k + 2]].join(","));
+    return [...vu];
+  });
+  assert.ok(icone.includes("255,156,198"), "l'icône n'est pas rose");
+  assert.ok(!icone.includes("99,155,255"), "l'icône est encore bleue");
+  assert.deepEqual(page.erreurs, []);
+  await page.close();
+});
+
+test("revenir à l'apparence d'origine rend la feuille pixel pour pixel", async () => {
+  const page = await sim.ouvrir();
+  await page.waitForFunction(() => SHEET_DATA.limace);
+  const r = await page.evaluate(async () => {
+    await Apparence.appliquer({corps: "citron", pupilles: "vert", bouche: "rouge"});
+    await Apparence.appliquer({});
+    const im = new Image(); im.src = "persos/limace/sheet.png"; await im.decode();
+    const meta = await (await fetch("persos/limace/sheet.json")).json(), cases = Object.values(meta.frames).map(f => f.frame);
+    const cv = document.createElement("canvas"); cv.width = im.width; cv.height = im.height; const g = cv.getContext("2d"); g.drawImage(im, 0, 0);
+    let diff = 0, faux = 0;
+    for (const [k, f] of SHEET_DATA.limace.frames.entries()) {
+      const a = g.getImageData(cases[k].x, cases[k].y, 64, 64).data, b = f.cv.getContext("2d").getImageData(0, 0, 64, 64).data;
+      for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) { diff++; break; }
+      if (Apparence.affichee(f.src) !== f.src) faux++;
+    }
+    return {diff, faux};
+  });
+  assert.deepEqual(r, {diff: 0, faux: 0});
+  await page.close();
+});
+
+// Motifs : on lit les pixels d'une image affichée avec leur position
+async function pixelsAffiches(page, tag, i = 0) {
+  return page.evaluate(async ([tag, i]) => {
+    Horloge.arreter(); img.src = SHEET_DATA.limace.tags[tag][i].src;
+    const im = new Image(); im.src = IMG_SRC.get.call(img); await im.decode();
+    const cv = document.createElement("canvas"); cv.width = cv.height = 64; const g = cv.getContext("2d"); g.drawImage(im, 0, 0);
+    const d = g.getImageData(0, 0, 64, 64).data, px = [];
+    for (let k = 0; k < d.length; k += 4) px.push(d[k + 3] ? "#" + [d[k], d[k + 1], d[k + 2]].map(v => v.toString(16).padStart(2, "0")).join("") : "");
+    return px;
+  }, [tag, i]);
+}
+const NOIR_DOUX = ["#7a7a90", "#4e4e62", "#34343f"];
+
+test("un motif n'est posé que sur le corps et garde ses ombres", async () => {
+  const page = await sim.ouvrir();
+  await page.waitForFunction(() => SHEET_DATA.limace);
+  const avant = await pixelsAffiches(page, "repos");
+  for (const motif of ["rayures", "pois", "coeurs", "vache"]) {
+    await page.evaluate(m => Apparence.appliquer({corps: "rose", motif: m, motifTeinte: "noir doux"}), motif);
+    const apres = await pixelsAffiches(page, "repos");
+    let dessin = 0;
+    const tons = new Set();
+    for (let k = 0; k < 64 * 64; k++) {
+      const o = BLEU.indexOf(avant[k]);
+      if (o < 0) { assert.equal(apres[k], avant[k], `${motif} : pixel hors du corps changé en ${k}`); continue; }
+      const n = NOIR_DOUX.indexOf(apres[k]);
+      if (n >= 0) { dessin++; tons.add(n); assert.equal(n, o, `${motif} : le dessin ne reprend pas l'ombre en ${k}`); }
+      else assert.equal(apres[k], ROSE[o], `${motif} : fond pas à la teinte du corps en ${k}`);
+    }
+    assert.ok(dessin > 20, `${motif} : presque pas de dessin (${dessin})`);
+    assert.ok(tons.size >= 2, `${motif} : le dessin n'a qu'un ton`);
+  }
+  assert.deepEqual(page.erreurs, []);
+  await page.close();
+});
+
+test("chaque motif a une deuxième teinte par défaut", async () => {
+  const page = await sim.ouvrir();
+  await page.waitForFunction(() => SHEET_DATA.limace);
+  await page.evaluate(() => Apparence.appliquer({motif: "vache"}));
+  const vu = await pixelsAffiches(page, "repos");
+  assert.ok(NOIR_DOUX.some(c => vu.includes(c)), "la vache n'est pas noire par défaut");
+  await page.close();
+});
+
+test("la nausée passe devant le motif, et sans motif rien ne change", async () => {
+  const page = await sim.ouvrir();
+  await page.waitForFunction(() => SHEET_DATA.limace);
+  const nausee = await pixelsAffiches(page, "nausee"), repos = await pixelsAffiches(page, "repos");
+  await page.evaluate(() => Apparence.appliquer({motif: "pois"}));
+  assert.deepEqual(await pixelsAffiches(page, "nausee"), nausee);
+  await page.evaluate(() => Apparence.appliquer({motif: null}));
+  assert.deepEqual(await pixelsAffiches(page, "repos"), repos);
+  await page.close();
+});
+
+// Enregistrement : le panneau envoie l'apparence (événement « apparence »), l'app la garde (simulée dans la page de test) et la rend au lancement
+const envoyer = (page, app) => page.evaluate(a => Promise.all(LISTEN.apparence.map(f => f({payload: a}))), app);
+test("l'apparence choisie dans le panneau revient après un rechargement, motif compris", async () => {
+  const page = await sim.ouvrir();
+  await page.waitForFunction(() => SHEET_DATA.limace);
+  await envoyer(page, {corps: "rose", cheveux: "roux", motif: "vache", motifTeinte: "noir doux"});
+  await page.reload({waitUntil: "domcontentloaded"});
+  await page.waitForFunction(() => chosen && SHEET_DATA.limace);
+  assert.deepEqual(await page.evaluate(() => Apparence.courante), {corps: "rose", cheveux: "roux", motif: "vache", motifTeinte: "noir doux"});
+  const vu = await couleursAffichees(page, "repos");
+  for (const c of ROSE) assert.ok(vu.includes(c), `ton ${c} absent après rechargement`);
+  assert.ok(NOIR_DOUX.some(c => vu.includes(c)), "le motif n'est pas revenu");
+  assert.deepEqual(page.erreurs, []);
+  await page.close();
+});
+
+test("« Remettre d'origine » rend la limace bleue sans motif, aussi au lancement suivant", async () => {
+  const page = await sim.ouvrir();
+  await page.waitForFunction(() => SHEET_DATA.limace);
+  await envoyer(page, {corps: "rose", pupilles: "brun", motif: "pois"});
+  await envoyer(page, {});
+  let vu = await couleursAffichees(page, "repos");
+  for (const c of BLEU) assert.ok(vu.includes(c), `bleu ${c} absent`);
+  assert.ok(vu.includes("#000001") && !vu.includes("#5a3a22"), "pupilles pas revenues");
+  await page.reload({waitUntil: "domcontentloaded"});
+  await page.waitForFunction(() => chosen && SHEET_DATA.limace);
+  assert.deepEqual(await page.evaluate(() => Apparence.courante), {});
+  vu = await couleursAffichees(page, "repos");
+  for (const c of ROSE) assert.ok(!vu.includes(c), `rose ${c} revenu après rechargement`);
+  assert.deepEqual(page.erreurs, []);
+  await page.close();
+});
+
+test("les cheveux teints gardent le contour du corps noir", async () => {
+  const page = await sim.ouvrir();
+  await page.waitForFunction(() => SHEET_DATA.limace);
+  await page.evaluate(async () => { cheveux = true; await hairLoad(); cheveux = false; });
+  const nu = await pixelsAffiches(page, "repos");
+  await page.evaluate(async () => { cheveux = true; await Apparence.appliquer({cheveux: "roux"}); });
+  const coiffe = await pixelsAffiches(page, "repos");
+  let meches = 0;
+  for (let k = 0; k < 64 * 64; k++) {
+    if (nu[k] === "#000000") assert.equal(coiffe[k], "#000000", `contour recoloré en ${k}`);
+    if (!nu[k] && coiffe[k]) { meches++; assert.equal(coiffe[k], "#d2622e", `mèche pas rousse en ${k}`); }
+  }
+  assert.ok(meches > 10, "pas de cheveux");
+  await page.close();
+});
+
+test("la teinte de la bouche ne touche que l'intérieur de la bouche, pas les éclaboussures vertes", async () => {
+  const page = await sim.ouvrir();
+  await page.waitForFunction(() => SHEET_DATA.limace);
+  const chute = await pixelsAffiches(page, "chute-vert", 1);
+  assert.ok(chute.includes("#3f3f74"), "l'éclaboussure n'a plus sa couleur sombre");
+  await page.evaluate(() => Apparence.appliquer({bouche: "rouge"}));
+  assert.deepEqual(await pixelsAffiches(page, "chute-vert", 1), chute);
+  assert.ok((await pixelsAffiches(page, "baille", 5)).includes("#9c2b3a"), "la bouche ouverte n'est pas rouge");
+  await page.close();
+});
+
+test("la goutte tenue a le motif, et verdit en entier quand on la secoue", async () => {
+  const page = await sim.ouvrir();
+  await page.waitForFunction(() => SHEET_DATA.limace);
+  await page.evaluate(() => Apparence.appliquer({corps: "rose", motif: "rayures", motifTeinte: "noir doux"}));
+  const lire = secoue => page.evaluate(async s => {
+    Horloge.arreter(); drag = {shaken: s, lastX: 0, lastY: 0}; swingStart(); swingDraw();
+    const im = new Image(); im.src = IMG_SRC.get.call(img); await im.decode();
+    const cv = document.createElement("canvas"); cv.width = im.width; cv.height = im.height; const g = cv.getContext("2d"); g.drawImage(im, 0, 0);
+    const d = g.getImageData(0, 0, im.width, im.height).data, vu = new Set();
+    for (let k = 0; k < d.length; k += 4) if (d[k + 3]) vu.add("#" + [d[k], d[k + 1], d[k + 2]].map(v => v.toString(16).padStart(2, "0")).join(""));
+    return [...vu];
+  }, secoue);
+  let vu = await lire(false);
+  assert.ok(ROSE.some(c => vu.includes(c)), "la goutte n'est pas rose");
+  assert.ok(NOIR_DOUX.some(c => vu.includes(c)), "la goutte n'a pas le motif");
+  vu = await lire(true);
+  assert.ok(vu.includes("#7fd46a"), "la goutte secouée ne verdit pas");
+  assert.ok(!NOIR_DOUX.some(c => vu.includes(c)), "le motif passe devant la nausée");
+  assert.deepEqual(page.erreurs, []);
+  await page.close();
+});
+
+// Les stats de la saison (jeu.js) : les prompts et les tokens viennent des journaux simulés (window.PROMPTS, window.DEPENSES)
+test("les stats de la saison montent : repas, secousses, travail, pauses, soirées tardives, tokens", async () => {
+  const page = await sim.ouvrir();
+  const s = await page.evaluate(async () => {
+    Horloge.arreter();
+    const d0 = saisonCourante(), a = d0.getTime() / 1000;
+    const h = (j, hh, mm = 0) => { const d = new Date(d0); d.setDate(d.getDate() + j); d.setHours(hh, mm); return d.getTime() / 1000; };
+    compter("repas"); compter("repas"); compter("secousses");
+    // 21 h, 21 h 10, puis trois pauses de 50 à 90 min jusqu'à 1 h du matin (une seule soirée), puis 10 h le lendemain
+    window.PROMPTS = [h(1, 21), h(1, 21, 10), h(1, 22), h(1, 23, 30), h(2, 1), h(2, 10)];
+    window.DEPENSES = [{heure: a - 3600, tokens: [1000, 1000, 5, 5, 5]}, {heure: a + 3600, tokens: [100, 20, 999, 999, 999]}, {heure: a + 7200, tokens: [5, 5, 0, 0, 0]}];
+    await releverPrompts(); await releverPrompts(); await releverTokens();
+    return stats;
+  });
+  assert.deepEqual([s.repas, s.secousses, s.travail, s.habitudes, s.tard, s.tokens], [2, 1, 300 + 600 + 300 * 4, 3, 1, 130]);
+  assert.deepEqual(page.erreurs, []);
+  await page.close();
+});
+
+test("les stats survivent à une relance et repartent à zéro à la saison suivante", async () => {
+  const page = await sim.ouvrir();
+  await page.evaluate(() => { compter("repas"); compter("tokens", 500); });
+  await page.waitForFunction(() => CALLS.some(c => c[1] === "garder_etat" && JSON.parse(c[2].etat).stats.repas === 1));
+  await page.reload({waitUntil: "domcontentloaded"});
+  await page.waitForFunction(() => chosen);
+  assert.deepEqual(await page.evaluate(() => [stats.repas, stats.tokens]), [1, 500]);
+  const s = await page.evaluate(() => { stats.saison = "2020-01-01"; saisonCourante(); return stats; });
+  assert.deepEqual([s.repas, s.tokens, s.saison], [0, 0, await page.evaluate(() => cleJour(saisonDebut()))]);
+  assert.deepEqual(page.erreurs, []);
+  await page.close();
+});
+
+// Les besoins (jeu.js) : on avance le temps en donnant les secondes de vie à avancerBesoins ; stats.vu, l'heure du dernier prompt, dit si tu travailles
+test("la faim descend avec le temps de l'app et les tokens, pas app fermée, et un repas la remplit", async () => {
+  const page = await sim.ouvrir();
+  const r = await page.evaluate(async () => {
+    Horloge.arreter(); const B = REGLAGES.besoins, o = {};
+    besoins = {...BESOINS_PLEINS};
+    avancerBesoins(3600); o.uneHeure = 100 - besoins.faim;
+    besoinsVu = Date.now() - 8 * 3600e3; pasBesoins(); o.apresFermeture = 100 - o.uneHeure - besoins.faim;
+    window.DEPENSES = [{heure: Date.now() / 1000, tokens: [1e6, 1e6, 0, 0, 0]}];
+    tokensLus = false; stats.tokens = 0; await releverTokens(); o.premierReleve = besoins.faim;
+    window.DEPENSES[0].tokens = [2e6, 1e6, 0, 0, 0]; await releverTokens(); o.millionDePlus = o.premierReleve - besoins.faim;
+    nourrir(); o.repas = besoins.faim;
+    return {o, B};
+  });
+  assert.equal(r.o.uneHeure, r.B.faim);
+  assert.ok(r.o.apresFermeture <= 2 * r.B.pas / 1000 * r.B.faim / 3600 + 1e-9, "le temps app fermée compte");
+  assert.ok(Math.abs(r.o.premierReleve - (100 - r.o.uneHeure - r.o.apresFermeture)) < 1e-9);
+  assert.ok(Math.abs(r.o.millionDePlus - r.B.parMillionTokens) < 1e-9);
+  assert.ok(Math.abs(r.o.repas - Math.min(100, r.o.premierReleve - r.o.millionDePlus + r.B.repas)) < 1e-9);
+  assert.deepEqual(page.erreurs, []);
+  await page.close();
+});
+
+test("la soif descend quand tu travailles et remonte pendant tes pauses", async () => {
+  const page = await sim.ouvrir();
+  const r = await page.evaluate(() => {
+    Horloge.arreter(); const B = REGLAGES.besoins, o = {};
+    besoins = {...BESOINS_PLEINS}; stats.vu = Date.now() / 1000;
+    avancerBesoins(3600 * (100 - B.bas / 2) / B.soif); o.travail = [Math.round(besoins.soif), etapeBesoins(), [...fx.querySelectorAll(".bub")].pop()?.textContent];
+    stats.vu = Date.now() / 1000 - B.pause; avancerBesoins(1800); o.pause = Math.round(besoins.soif);
+    return o;
+  });
+  assert.deepEqual(r, {travail: [20, "soif", "J'ai soif !"], pause: 50});
+  assert.deepEqual(page.erreurs, []);
+  await page.close();
+});
+
+test("négligé, il a faim, tombe malade, guérit si on le soigne, sinon sa vie se vide, il devient un squelette et un œuf arrive", async () => {
+  const page = await sim.ouvrir();
+  const r = await page.evaluate(async () => {
+    Horloge.arreter(); const B = REGLAGES.besoins, o = {}, h = n => n * 3600 / B.faim;
+    besoins = {...BESOINS_PLEINS}; collection = []; stats.malade = 0; stats.vu = 0;
+    avancerBesoins(h(100 - B.bas + 1)); o.faim = [etapeBesoins(), (await guessMood())[0]];
+    avancerBesoins(h(B.bas)); avancerBesoins(600);
+    o.malade = [etapeBesoins(), (await guessMood())[0], Apparence.tonDuCorps(1).join(), stats.malade, besoins.vie < 100];
+    nourrir(); nourrir(); o.gueri = [etapeBesoins(), Apparence.tonDuCorps(1).join()];
+    avancerBesoins(h(100)); avancerBesoins(B.squelette);
+    o.squelette = [collection.length, collection[0].style, etapeBesoins(), besoins.faim, besoins.vie, Apparence.tonDuCorps(1).join()];
+    return o;
+  });
+  assert.deepEqual(r.faim, ["faim", "ronchon"]);
+  assert.deepEqual(r.malade, ["malade", "vaseux", "168,200,120", 600, true]);
+  assert.deepEqual(r.gueri, ["", "99,155,255"]);
+  assert.deepEqual(r.squelette, [1, "limace", "", 100, 0, "216,208,184"]);
+  await page.waitForFunction(() => Apparence.tonDuCorps(1).join() === "99,155,255" && besoins.vie === 100, null, {timeout: 9000});
+  assert.deepEqual(page.erreurs, []);
+  await page.close();
+});
+
+test("les besoins et la collection survivent à une relance, et le temps malade arrive au panneau", async () => {
+  const page = await sim.ouvrir();
+  await page.evaluate(() => { Horloge.arreter(); T.event.emit = (n, p) => { if (n === "etat") window.ETAT = p.jeu; }; stats.vu = 0; besoins = {...BESOINS_PLEINS, faim: 0}; collection = [{style: "limace", apparence: {}, quand: 1}]; avancerBesoins(1); stats.malade = 0; avancerBesoins(60); });
+  await page.waitForFunction(() => CALLS.some(c => c[1] === "garder_etat" && JSON.parse(c[2].etat).besoins.malade === true));
+  const etat = await page.evaluate(() => ETAT);
+  assert.deepEqual([etat.etape, etat.stats.malade, etat.collection], ["malade", 60, 1]);
+  await page.reload({waitUntil: "domcontentloaded"});
+  await page.waitForFunction(() => chosen);
+  assert.deepEqual(await page.evaluate(() => [besoins.malade, besoins.vie < 100, collection.length, Apparence.tonDuCorps(1).join()]), [true, true, 1, "168,200,120"]);
+  assert.deepEqual(page.erreurs, []);
+  await page.close();
+});
+
+test("les essais de l'onglet Tests sautent aux étapes sans compter dans les stats", async () => {
+  const page = await sim.ouvrir();
+  const r = await page.evaluate(() => {
+    Horloge.arreter(); const o = {}, essai = q => LISTEN.besoins.forEach(f => f({payload: q}));
+    besoins = {...BESOINS_PLEINS}; collection = [{style: "limace", apparence: {}, quand: 1}]; stats.malade = 0; stats.repas = 0;
+    essai("faim"); o.faim = etapeBesoins();
+    essai("soif"); o.soif = etapeBesoins();
+    essai("malade"); avancerBesoins(600); o.malade = [etapeBesoins(), stats.malade];
+    essai("nourrir"); essai("nourrir"); o.gueri = [etapeBesoins(), stats.repas, besoins.essai];
+    essai("squelette"); o.squelette = collection.length;
+    essai("malade"); essai("zero"); o.zero = [etapeBesoins(), besoins.faim, besoins.vie, collection.length];
+    return o;
+  });
+  assert.deepEqual(r, {faim: "faim", soif: "soif", malade: ["malade", 0], gueri: ["", 0, undefined], squelette: 2, zero: ["", 100, 100, 1]});
+  assert.deepEqual(page.erreurs, []);
+  await page.close();
+});
