@@ -2,7 +2,7 @@
 let bidHidden = false;          // caché par un clic droit (main.rs : montrer_bidule)
 let chosen = false;          // un Bidule a été choisi (au premier lancement, pas encore)
 let claudeJ = null;          // la dernière jauge lue (contexte), envoyée au panneau
-function sendState(avecClaude = true) { T.event.emit("etat", {style:chosen ? style : null, partsBy, cheveux, thumb:hairComposite(FR.normal, 2), mood, moodMode, moodReason, cache:bidHidden, haptique:hapticOn, apparence:apparences[style] || {}, aUneApparence:Apparence.aUneApparence(style), teintes:Apparence.TEINTES, origine:Apparence.ORIGINE, motifs:Object.fromEntries(Object.entries(Apparence.MOTIFS).map(([m, d]) => [m, {nom:d.nom, teinte:d.teinte}])), jeu:{stats, plein:REGLAGES.plein, fin:saisonFin().getTime()}}); if (avecClaude) T.event.emit("claude", claudeJ); }
+function sendState(avecClaude = true) { T.event.emit("etat", {style:chosen ? style : null, partsBy, cheveux, thumb:hairComposite(FR.normal, 2), mood, moodMode, moodReason, cache:bidHidden, haptique:hapticOn, apparence:apparences[style] || {}, aUneApparence:Apparence.aUneApparence(style), teintes:Apparence.TEINTES, origine:Apparence.ORIGINE, motifs:Object.fromEntries(Object.entries(Apparence.MOTIFS).map(([m, d]) => [m, {nom:d.nom, teinte:d.teinte}])), jeu:{stats, plein:REGLAGES.plein, fin:saisonFin().getTime(), besoins, etape:etapeBesoins(), reglages:REGLAGES.besoins, collection:collection.length}}); if (avecClaude) T.event.emit("claude", claudeJ); }
 function refreshSprite() {
   const cur = {sleep:"dort", carried:"dort", dizzy:"d1", nausea:"n1", pet:"content", laugh:"rire", angry:"fache",
     sulk:"fache", eat:"rire", ooh:"ooh", drowsy:"baille", waking:"baille", fly:"p1", held:"p1"}[mode];
@@ -108,6 +108,8 @@ async function guessMood() {
   let start = lastT;
   for (let i = times.length - 1; i > 0; i--) { if (times[i] - times[i - 1] > 1200) break; start = times[i - 1]; }
   const sessionH = lastT && now - lastT < 1200 ? (lastT - start) / 3600 : 0;
+  if (besoins.malade) return ["vaseux", "il est malade"];
+  if (etapeBesoins()) return ["ronchon", "il a " + etapeBesoins()];
   if (h >= 20 || h < 7) return ["vaseux", "il est tard"];
   if (sessionH >= 3) return ["vaseux", `tu travailles depuis ${Math.floor(sessionH)} h sans vraie pause`];
   if (busy >= 4) return ["stresse", `${busy} sessions de Claude en même temps`];

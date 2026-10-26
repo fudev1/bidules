@@ -113,6 +113,18 @@ Décidé le 22 octobre 2026. La spec est l'issue #76, les étapes « Jeu 1 » à
 
 ## Fait
 
+- Jeu 2 (#78) : les besoins, la maladie et le squelette. Trois jauges de 100 (plein, il va bien) à 0, dans l'en-tête
+  du panneau à côté du Bidule (faim orange, soif bleue, vie rouge ; elles clignotent sous 40). Pas au-dessus de sa tête
+  sur le bureau : Matteo n'en veut pas. La faim descend avec le
+  temps où l'app tourne (plafonné à chaque passage : l'app fermée ou en veille ne compte pas) et avec les tokens (sauf
+  ceux du premier relevé, faits app fermée) ; chaque repas (bonbon, fichier déposé) la remplit en partie. La soif descend
+  quand tu travailles (un prompt il y a moins de 10 min) et remonte pendant tes pauses. Sous 40, il dit « J'ai faim ! »
+  ou « J'ai soif ! » dans sa bulle et devient ronchon (humeur devinée). Une jauge à 0 le rend malade : vaseux et corps
+  vert pâle (la limace) ; il guérit quand faim et soif repassent au-dessus de 50. Malade, sa vie se vide en 6 h, sinon
+  elle remonte ; vide, il devient un squelette (corps couleur os), part dans la collection, puis un nouvel œuf éclot (pas
+  encore dessiné : il se reforme et repart à zéro). Le temps malade compte dans les stats. Besoins et collection gardés
+  dans `etat.json` ; seuils et vitesses dans `REGLAGES.besoins`. L'onglet Tests a des boutons pour sauter aux étapes
+  (faim haute, soif haute, malade, squelette, nourrir, remettre à zéro), hors stats.
 - Jeu 1 (#77) : les stats de la saison. Repas (bonbon de Candy, fichier déposé), secousses, bonnes habitudes (pause de
   20 min à 2 h entre deux prompts), soirées tardives (un prompt entre 20 h et 7 h, une par soirée), temps de travail
   (même règle que le panneau) et tokens (entrée + sortie, sans le cache) montent ; temps malade et mini-jeux restent à 0.
@@ -428,7 +440,7 @@ Décidé le 22 octobre 2026. La spec est l'issue #76, les étapes « Jeu 1 » à
 - Sauvegarder aussi les pièces et la collection, quand elles existeront (dans `etat.json`, voir « Fait »).
 - Fichier "maître" des sprints, lu au démarrage.
 - Œuf et éclosion en début de sprint, Bidule figé dans la collection en fin de sprint.
-- Le jeu (récompenses, besoins, évolution) : les étapes « Jeu 2 » à « Jeu 6 » (#78 à #82), voir plus haut. Jeu 1 est fait.
+- Le jeu (récompenses, besoins, évolution) : les étapes « Jeu 3 » à « Jeu 6 » (#79 à #82), voir plus haut. Jeu 1 et Jeu 2 sont faits.
 - Parties sur la limace : points d'accroche sur chaque image (voir la spec).
 - Chambre, accessoires.
 

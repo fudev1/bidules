@@ -395,3 +395,93 @@ test("les stats survivent à une relance et repartent à zéro à la saison suiv
   assert.deepEqual(page.erreurs, []);
   await page.close();
 });
+
+// Les besoins (jeu.js) : on avance le temps en donnant les secondes de vie à avancerBesoins ; stats.vu, l'heure du dernier prompt, dit si tu travailles
+test("la faim descend avec le temps de l'app et les tokens, pas app fermée, et un repas la remplit", async () => {
+  const page = await sim.ouvrir();
+  const r = await page.evaluate(async () => {
+    Horloge.arreter(); const B = REGLAGES.besoins, o = {};
+    besoins = {...BESOINS_PLEINS};
+    avancerBesoins(3600); o.uneHeure = 100 - besoins.faim;
+    besoinsVu = Date.now() - 8 * 3600e3; pasBesoins(); o.apresFermeture = 100 - o.uneHeure - besoins.faim;
+    window.DEPENSES = [{heure: Date.now() / 1000, tokens: [1e6, 1e6, 0, 0, 0]}];
+    tokensLus = false; stats.tokens = 0; await releverTokens(); o.premierReleve = besoins.faim;
+    window.DEPENSES[0].tokens = [2e6, 1e6, 0, 0, 0]; await releverTokens(); o.millionDePlus = o.premierReleve - besoins.faim;
+    nourrir(); o.repas = besoins.faim;
+    return {o, B};
+  });
+  assert.equal(r.o.uneHeure, r.B.faim);
+  assert.ok(r.o.apresFermeture <= 2 * r.B.pas / 1000 * r.B.faim / 3600 + 1e-9, "le temps app fermée compte");
+  assert.ok(Math.abs(r.o.premierReleve - (100 - r.o.uneHeure - r.o.apresFermeture)) < 1e-9);
+  assert.ok(Math.abs(r.o.millionDePlus - r.B.parMillionTokens) < 1e-9);
+  assert.ok(Math.abs(r.o.repas - Math.min(100, r.o.premierReleve - r.o.millionDePlus + r.B.repas)) < 1e-9);
+  assert.deepEqual(page.erreurs, []);
+  await page.close();
+});
+
+test("la soif descend quand tu travailles et remonte pendant tes pauses", async () => {
+  const page = await sim.ouvrir();
+  const r = await page.evaluate(() => {
+    Horloge.arreter(); const B = REGLAGES.besoins, o = {};
+    besoins = {...BESOINS_PLEINS}; stats.vu = Date.now() / 1000;
+    avancerBesoins(3600 * (100 - B.bas / 2) / B.soif); o.travail = [Math.round(besoins.soif), etapeBesoins(), [...fx.querySelectorAll(".bub")].pop()?.textContent];
+    stats.vu = Date.now() / 1000 - B.pause; avancerBesoins(1800); o.pause = Math.round(besoins.soif);
+    return o;
+  });
+  assert.deepEqual(r, {travail: [20, "soif", "J'ai soif !"], pause: 50});
+  assert.deepEqual(page.erreurs, []);
+  await page.close();
+});
+
+test("négligé, il a faim, tombe malade, guérit si on le soigne, sinon sa vie se vide, il devient un squelette et un œuf arrive", async () => {
+  const page = await sim.ouvrir();
+  const r = await page.evaluate(async () => {
+    Horloge.arreter(); const B = REGLAGES.besoins, o = {}, h = n => n * 3600 / B.faim;
+    besoins = {...BESOINS_PLEINS}; collection = []; stats.malade = 0; stats.vu = 0;
+    avancerBesoins(h(100 - B.bas + 1)); o.faim = [etapeBesoins(), (await guessMood())[0]];
+    avancerBesoins(h(B.bas)); avancerBesoins(600);
+    o.malade = [etapeBesoins(), (await guessMood())[0], Apparence.tonDuCorps(1).join(), stats.malade, besoins.vie < 100];
+    nourrir(); nourrir(); o.gueri = [etapeBesoins(), Apparence.tonDuCorps(1).join()];
+    avancerBesoins(h(100)); avancerBesoins(B.squelette);
+    o.squelette = [collection.length, collection[0].style, etapeBesoins(), besoins.faim, besoins.vie, Apparence.tonDuCorps(1).join()];
+    return o;
+  });
+  assert.deepEqual(r.faim, ["faim", "ronchon"]);
+  assert.deepEqual(r.malade, ["malade", "vaseux", "168,200,120", 600, true]);
+  assert.deepEqual(r.gueri, ["", "99,155,255"]);
+  assert.deepEqual(r.squelette, [1, "limace", "", 100, 0, "216,208,184"]);
+  await page.waitForFunction(() => Apparence.tonDuCorps(1).join() === "99,155,255" && besoins.vie === 100, null, {timeout: 9000});
+  assert.deepEqual(page.erreurs, []);
+  await page.close();
+});
+
+test("les besoins et la collection survivent à une relance, et le temps malade arrive au panneau", async () => {
+  const page = await sim.ouvrir();
+  await page.evaluate(() => { Horloge.arreter(); T.event.emit = (n, p) => { if (n === "etat") window.ETAT = p.jeu; }; stats.vu = 0; besoins = {...BESOINS_PLEINS, faim: 0}; collection = [{style: "limace", apparence: {}, quand: 1}]; avancerBesoins(1); stats.malade = 0; avancerBesoins(60); });
+  await page.waitForFunction(() => CALLS.some(c => c[1] === "garder_etat" && JSON.parse(c[2].etat).besoins.malade === true));
+  const etat = await page.evaluate(() => ETAT);
+  assert.deepEqual([etat.etape, etat.stats.malade, etat.collection], ["malade", 60, 1]);
+  await page.reload({waitUntil: "domcontentloaded"});
+  await page.waitForFunction(() => chosen);
+  assert.deepEqual(await page.evaluate(() => [besoins.malade, besoins.vie < 100, collection.length, Apparence.tonDuCorps(1).join()]), [true, true, 1, "168,200,120"]);
+  assert.deepEqual(page.erreurs, []);
+  await page.close();
+});
+
+test("les essais de l'onglet Tests sautent aux étapes sans compter dans les stats", async () => {
+  const page = await sim.ouvrir();
+  const r = await page.evaluate(() => {
+    Horloge.arreter(); const o = {}, essai = q => LISTEN.besoins.forEach(f => f({payload: q}));
+    besoins = {...BESOINS_PLEINS}; collection = [{style: "limace", apparence: {}, quand: 1}]; stats.malade = 0; stats.repas = 0;
+    essai("faim"); o.faim = etapeBesoins();
+    essai("soif"); o.soif = etapeBesoins();
+    essai("malade"); avancerBesoins(600); o.malade = [etapeBesoins(), stats.malade];
+    essai("nourrir"); essai("nourrir"); o.gueri = [etapeBesoins(), stats.repas, besoins.essai];
+    essai("squelette"); o.squelette = collection.length;
+    essai("malade"); essai("zero"); o.zero = [etapeBesoins(), besoins.faim, besoins.vie, collection.length];
+    return o;
+  });
+  assert.deepEqual(r, {faim: "faim", soif: "soif", malade: ["malade", 0], gueri: ["", 0, undefined], squelette: 2, zero: ["", 100, 100, 1]});
+  assert.deepEqual(page.erreurs, []);
+  await page.close();
+});
