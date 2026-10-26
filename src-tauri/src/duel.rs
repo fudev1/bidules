@@ -231,6 +231,26 @@ fn mon_adresse() -> Option<String> {
     Some(s.local_addr().ok()?.ip().to_string())
 }
 
+// Toutes les adresses IPv4 de cette machine, avec leur carte réseau (lues dans ifconfig) : sur plusieurs réseaux à la fois (VPN, Wi-Fi et câble,
+// machine virtuelle), celle de mon_adresse n'est pas toujours celle que le collègue peut joindre. Sans 127.x ni 169.254.x (jamais joignables).
+fn mes_adresses() -> Vec<(String, String)> {
+    let Ok(o) = std::process::Command::new("ifconfig").output() else { return vec![] };
+    lire_ifconfig(&String::from_utf8_lossy(&o.stdout))
+}
+
+fn lire_ifconfig(texte: &str) -> Vec<(String, String)> {
+    let (mut carte, mut adresses) = (String::new(), vec![]);
+    for ligne in texte.lines() {
+        if !ligne.starts_with(char::is_whitespace) { carte = ligne.split(':').next().unwrap_or("").to_string(); continue; }
+        let mut mots = ligne.split_whitespace();
+        if mots.next() != Some("inet") { continue; }
+        let Some(ip) = mots.next() else { continue };
+        if ip.starts_with("127.") || ip.starts_with("169.254.") { continue; }
+        adresses.push((ip.to_string(), carte.clone()));
+    }
+    adresses
+}
+
 pub fn brancher(app: &AppHandle) {
     let h = app.clone();
     let reseau = Reseau::new(move |e| match e {
@@ -278,7 +298,8 @@ fn ouvrir_terrain(app: &AppHandle, hote: bool, nom: &str) {
 }
 
 #[tauri::command]
-pub fn duel_infos() -> Value { json!({"nom": mon_nom(), "adresse": mon_adresse()}) }
+pub fn duel_infos() -> Value { json!({"nom": mon_nom(), "adresse": mon_adresse(),
+    "adresses": mes_adresses().into_iter().map(|(ip, carte)| json!({"ip": ip, "carte": carte})).collect::<Vec<_>>()}) }
 
 #[tauri::command]
 pub fn duel_ecouter(reseau: tauri::State<Reseau>, actif: bool) -> Result<(), String> {
@@ -391,5 +412,11 @@ mod tests {
         assert_eq!(invite.ecouter(port, true).unwrap(), port);
         hote.defier(&format!("127.0.0.1:{port}"), "Thibault", "limace");
         assert!(matches!(attendre(&rx_i), Evenement::Defi { .. }));
+    }
+
+    #[test]
+    fn les_adresses_de_toutes_les_cartes_sauf_la_boucle_locale() {
+        let texte = "lo0: flags=8049<UP,LOOPBACK>\n\tinet 127.0.0.1 netmask 0xff000000\nen0: flags=8863<UP>\n\tinet6 fe80::1%en0\n\tinet 192.168.1.42 netmask 0xffffff00\nen7: flags=8863<UP>\n\tinet 169.254.3.4 netmask 0xffff0000\nutun4: flags=8051<UP>\n\tinet 10.8.0.5 --> 10.8.0.5\n";
+        assert_eq!(lire_ifconfig(texte), vec![("192.168.1.42".into(), "en0".into()), ("10.8.0.5".into(), "utun4".into())]);
     }
 }
