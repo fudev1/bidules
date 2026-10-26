@@ -1,5 +1,7 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+mod duel;
+
 use serde::de::IgnoredAny;
 use serde::Deserialize;
 use std::collections::HashMap;
@@ -889,10 +891,12 @@ async fn usage() -> Vec<Releves> { a_part(usage_lire).await }
 
 fn main() {
     tauri::Builder::default()
-        .invoke_handler(tauri::generate_handler![log, quit, cadre, hide_panel, prompt_times, contexte, icone, session_active, haptique, hooks_etat, brancher_hooks, debrancher_hooks, sessions, limites, usage, prompts_semaine, depenses, montrer_bidule, ouvrir_panneau, lire_choix, garder_choix, lire_apparences, garder_apparences, lire_etat, garder_etat, bonbon_poser, bonbon_retirer, bonbon_clic])
+        .invoke_handler(tauri::generate_handler![log, quit, cadre, hide_panel, prompt_times, contexte, icone, session_active, haptique, hooks_etat, brancher_hooks, debrancher_hooks, sessions, limites, usage, prompts_semaine, depenses, montrer_bidule, ouvrir_panneau, lire_choix, garder_choix, lire_apparences, garder_apparences, lire_etat, garder_etat, bonbon_poser, bonbon_retirer, bonbon_clic,
+            duel::duel_infos, duel::duel_ecouter, duel::duel_defier, duel::duel_repondre, duel::duel_envoyer, duel::duel_quitter, duel::duel_fermer])
         .setup(|app| {
             #[cfg(target_os = "macos")]
             app.set_activation_policy(tauri::ActivationPolicy::Accessory);
+            duel::brancher(app.handle());
 
             // Le panneau se cache quand il perd le focus ; on retient quand, pour qu'un clic sur l'icône ne le rouvre pas aussitôt.
             let hidden_at = Arc::new(Mutex::new(Instant::now() - Duration::from_secs(5)));

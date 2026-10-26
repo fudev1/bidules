@@ -19,3 +19,25 @@ _À éviter_ : couleur libre
 **Motif** :
 Un dessin répété posé sur le corps (rayures, pois, cœurs, vache...), qui garde les ombres du corps.
 _À éviter_ : texture, pattern
+
+## Pong entre collègues
+
+**Duel** :
+Un Pong entre deux joueurs du même réseau local, en plein écran, où chaque Bidule devient la raquette de son joueur. Il n'a aucun lien avec les tokens, les pièces ou l'évolution.
+_À éviter_ : partie (c'est une zone du Bidule), match
+
+**Défi** :
+L'invitation à un duel, avec son score à atteindre et sa vitesse de départ, que l'autre joueur accepte ou refuse. Sans défi accepté, rien ne se connecte.
+_À éviter_ : appairage, pairing
+
+**Hôte** :
+Le joueur qui a lancé le défi : sa machine fait foi pour la balle et le score du duel.
+_À éviter_ : serveur, maître
+
+**Raquette** :
+Le Bidule d'un joueur pendant un duel. Il monte et descend au bord gauche de l'écran de son joueur, l'adversaire au bord droit.
+_À éviter_ : palette, paddle
+
+**Effet** :
+La rotation donnée à la balle par une raquette en mouvement au moment du coup ; elle courbe la trajectoire.
+_À éviter_ : spin, lift

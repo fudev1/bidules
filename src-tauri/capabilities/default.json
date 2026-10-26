@@ -3,7 +3,8 @@
   "windows": [
     "main",
     "panel",
-    "bonbon-*"
+    "bonbon-*",
+    "duel"
   ],
   "permissions": [
     "core:default",

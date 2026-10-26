@@ -1,20 +1,20 @@
 ---
 name: pull-request
-description: Écrire le titre et la description d'une pull request du repo Bidules - titre au format Conventional Commits et description, tout en français, simple et sans jargon. À utiliser pour ouvrir une pull request, mettre à jour sa description après de nouveaux commits, ou réécrire celle d'un collègue ("ouvre une PR", "mets à jour la PR", "réécris la description").
+description: Écrire le titre et la description d'une pull request du repo Bidules - titre en anglais au format Conventional Commits, description en français, simple et sans jargon. À utiliser pour ouvrir une pull request, mettre à jour sa description après de nouveaux commits, ou réécrire celle d'un collègue ("ouvre une PR", "mets à jour la PR", "réécris la description").
 ---
 
-# Pull request : titre et description en français
+# Pull request : titre en anglais, description en français
 
 La description est lue par toute l'équipe, y compris des personnes qui ne lisent pas le code. Elle dit ce que la pull request apporte, avec des mots ordinaires.
 
 ## Titre
 
 ```
-<type>(<domaine>): <résumé en français>
+<type>(<domaine>): <summary in English>
 ```
 
-- Même format que les commits (skill `commit`) : le type reste en anglais, c'est la convention (`feat`, `fix`, `docs`...), le domaine aussi (`limace`, `app`, `panneau`...), le résumé est en français.
-- Résumé en minuscule, sans point final, 72 caractères au plus : `feat(limace): trois humeurs sur toutes les animations`.
+- Format Conventional Commits, **toujours en anglais** : le type (`feat`, `fix`, `docs`...), le domaine (`limace`, `app`, `panneau`...) et le résumé. Seule la description reste en français.
+- Résumé en minuscule, sans point final, 72 caractères au plus : `feat(limace): three moods on every animation`.
 
 ## Description
 
@@ -49,7 +49,7 @@ En français, trois parties, dans cet ordre :
 ## Ouvrir ou modifier
 
 ```bash
-gh pr create --base test --title "feat(limace): ..." --body-file - <<'EOF'
+gh pr create --base test --title "feat(limace): ..." # titre en anglais --body-file - <<'EOF'
 ## Ce que ça apporte
 ...
 EOF
@@ -59,7 +59,7 @@ Pour la pull request d'un collègue : `gh pr edit <numéro> --title "..." --body
 
 ## Exemple
 
-Titre : `feat(limace): trois humeurs (neutre, joyeuse, fatiguée) sur toutes les animations`
+Titre : `feat(limace): three moods (neutral, happy, tired) on every animation`
 
 ```markdown
 ## Ce que ça apporte

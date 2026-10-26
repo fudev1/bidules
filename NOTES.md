@@ -73,6 +73,11 @@ fait et ce qui reste à faire. La vision, l'installation et la stack sont dans l
   recouvert. La nausée passe devant. L'icône et la goutte tenue (dessinée par le code) le montrent aussi. Chaque sous-système
   qui garde des images ou des couleurs de l'apparence s'y abonne (`Apparence.quandElleChange`).
 
+- Duel : un Pong entre deux collègues du même réseau local, en plein écran, chaque Bidule devenu raquette. Sans
+  serveur sur internet, l'hôte (celui qui lance le défi) fait foi ; voir
+  [l'ADR 0002](docs/adr/0002-duel-en-reseau-local-avec-hote.md) et le glossaire. Sans lien avec les tokens, les pièces
+  ni l'évolution. Réservé à la limace pour la première version.
+
 ## À trancher
 
 - **Personnages** : animer à la main les 6 monstres du moodboard, ou garder seulement la limace pour la v1.
@@ -112,6 +117,12 @@ Décidé le 22 octobre 2026. La spec est l'issue #76, les étapes « Jeu 1 » à
   niveau du joueur, évolution de fin de saison.
 
 ## Fait
+
+- Duel, premier ticket : un duel minimal entre deux machines, en tapant l'adresse du collègue dans l'onglet « Jouer ».
+  Chaque Bidule attend les défis sur le port 47800 tant que « Accepter les défis » est activé ; la bulle du défi
+  s'affiche au-dessus du Bidule. Fenêtre transparente plein écran, raquettes en rectangles, balle carrée, premier à 5,
+  Échap pour quitter. Le transport est dans `duel.rs` (testé avec `cargo test`), les règles dans `dist/js/duel-jeu.js`
+  (testées avec `mise run tests`), l'affichage dans `dist/duel.html`.
 
 - Jeu 2 (#78) : les besoins, la maladie et le squelette. Trois jauges de 100 (plein, il va bien) à 0, dans l'en-tête
   du panneau à côté du Bidule (faim orange, soif bleue, vie rouge ; elles clignotent sous 40). Pas au-dessus de sa tête
