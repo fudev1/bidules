@@ -32,5 +32,5 @@ run = "bun install --frozen-lockfile && bunx playwright install chromium && bun 
 [tasks.relais]
 description = "Met en ligne le relais du duel sur Cloudflare Workers"
 dir = "{{config_root}}/relais"
-tools = { node = "22" }
+tools = { node = "lts" }
 run = "npx -y wrangler@4 deploy"
