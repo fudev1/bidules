@@ -17,6 +17,12 @@ async function hairLoad() {
   const cv = document.createElement("canvas"); cv.width = im.width; cv.height = im.height; const g = cv.getContext("2d"); g.drawImage(im, 0, 0);
   hair.px0 = g.getImageData(0, 0, im.width, im.height).data; hair.px = Apparence.teindreCheveux(hair.px0); hair.pw = im.width;
 }
+// une image le long d'un mur (choc contre le bord, glissade, retour au sol)
+function hairMur(f) {
+  const D = SHEET_DATA.limace;
+  if (f.mur === undefined) { f.mur = false; for (const [n, fr] of Object.entries(D.tags)) if (/^(coule|choc-bord)/.test(n) && fr.includes(f)) { f.mur = true; break; } }
+  return f.mur;
+}
 // le sommet de la tête d'une image de la feuille : au-dessus des yeux (l'encre loin du bord du corps), le milieu de la ligne du haut ; null sans corps
 function hairAnchor(f) {
   if (f.hairAt !== undefined) return f.hairAt;
@@ -32,6 +38,8 @@ function hairAnchor(f) {
   }
   if (top === 64) return f.hairAt = null;
   let X, Y;
+  // contre un mur, au-dessus des yeux il y a la queue collée au bord : la racine va sur le contour extérieur de la tête, en diagonale depuis les yeux
+  if (n && hairMur(f)) { X = Math.round(ex / n); Y = Math.round(ey / n); while (inside(X - 1, Y - 1)) { X--; Y--; } return f.hairAt = [X + .5, Y]; }
   if (n) { X = Math.round(ex / n); Y = Math.round(ey / n); if (!inside(X, Y)) { let best = null; for (let x2 = 0; x2 < 64; x2++) if (inside(x2, Y) && (best === null || Math.abs(x2 - X) < Math.abs(best - X))) best = x2; if (best === null) return f.hairAt = null; X = best; } while (inside(X, Y - 1)) Y--; }
   else { Y = top; let s2 = 0, c = 0; for (let x2 = 0; x2 < 64; x2++) if (inside(x2, Y)) { s2 += x2; c++; } X = Math.round(s2 / c); }
   let a = X, b = X; while (inside(a - 1, Y)) a--; while (inside(b + 1, Y)) b++;
@@ -41,6 +49,9 @@ function hairAnchor(f) {
 function hairComposite(src, pose) {
   if (!cheveux || !hair.px || style !== "limace" || !SHEET_DATA.limace) return Apparence.affichee(src);
   const D = SHEET_DATA.limace, f = (D.bySrc || (D.bySrc = new Map(D.frames.map(f => [f.src, f])))).get(src); if (!f) return Apparence.affichee(src);
+  // le long d'un mur : la tête penche vers l'extérieur, les cheveux aussi (penchés fort, du côté opposé au mur : à gauche dans l'image, qui est
+  // dessinée contre le bord droit et retournée pour le mur de gauche), sinon le corps les cache
+  if (hairMur(f)) pose = pose === 1 ? 1 : 0;
   const key = src + "|" + pose; let out = hair.cache.get(key); if (out) return out;
   const at = hairAnchor(f); if (!at) return Apparence.affichee(src);
   const cv = document.createElement("canvas"); cv.width = cv.height = 64; const g = cv.getContext("2d"); g.drawImage(f.cv, 0, 0);
