@@ -68,9 +68,10 @@ fait et ce qui reste à faire. La vision, l'installation et la stack sont dans l
   « Remettre d'origine ». Le panneau envoie l'apparence au Bidule (événement `apparence`) ; l'app la garde par Bidule
   dans `apparences.json` et la rend au lancement (`lire_apparences`, `garder_apparences`, simulés dans la page de test).
 - Motifs du corps (#71) : rayures, pois, cœurs, vache (`Apparence.appliquer({motif, motifTeinte})`). Posés seulement
-  sur les pixels du corps, fixes dans l'image 64 × 64 (ils ne suivent pas la déformation) ; fond = teinte du corps,
+  sur les pixels du corps, collés au corps : dessinés sur l'image de face, puis étirés, écrasés et penchés avec lui dans chaque
+  image de la feuille, dans l'étirement collant et dans la goutte tenue ; fond = teinte du corps,
   dessin = deuxième teinte (une teinte du corps ; par défaut blanc, blanc, rose, noir doux), qui reprend le ton du pixel
-  recouvert. La nausée passe devant. L'icône et la goutte tenue (dessinée par le code) le montrent aussi. Chaque sous-système
+  recouvert. Ils restent dessus dans toutes les animations, la nausée verte et les états (malade, squelette) compris. L'icône et la goutte tenue (dessinée par le code) le montrent aussi. Chaque sous-système
   qui garde des images ou des couleurs de l'apparence s'y abonne (`Apparence.quandElleChange`).
 
 - Duel : un Pong entre deux collègues du même réseau local, en plein écran, chaque Bidule devenu raquette. Sans

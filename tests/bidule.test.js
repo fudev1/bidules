@@ -271,12 +271,14 @@ test("chaque motif a une deuxième teinte par défaut", async () => {
   await page.close();
 });
 
-test("la nausée passe devant le motif, et sans motif rien ne change", async () => {
+test("le motif reste sur la nausée, et sans motif rien ne change", async () => {
   const page = await sim.ouvrir();
   await page.waitForFunction(() => SHEET_DATA.limace);
-  const nausee = await pixelsAffiches(page, "nausee"), repos = await pixelsAffiches(page, "repos");
-  await page.evaluate(() => Apparence.appliquer({motif: "pois"}));
-  assert.deepEqual(await pixelsAffiches(page, "nausee"), nausee);
+  const repos = await pixelsAffiches(page, "repos");
+  await page.evaluate(() => Apparence.appliquer({motif: "rayures", motifTeinte: "noir doux"}));
+  const nausee = await couleursAffichees(page, "nausee");
+  assert.ok(nausee.includes("#7fd46a"), "la nausée n'est plus verte");
+  assert.ok(NOIR_DOUX.some(c => nausee.includes(c)), "le motif n'est pas sur la nausée");
   await page.evaluate(() => Apparence.appliquer({motif: null}));
   assert.deepEqual(await pixelsAffiches(page, "repos"), repos);
   await page.close();
@@ -342,7 +344,7 @@ test("la teinte de la bouche ne touche que l'intérieur de la bouche, pas les é
   await page.close();
 });
 
-test("la goutte tenue a le motif, et verdit en entier quand on la secoue", async () => {
+test("la goutte tenue a le motif, et verdit sous le motif quand on la secoue", async () => {
   const page = await sim.ouvrir();
   await page.waitForFunction(() => SHEET_DATA.limace);
   await page.evaluate(() => Apparence.appliquer({corps: "rose", motif: "rayures", motifTeinte: "noir doux"}));
@@ -359,7 +361,7 @@ test("la goutte tenue a le motif, et verdit en entier quand on la secoue", async
   assert.ok(NOIR_DOUX.some(c => vu.includes(c)), "la goutte n'a pas le motif");
   vu = await lire(true);
   assert.ok(vu.includes("#7fd46a"), "la goutte secouée ne verdit pas");
-  assert.ok(!NOIR_DOUX.some(c => vu.includes(c)), "le motif passe devant la nausée");
+  assert.ok(NOIR_DOUX.some(c => vu.includes(c)), "le motif disparaît quand elle verdit");
   assert.deepEqual(page.erreurs, []);
   await page.close();
 });

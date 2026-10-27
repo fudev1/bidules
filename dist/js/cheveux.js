@@ -17,10 +17,11 @@ async function hairLoad() {
   const cv = document.createElement("canvas"); cv.width = im.width; cv.height = im.height; const g = cv.getContext("2d"); g.drawImage(im, 0, 0);
   hair.px0 = g.getImageData(0, 0, im.width, im.height).data; hair.px = Apparence.teindreCheveux(hair.px0); hair.pw = im.width;
 }
-// une image le long d'un mur (choc contre le bord, glissade, retour au sol)
+// une image le long d'un mur (choc contre le bord, glissade, retour au sol), dans toutes les humeurs et leurs clignements : D.all, pas D.tags
+// (seulement l'humeur du moment)
 function hairMur(f) {
   const D = SHEET_DATA.limace;
-  if (f.mur === undefined) { f.mur = false; for (const [n, fr] of Object.entries(D.tags)) if (/^(coule|choc-bord)/.test(n) && fr.includes(f)) { f.mur = true; break; } }
+  if (f.mur === undefined) { f.mur = false; for (const [n, fr] of Object.entries(D.all)) if (/^(coule|choc-bord)/.test(n) && fr.includes(f)) { f.mur = true; break; } }
   return f.mur;
 }
 // le sommet de la tête d'une image de la feuille : au-dessus des yeux (l'encre loin du bord du corps), le milieu de la ligne du haut ; null sans corps
