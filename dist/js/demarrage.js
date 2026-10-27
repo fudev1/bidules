@@ -5,7 +5,7 @@ let gardeT = 0, gardeX = null;
 function garder() {
   clearTimeout(gardeT);
   gardeT = setTimeout(() => { if (mode === "walk") gardeX = Math.round(x);
-    T.core.invoke("garder_etat", {etat:JSON.stringify({humeur:moodMode, parties:partsBy, cheveux, cache:bidHidden, haptique:hapticOn, x:gardeX, stats, besoins, collection})}).catch(e => say("etat : " + e)); }, 500);
+    T.core.invoke("garder_etat", {etat:JSON.stringify({humeur:moodMode, parties:partsBy, cheveux, cache:bidHidden, haptique:hapticOn, calme, x:gardeX, stats, besoins, collection})}).catch(e => say("etat : " + e)); }, 500);
 }
 // Le Bidule choisi : chargé, affiché, et gardé pour le prochain lancement (main.rs : garder_choix).
 async function chooseStyle(s) {
@@ -28,6 +28,10 @@ T.event.listen("apparence", async e => {
   sendState();
 });
 T.event.listen("haptique", e => { hapticOn = !!e.payload; garder(); sendState(); if (hapticOn) haptic("clic"); });
+T.event.listen("calme", e => { calme = !!e.payload; garder(); sendState(); });
+// une invitation d'un ami (le panneau l'envoie, null quand on y a répondu) : il se réveille, se fige de face et sautille (vie.js) ; "bulle" : un mot à dire, comme un refus
+T.event.listen("invitation", e => { invite = e.payload && e.payload.nom || null; if (invite && mode === "sleep") wakeUp("invite"); });
+T.event.listen("bulle", e => bubble(String(e.payload), 3500));
 // Demi-tour : avec un perso dessiné, on joue son animation "turn" au lieu de retourner l'image.
 function turnTo(nd, ready) {
   if (nd === dir) return;
@@ -118,6 +122,7 @@ img.addEventListener("contextmenu", async e => {
     if (E.parties) for (const k in E.parties) partsBy[k] = E.parties[k];
     if (typeof E.cheveux === "boolean") cheveux = E.cheveux;
     if (typeof E.haptique === "boolean") hapticOn = E.haptique;
+    if (typeof E.calme === "boolean") calme = E.calme;
     if (E.stats) stats = {...stats, ...E.stats};
     // au sol, là où il était ; la fenêtre y va tout de suite (sinon elle attendrait son premier pas, en l'air à sa place de départ)
     if (saved && typeof E.x === "number") { x = Math.max(minX, Math.min(maxX, E.x)); y = floorY; setMode("walk"); gardeX = Math.round(x); push(); }

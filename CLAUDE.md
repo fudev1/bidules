@@ -5,7 +5,7 @@ Compagnon de bureau pour les utilisateurs de Claude Code. La vision et l'install
 ## Où est quoi
 
 - `dist/index.html` et `dist/js/` : le comportement du Bidule (JavaScript sans framework, sans étape de build), un fichier par sous-système. `horloge.js` : la seule boucle (chaque tâche régulière y a sa cadence) ; `fenetre.js` : tous les déplacements de la fenêtre ; le mode ne change que par `setMode` (`corps.js`).
-- Le duel (Pong entre collègues, voir `GLOSSARY.md` et `docs/adr/0001-…`) : `src-tauri/src/duel.rs` (le transport réseau et la fenêtre plein écran), `dist/js/duel-jeu.js` (les règles, sans fenêtre ni réseau), `dist/duel.html` (la fenêtre du duel, qui a sa propre boucle d'images : elle ne passe pas par `horloge.js`), `dist/js/duel-defi.js` (la bulle du défi reçu) et l'onglet Jouer du panneau.
+- Le duel (Pong entre collègues, voir `GLOSSARY.md` et `docs/adr/0001-…`) : `src-tauri/src/duel.rs` (le transport réseau et la fenêtre plein écran), `src-tauri/src/presence.rs` (les amis, leur présence et les invitations, par le relais), `dist/js/duel-jeu.js` (les règles, sans fenêtre ni réseau), `dist/duel.html` (la fenêtre du duel, qui a sa propre boucle d'images : elle ne passe pas par `horloge.js`), l'onglet Jouer du panneau, et `dist/js/decompte.js` (le décompte 3, 2, 1 que toute page de jeu lance à son ouverture).
 - `dist/panel.html` : le panneau de la barre de menus. `dist/monstre64.js` et `dist/bidule64.js` : les monstres générés par le code.
 - `dist/persos/limace/` : la feuille d'images de la limace, recopiée depuis `animations/limace-complete/`.
 - `src-tauri/src/main.rs` : l'app de bureau en Rust (fenêtre, icône, lecture des journaux de Claude Code).
@@ -27,6 +27,7 @@ Compagnon de bureau pour les utilisateurs de Claude Code. La vision et l'install
 
 - **Vie privée** : ne jamais lire le texte des messages de Claude Code. Seulement les métadonnées : heures, quantités de tokens, outils utilisés.
 - **Pixel art 64 × 64**, jamais de vectoriel. Le format des animations est dans la spec (`moodboard/animations-des-bidules.html`).
+- **Version** : le panneau affiche `v0.<nombre de pull requests fusionnées>`, calculé par `src-tauri/build.rs` à la compilation. Rien à changer à la main : chaque pull request fusionnée l'augmente d'elle-même.
 - **NOTES.md** : quand une décision ou l'état du projet change, le mettre à jour dans la même pull request.
 - **Git** : suivre `.claude/rules/git-flux.md` (branche, puis `test`, puis `main`) et `.claude/rules/pas-de-mention-claude.md`. Pour les commits : le skill `commit`. Pour les pull requests : le skill `pull-request` (pas `pr`, qui vient des skills de Matt Pocock).
 - **Langue** : écrire en français, sauf les titres de pull request, toujours en anglais (commentaires, messages, documents), comme l'existant. Cela vaut aussi pour ce que produisent les skills de Matt Pocock (glossaire, ADR, specs, tickets, passages de relais, questionnaires, rapports) et pour `/wait-what` (en français simple). Garder tels quels les noms de fichiers (`GLOSSARY.md`...), les titres de section et les étiquettes que ces skills recherchent (`## Agent skills`, `## Comments`, `## Answer`, `Status:`, `wayfinder:<type>`...).

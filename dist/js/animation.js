@@ -3,7 +3,7 @@
 // tenu par la souris : la boule avec une pointe (attrape-boule) si elle existe, sinon attrape
 const heldTag = T2 => T2["attrape-boule"] ? "attrape-boule" : "attrape";
 const SHEET_MODE_TAG = {held:"attrape", ceiling:"crawl", fly:"vol", dizzy:"etourdi", nausea:"nausee", recover:"remis", pet:"caresse", laugh:"rire", angry:"fache",
-  sulk:"boude", wall:"coule", ooh:"intrigue", sleep:"dort", carried:"attrape", waking:"baille", evolving:"fier"};
+  sulk:"boude", wall:"coule", ooh:"intrigue", sleep:"dort", carried:"attrape", waking:"baille", evolving:"fier", invite:"intrigue"};
 // Candy rebondit comme une balle quand on la lance ; crashed : la première chute était grosse, l'écrasement viendra à la fin des rebonds ; sing : elle chante pendant cette pause
 const BOUNCY = new Set(["candy"]);
 // pas d'étirement collant quand on la soulève : elle réagit avec ses images (balise attrape)

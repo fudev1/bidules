@@ -148,6 +148,29 @@ test("les réglages du panneau passent sans erreur", async () => {
   await page.close();
 });
 
+test("invité à jouer, il se fige, sautille et le dit, puis reprend sa marche une fois répondu", async () => {
+  const page = await sim.ouvrir();
+  await page.waitForFunction(() => mode === "walk", null, {timeout: 10000});
+  await page.evaluate(() => LISTEN.invitation.forEach(f => f({payload: {nom: "Thibault"}})));
+  await page.waitForFunction(() => mode === "invite", null, {timeout: 10000});
+  assert.equal(await page.evaluate(() => img.className), "invite");
+  await page.waitForFunction(() => [...document.querySelectorAll(".bub")].some(b => b.textContent === "Thibault t'invite au Pong !"), null, {timeout: 4000});
+  await page.evaluate(() => { LISTEN.invitation.forEach(f => f({payload: null})); LISTEN.bulle.forEach(f => f({payload: "Thibault ne veut pas être dérangé."})); });
+  await page.waitForFunction(() => mode !== "invite", null, {timeout: 2000});
+  assert.ok(await page.evaluate(() => [...document.querySelectorAll(".bub")].some(b => b.textContent === "Thibault ne veut pas être dérangé.")));
+  assert.deepEqual(page.erreurs, []);
+  await page.close();
+});
+
+test("Ne pas déranger survit à une relance", async () => {
+  const page = await sim.ouvrir();
+  await page.evaluate(() => LISTEN.calme.forEach(f => f({payload: true})));
+  await page.waitForTimeout(800);
+  await page.reload(); await page.waitForFunction(() => chosen, null, {timeout: 10000});
+  assert.equal(await page.evaluate(() => calme), true);
+  await page.close();
+});
+
 // Apparence : on applique une apparence, puis on lit les couleurs de la limace affichée
 const ROSE = ["#ffd6e8", "#ff9cc6", "#e0679f"], BLEU = ["#a4c6ff", "#639bff", "#4577e0"];
 async function couleursAffichees(page, tag, i = 0) {

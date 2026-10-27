@@ -15,7 +15,7 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;paddin
 button:disabled{cursor:default}
 [hidden]{display:none!important}
 :focus-visible{outline:3px solid var(--yellow);outline-offset:2px}
-.panel{margin:10px;height:calc(100vh - 20px);border-radius:24px;overflow:hidden;display:flex;flex-direction:column;background:var(--pink) var(--waves);box-shadow:0 8px 22px rgba(30,27,58,.35)}
+.panel{position:relative;margin:10px;height:calc(100vh - 20px);border-radius:24px;overflow:hidden;display:flex;flex-direction:column;background:var(--pink) var(--waves);box-shadow:0 8px 22px rgba(30,27,58,.35)}
 /* les Bidules : contour blanc d'autocollant et ombre au sol, comme sur les affiches du moodboard */
 .mon{image-rendering:pixelated;filter:drop-shadow(2px 0 0 #fff) drop-shadow(-2px 0 0 #fff) drop-shadow(0 2px 0 #fff) drop-shadow(0 -2px 0 #fff)}
 .ground{position:relative;display:grid;justify-items:center;isolation:isolate}
@@ -39,7 +39,8 @@ h1{margin:0;font:400 30px/.95 var(--display);letter-spacing:1px;color:var(--yell
 .tab{flex:1;font:400 13px/1 var(--display);letter-spacing:.8px;padding:7px 4px 5px;border-radius:999px}
 .tab[aria-selected="true"]{color:var(--ink)}
 .tab:disabled{opacity:.4}
-main{flex:1;overflow:auto;padding:0 12px 12px}
+main{flex:1;overflow:auto;padding:0 12px 24px}
+.version{position:absolute;left:24px;bottom:16px;margin:0;font-size:9.5px;opacity:.55;pointer-events:none}
 .pane{display:grid;gap:10px}
 .hint{margin:0;font-size:11.5px;opacity:.9}
 /* tuiles en aplats qui alternent, motif ondulé, aucun bord ; le Bidule choisi a son nom sur une pastille blanche et une étoile */
@@ -155,6 +156,8 @@ main{flex:1;overflow:auto;padding:0 12px 12px}
 .saison .stats u i{display:block;height:100%;background:var(--lime);border-radius:999px}
 .saison .stats b{text-align:right;font-weight:700}
 .fini .hint{flex:1}
+.invitation{display:flex;align-items:center;gap:8px}.invitation .hint{flex:1;color:var(--yellow);font-weight:700}
+.sess.ami{grid-template-columns:1fr auto auto auto}
 .moods{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
 #sub b{color:var(--yellow)}
 #vie{display:grid;grid-template-columns:auto 1fr;gap:3px 6px;align-items:center;max-width:170px;margin-top:4px;font-size:10.5px}
@@ -210,6 +213,7 @@ main{flex:1;overflow:auto;padding:0 12px 12px}
       <div class="graphe cout" id="cout"></div>
       <div class="sessions" id="sessions"></div>
       <div class="now fini"><p class="hint" id="finiTxt"></p><button class="chip" id="fini" hidden>Brancher</button></div>
+      <div class="now fini"><p class="hint">Ne pas déranger : les invitations à jouer de tes amis sont refusées d'elles-mêmes, et leur Bidule le leur dit.</p><button class="chip" id="calme">Coupé</button></div>
     </section>
     <section class="pane" id="p-piste">
       <p class="hint" id="pisteHint">Pour l'instant, seule la limace est prête. Les autres Bidules arriveront avec leurs animations redessinées.</p>
@@ -230,9 +234,14 @@ main{flex:1;overflow:auto;padding:0 12px 12px}
     <section class="pane" id="p-jouer" hidden>
       <p class="hint">Un duel de Pong avec un collègue, au bureau ou à la maison : vos deux Bidules deviennent les raquettes. Rien ne se gagne, et rien de Claude ne passe par le réseau.</p>
       <p class="hint" id="jouerMoi"></p>
+      <div class="now invitation" id="invitation" hidden><p class="hint" id="invitationTxt"></p><button class="btn primary" id="accepter">Accepter</button><button class="btn" id="refuser">Refuser</button></div>
+      <div class="slot"><b>Jeu</b><div class="chips" id="jeux"><button class="chip on" data-jeu="pong">Pong</button></div></div>
+      <div class="sessions" id="amis"></div>
+      <div class="row"><input class="champ" id="codeAmi" placeholder="Code d'ami d'un collègue (6 lettres)" maxlength="6" spellcheck="false" autocomplete="off"><button class="btn" id="ajouterAmi">Ajouter</button></div>
+      <p class="hint" id="jouerEtat"></p>
+      <p class="hint">Sans être amis : un défi par un code de 4 lettres, à donner de vive voix ou par message.</p>
       <div class="row"><button class="btn primary" id="lancerDefi">Défier un collègue</button><button class="btn" id="annulerDefi" hidden>Annuler</button></div>
       <div class="row"><input class="champ" id="codeDefi" placeholder="Code reçu d'un collègue (ex. KZPQ)" maxlength="4" spellcheck="false" autocomplete="off"><button class="btn primary" id="relever">Relever le défi</button></div>
-      <p class="hint" id="jouerEtat"></p>
     </section>
     <section class="pane" id="p-humeur" hidden>
       <p class="hint">Elle suit le rythme de ta journée, toutes sessions confondues : l'heure, le temps sans vraie pause, le nombre de sessions en même temps. Jamais en lisant tes messages. Tu peux la forcer ici.</p>
@@ -246,6 +255,7 @@ main{flex:1;overflow:auto;padding:0 12px 12px}
       <div class="row"><button class="btn" id="origine">Remettre d'origine</button></div>
     </section>
   </main>
+  <p class="version" id="version"></p>
 </div>
 <script src="bidule64.js"></script>
 <script src="monstre64.js"></script>
@@ -274,7 +284,7 @@ function render() {
   $("title").textContent = st.style ? STYLES.find(s => s[0] === st.style)[1] : "Choisis-le !";
   const ml = st.mood ? MOODS.find(m => m[0] === st.mood)[1] : "Normale";
   $("sub").innerHTML = st.style ? `Humeur : <b>${ml}</b>` + (st.moodReason ? ` (${st.moodMode === "auto" ? "devinée : " : ""}${st.moodReason})` : "") : "";
-  $("haptique").textContent = st.haptique === false ? "Coupé" : "Activé"; $("haptique").classList.toggle("on", st.haptique !== false);
+  $("calme").textContent = st.calme ? "Activé" : "Coupé"; $("calme").classList.toggle("on", !!st.calme); $("haptique").textContent = st.haptique === false ? "Coupé" : "Activé"; $("haptique").classList.toggle("on", st.haptique !== false);
   $("moods").innerHTML = MOODS.map(([id, name]) => `<button class="chip ${st.moodMode === id ? "on" : ""}" data-mood="${id}">${name}</button>`).join("");
   $("styles").innerHTML = STYLES.map(([id, name], i) => `<button class="st c${i % 4} ${id === st.style ? "on" : ""}" data-style="${id}" ${READY.has(id) ? "" : "disabled"}>${READY.has(id) ? (id === st.style && st.cache ? '<i class="soon">Caché</i>' : "") : '<i class="soon">Bientôt</i>'}<i class="spark"></i><span class="ground"><img class="mon" src="${render64(id, st.partsBy[id] || {}, READY.has(id) ? st.mood : null)}" alt=""></span><span class="nm">${name}</span></button>`).join("");
   // la limace : un premier essai d'évolution, des cheveux ; les autres Bidules dessinés n'ont encore rien
@@ -624,29 +634,111 @@ document.addEventListener("click", e => {
   else if (b.id === "cheveux") send("evo", "evo:cheveux");
   else if (b.id === "fini") T.core.invoke(finiEtat === "oui" ? "debrancher_hooks" : "brancher_hooks").then(renderFini, err => { $("finiTxt").textContent = "Pas pu le faire : " + err; });
   else if (b.id === "haptique") send("haptique", st.haptique === false);
+  else if (b.id === "calme") send("calme", !st.calme);
+  else if (b.dataset.jeu) { jeu = b.dataset.jeu; document.querySelectorAll("[data-jeu]").forEach(c => c.classList.toggle("on", c === b)); }
+  else if (b.dataset.inviter) inviter(b.dataset.inviter);
+  else if (b.dataset.retirer) T.core.invoke("ami_retirer", {id:b.dataset.retirer}).then(l => { amis = l; renderAmis(); });
+  else if (b.id === "ajouterAmi") ajouterAmi();
+  else if (b.id === "accepter") accepter();
+  else if (b.id === "refuser") refuserInvitation("non");
   else if (b.id === "quit") { if (T) T.core.invoke("quit"); }
   else if (b.id === "lancerDefi") jouer("duel_creer", {}, "Connexion…");
   else if (b.id === "relever") relever();
-  else if (b.id === "annulerDefi" && T) T.core.invoke("duel_quitter");
+  else if (b.id === "annulerDefi" && T) { if (jeInvite) presence({t:"annuler", a:jeInvite.a}); T.core.invoke("duel_quitter"); }
 });
 document.addEventListener("keydown", e => { if (e.key === "Escape" && T) T.core.invoke("hide_panel"); });
 // Onglet Jouer : lancer un défi (on reçoit un code à donner) ou relever celui d'un collègue avec son code. Le duel est dans duel.html, le transport dans duel.rs.
 const DUEL_ETAT = {injoignable: "Impossible de joindre le relais du duel : es-tu connecté à internet ?", inconnu: "Pas de défi avec ce code, ou le duel a déjà commencé.",
   expire: "Personne n'a relevé le défi : il est annulé.", coupe: "La connexion a coupé.", quitte: "", "adversaire-parti": ""};
-function enAttente(oui) { $("lancerDefi").disabled = $("relever").disabled = oui; $("annulerDefi").hidden = !oui; }
+let occupe = false;
+function enAttente(oui) { occupe = oui; $("lancerDefi").disabled = $("relever").disabled = oui; $("annulerDefi").hidden = !oui; renderAmis(); }
 function jouer(commande, args, texte) {
-  if (!T) return;
-  if (st.style !== "limace") { $("jouerEtat").textContent = "Pour l'instant, seule la limace sait devenir raquette."; return; }
+  if (!T) return false;
+  if (st.style !== "limace") { $("jouerEtat").textContent = "Pour l'instant, seule la limace sait devenir raquette."; return false; }
   $("jouerEtat").textContent = texte; enAttente(true);
   T.core.invoke(commande, args);
+  return true;
+}
+// Les amis (voir docs/adr/0004-amis-et-invitations-par-le-relais.md) : la liste est gardée par l'app (presence.rs), on les voit en ligne par le relais.
+// Inviter un ami : on crée un défi, et son code part à l'ami par la présence ; sans réponse au bout de 10 min, l'invitation est annulée.
+// Les noms viennent des autres Bidules : toujours en textContent.
+const ATTENTE_INVITATION = 10 * 60 * 1000;
+let amis = [], enLigne = new Map(), jeu = "pong", jeInvite = null, invitation = null;
+const presence = m => T && T.core.invoke("presence_envoyer", {texte:JSON.stringify(m)});
+const nomAmi = id => enLigne.get(id) || (amis.find(a => a.id === id) || {}).nom || "Ton ami";
+function renderAmis() {
+  const el = $("amis"); el.replaceChildren();
+  if (!amis.length) { const p = document.createElement("p"); p.className = "hint"; p.textContent = "Pas encore d'amis : ajoute un collègue avec son code d'ami, pour l'inviter sans code."; el.append(p); return; }
+  for (const a of amis) {
+    const d = document.createElement("div"); d.className = "sess ami";
+    const n = document.createElement("b"); n.textContent = nomAmi(a.id) === "Ton ami" ? a.id : nomAmi(a.id);
+    const e = document.createElement("span"); e.className = "et"; e.textContent = enLigne.has(a.id) ? "en ligne" : "hors ligne";
+    const i = document.createElement("button"); i.className = "chip"; i.dataset.inviter = a.id; i.textContent = "Inviter"; i.disabled = !enLigne.has(a.id) || occupe;
+    const r = document.createElement("button"); r.className = "chip"; r.dataset.retirer = a.id; r.textContent = "Retirer";
+    d.append(n, e, i, r); el.append(d);
+  }
+}
+function ajouterAmi() {
+  const id = $("codeAmi").value.trim(); if (!id || !T) return;
+  T.core.invoke("ami_ajouter", {id, nom:null}).then(l => { amis = l; $("codeAmi").value = ""; renderAmis(); });
+}
+function inviter(id) {
+  if (occupe) return;
+  const nom = nomAmi(id);
+  if (jouer("duel_creer", {}, `Invitation à ${nom}…`)) jeInvite = {a:id, nom, fin:null};
+}
+function finInvitation(texte) { if (!jeInvite) return; jeInvite.fin = texte; T.core.invoke("duel_quitter"); }
+function montrerInvitation(m) {
+  invitation = m; $("invitation").hidden = !m;
+  if (m) $("invitationTxt").textContent = `${m.nom} t'invite au Pong !`;
+  send("invitation", m ? {nom:m.nom} : null);
+}
+function refuserInvitation(raison) { if (!invitation) return; presence({t:"refuser", a:invitation.de, raison}); montrerInvitation(null); }
+function accepter() {
+  if (!invitation) return;
+  const m = invitation;
+  if (!jouer("duel_rejoindre", {code:m.code}, `Connexion au défi de ${m.nom}…`)) { refuserInvitation("non"); return; }
+  montrerInvitation(null);
+  T.core.invoke("ami_ajouter", {id:m.de, nom:m.nom}).then(l => { amis = l; renderAmis(); });
+}
+function surPresence(m) {
+  if (m.t === "presents") { enLigne = new Map(m.amis.map(a => [a.id, a.nom])); renderAmis(); }
+  else if (m.t === "hors-ligne") { enLigne.clear(); renderAmis(); }
+  else if (m.t === "invitation") {
+    if (st.calme) presence({t:"refuser", a:m.de, raison:"ne-pas-deranger"});
+    else if (occupe || invitation) presence({t:"refuser", a:m.de, raison:"occupe"});
+    else montrerInvitation(m);
+  }
+  else if (m.t === "annule" && invitation && invitation.de === m.de) { $("jouerEtat").textContent = `${invitation.nom} a annulé son invitation.`; montrerInvitation(null); }
+  else if (m.t === "absent" && jeInvite && jeInvite.a === m.a) finInvitation(`${jeInvite.nom} n'est pas en ligne.`);
+  else if (m.t === "refus" && jeInvite && jeInvite.a === m.de) {
+    const t = m.raison === "ne-pas-deranger" ? `${m.nom} ne veut pas être dérangé.` : `${m.nom} ne peut pas jouer maintenant.`;
+    send("bulle", t); finInvitation(t);
+  }
 }
 function relever() { const code = $("codeDefi").value.trim(); if (code) jouer("duel_rejoindre", {code}, "Connexion au défi…"); }
 $("codeDefi").addEventListener("keydown", e => { if (e.key === "Enter") relever(); });
+$("codeAmi").addEventListener("keydown", e => { if (e.key === "Enter") ajouterAmi(); });
 if (T) {
-  T.core.invoke("duel_infos").then(i => { $("jouerMoi").innerHTML = `Tu apparais comme <b>${i.nom}</b>.`; });
-  T.event.listen("duel-code", e => { $("jouerEtat").innerHTML = `Donne ce code à ton collègue : <b>${e.payload}</b>. Le duel commence dès qu'il le relève.`; });
-  T.event.listen("duel-debut", () => { $("jouerEtat").textContent = ""; $("codeDefi").value = ""; $("annulerDefi").hidden = true; });
-  T.event.listen("duel-fin", e => { $("jouerEtat").textContent = DUEL_ETAT[e.payload] ?? ""; enAttente(false); });
+  T.core.invoke("version").then(v => $("version").textContent = v);
+  Promise.all([T.core.invoke("duel_infos"), T.core.invoke("amis_infos")]).then(([i, a]) => {
+    $("jouerMoi").innerHTML = `Tu apparais comme <b>${i.nom}</b>. Ton code d'ami : <b>${a.id}</b>, à donner à un collègue pour qu'il t'ajoute.`;
+    amis = a.amis; renderAmis();
+  });
+  T.event.listen("presence", e => surPresence(e.payload));
+  T.event.listen("duel-code", e => {
+    if (!jeInvite) { $("jouerEtat").innerHTML = `Donne ce code à ton collègue : <b>${e.payload}</b>. Le duel commence dès qu'il le relève.`; return; }
+    presence({t:"inviter", a:jeInvite.a, code:e.payload, jeu});
+    $("jouerEtat").textContent = `En attente de ${jeInvite.nom}…`;
+    const j = jeInvite;
+    j.minuteur = setTimeout(() => { if (jeInvite === j) { presence({t:"annuler", a:j.a}); finInvitation(`${j.nom} n'a pas répondu : l'invitation est annulée.`); } }, ATTENTE_INVITATION);
+  });
+  T.event.listen("duel-debut", () => { if (jeInvite) clearTimeout(jeInvite.minuteur); jeInvite = null; $("jouerEtat").textContent = ""; $("codeDefi").value = ""; $("annulerDefi").hidden = true; });
+  T.event.listen("duel-fin", e => {
+    if (jeInvite) clearTimeout(jeInvite.minuteur);
+    $("jouerEtat").textContent = jeInvite && jeInvite.fin || (DUEL_ETAT[e.payload] ?? "");
+    jeInvite = null; enAttente(false);
+  });
 }
 // le panneau s'ouvre sur l'onglet Claude dès qu'un Bidule est choisi (au premier lancement, sur la Piste pour le choisir)
 let ongletChoisi = false;
