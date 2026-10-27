@@ -23,12 +23,16 @@ _À éviter_ : texture, pattern
 ## Pong entre collègues
 
 **Duel** :
-Un Pong entre deux joueurs du même réseau local, en plein écran, où chaque Bidule devient la raquette de son joueur. Il n'a aucun lien avec les tokens, les pièces ou l'évolution.
+Un Pong entre deux joueurs, sur internet, en plein écran, où chaque Bidule devient la raquette de son joueur. Il n'a aucun lien avec les tokens, les pièces ou l'évolution.
 _À éviter_ : partie (c'est une zone du Bidule), match
 
 **Défi** :
-L'invitation à un duel, avec son score à atteindre et sa vitesse de départ, que l'autre joueur accepte ou refuse. Sans défi accepté, rien ne se connecte.
-_À éviter_ : appairage, pairing
+L'invitation à un duel : celui qui défie reçoit un code de quatre lettres, qu'il donne à son collègue ; le collègue relève le défi en tapant ce code. Sans code, personne ne peut te défier.
+_À éviter_ : partie, salle, appairage, pairing
+
+**Relais** :
+Le petit service sur internet qui met ensemble les deux joueurs d'un défi et fait passer leurs messages sans les lire.
+_À éviter_ : serveur (l'hôte calcule le jeu, pas le relais)
 
 **Hôte** :
 Le joueur qui a lancé le défi : sa machine fait foi pour la balle et le score du duel.
