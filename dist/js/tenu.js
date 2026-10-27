@@ -52,8 +52,10 @@ function swingHand(A) {
   }
   return best;
 }
-// un bras tourné de `delta` (radians) : plein, ou fantôme (une seule couleur, tramé selon la parité `dither` ; -1 = pas de trame)
-function swingArm(d, A, side, sx, sy, delta, ghost, dither) {
+// un bras tourné de `delta` (radians) : plein, ou fantôme (une seule couleur, tramé selon la parité `dither` ; -1 = pas de trame) ;
+// plein, ses bleus d'origine (SW_COL) prennent les tons du corps : ton(k, X, Y), comme la boule
+const SW_TON = {[SW_COL.light]:0, [SW_COL.base]:1, [SW_COL.shade]:2};
+function swingArm(d, A, side, sx, sy, delta, ghost, dither, ton) {
   const sg = side ? 1 : -1, P0 = SW_PIV[side], P1 = [P0[0] + sx, P0[1] + sy];
   for (let Y = Math.floor(P1[1] - 18); Y <= Math.ceil(P1[1] + 18); Y++) for (let X = Math.floor(P1[0] - 18); X <= Math.ceil(P1[0] + 18); X++) {
     if (X < 0 || Y < 0 || X >= SW_N || Y >= SW_N || (dither >= 0 && (X + Y) % 2 !== dither)) continue;
@@ -64,7 +66,7 @@ function swingArm(d, A, side, sx, sy, delta, ghost, dither) {
     const i = (V * 64 + U) * 4; if (!A[i + 3]) continue;
     const o = (Y * SW_N + X) * 4;
     if (ghost && d[o + 3]) continue;                                                      // un fantôme ne recouvre pas ce qui est déjà dessiné
-    const c = ghost || [A[i], A[i + 1], A[i + 2]];
+    const k = SW_TON[[A[i], A[i + 1], A[i + 2]]], c = ghost || (k !== undefined ? ton(k, X, Y) : [A[i], A[i + 1], A[i + 2]]);
     d[o] = c[0]; d[o + 1] = c[1]; d[o + 2] = c[2]; d[o + 3] = 255;
   }
 }
@@ -90,7 +92,7 @@ function swingArms(d, B, ms, ton) {          // ton(k, X, Y) : la couleur du cor
     }
   }
   // le bras de l'instant, en plein, par-dessus l'éventail
-  for (let side = 0; side < 2; side++) swingArm(d, A, side, sx, sy, rad(now), null, -1);
+  for (let side = 0; side < 2; side++) swingArm(d, A, side, sx, sy, rad(now), null, -1, ton);
 }
 function swingStart() { Object.assign(swing, {on:true, b:[0, SW_L], vb:[0, 160], pw:[x, y], pv:[0, 0], aw:[0, 0], skip:2, t:0}); }
 function swingStep(dt) {
