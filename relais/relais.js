@@ -62,8 +62,11 @@ export class Defi {
     const [a, b] = this.joueurs;
     if (!b || a.nom === null || b.nom === null) return;
     clearTimeout(this.minuteur);
-    a.ws.send(JSON.stringify({t: "go", nom: b.nom}));
-    b.ws.send(JSON.stringify({t: "go", nom: a.nom}));
+    // celui qui attendait a pu perdre sa connexion sans qu'on le sache : on arrête tout, l'autre le voit
+    try {
+      a.ws.send(JSON.stringify({t: "go", nom: b.nom}));
+      b.ws.send(JSON.stringify({t: "go", nom: a.nom}));
+    } catch { this.fin(); }
   }
 
   // un joueur parti : on ferme l'autre, et le code redevient libre

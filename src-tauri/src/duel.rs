@@ -7,7 +7,7 @@ use std::net::{TcpStream, ToSocketAddrs};
 use std::sync::mpsc::{channel, Receiver, Sender, TryRecvError};
 use std::sync::{Arc, Mutex};
 use std::thread;
-use std::time::Duration;
+use std::time::{Duration, Instant};
 use tungstenite::stream::MaybeTlsStream;
 use tungstenite::{Message, WebSocket};
 
@@ -91,7 +91,18 @@ impl Reseau {
         // en attente de l'autre, les messages viennent du relais ; une fois le duel lancé, de l'autre joueur
         let mut en_duel = false;
         let _ = flux.set_read_timeout(Some(Duration::from_millis(50)));
+        // en attente, un signal toutes les 20 s pour que la connexion ne soit pas coupée comme inactive ;
+        // qui relève un défi doit voir le duel commencer en 15 s, sinon le défi n'est plus là
+        let debut = Instant::now();
+        let mut signal = Instant::now();
         loop {
+            if !en_duel {
+                if !hote && debut.elapsed() > Duration::from_secs(15) { let _ = ws.close(None); return self.finir("coupe"); }
+                if signal.elapsed() > Duration::from_secs(20) {
+                    signal = Instant::now();
+                    if ws.send(Message::Ping(Vec::new())).is_err() { return self.finir("coupe"); }
+                }
+            }
             loop {
                 match rx.try_recv() {
                     Ok(Sortie::Texte(t)) => { if en_duel && ws.send(Message::text(t)).is_err() { return self.finir("coupe"); } }
