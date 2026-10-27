@@ -12,7 +12,7 @@ use tungstenite::stream::MaybeTlsStream;
 use tungstenite::{Message, WebSocket};
 
 // Le relais (relais/relais.js), mis en ligne sur le compte Cloudflare de Matteo.
-pub const RELAIS: &str = "wss://bidules-duel.matteo-divita.workers.dev";
+pub const RELAIS: &str = "wss://duel.bidules.workers.dev";
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Evenement {

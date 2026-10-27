@@ -1,5 +1,5 @@
 # Le relais du duel sur Cloudflare Workers. Mise en ligne : mise run relais (voir README, « Le relais du duel »).
-name = "bidules-duel"
+name = "duel"
 main = "relais.js"
 compatibility_date = "2025-09-01"
 
