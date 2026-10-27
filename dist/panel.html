@@ -648,7 +648,13 @@ $("adresse").value = localStorage.adresseDuel || "";
 $("adresse").addEventListener("keydown", e => { if (e.key === "Enter") defier(); });
 accepterDefis(localStorage.accepterDefis !== "non");
 if (T) {
-  T.core.invoke("duel_infos").then(i => { $("jouerMoi").innerHTML = `Tu apparais comme <b>${i.nom}</b>` + (i.adresse ? `, ton adresse : <b>${i.adresse}</b>` : ""); });
+  // sur plusieurs réseaux (VPN, Wi-Fi et câble...), toutes les adresses : le collègue prend celle de son réseau ; la principale d'abord
+  const CARTE = c => /^(utun|ipsec|ppp)/.test(c) ? "VPN" : /^(bridge|vmenet|vnic)/.test(c) ? "machine virtuelle" : c;
+  T.core.invoke("duel_infos").then(i => {
+    const autres = (i.adresses || []).filter(a => a.ip !== i.adresse);
+    const liste = autres.length ? `<br>Sur plusieurs réseaux : ${(i.adresse ? [`<b>${i.adresse}</b> (principale)`] : []).concat(autres.map(a => `<b>${a.ip}</b> (${CARTE(a.carte)})`)).join(", ")}. Ton collègue prend celle de son réseau.` : "";
+    $("jouerMoi").innerHTML = `Tu apparais comme <b>${i.nom}</b>` + (i.adresse ? `, ton adresse : <b>${i.adresse}</b>` : "") + liste;
+  });
   T.event.listen("duel-reponse", e => { $("jouerEtat").textContent = DUEL_ETAT[e.payload] || ""; $("defier").disabled = false; });
   T.event.listen("duel-fin", e => { $("jouerEtat").textContent = DUEL_ETAT[e.payload] ?? ""; $("defier").disabled = false; });
   T.event.listen("duel-defi", () => { $("jouerEtat").textContent = ""; });
