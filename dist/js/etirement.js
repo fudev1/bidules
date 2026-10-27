@@ -8,6 +8,11 @@ function captureFrame(src) {          // src : l'image déjà remise dans le rep
   if (src) g.drawImage(src, 0, 0);
   else { if (img.style.scale === "-1 1") { g.translate(2 * (SHEET_DATA[style].axis + .5), 0); g.scale(-1, 1); } g.drawImage(img, 0, 0, 64, 64); }
   const px = g.getImageData(0, 0, 64, 64).data, mask = new Uint8Array(4096);
+  // sans les cheveux (cheveux.js les pose hors du corps, sur l'image affichée) : sinon leur couleur passerait pour le reflet du corps ; ils sont redessinés plus bas
+  const sans = !src && SHEET_DATA.limace?.bySrc?.get(img.src);
+  if (sans) { const a = sans.cv.getContext("2d").getImageData(0, 0, 64, 64).data, flip = img.style.scale === "-1 1", ax = 2 * (SHEET_DATA[style].axis + .5);
+    for (let i = 0; i < 4096; i++) { const X = i % 64, Y = (i - X) / 64, Xs = flip ? Math.floor(ax - 1 - X) : X;
+      if (Xs < 0 || Xs > 63 || !a[(Y * 64 + Xs) * 4 + 3]) px[i * 4 + 3] = 0; } }
   let top = 64, bot = 0, x0 = 64, x1 = 0;
   for (let i = 0; i < 4096; i++) if (px[i * 4 + 3]) { mask[i] = 1; const X = i % 64, Y = (i - X) / 64; top = Math.min(top, Y); bot = Math.max(bot, Y); x0 = Math.min(x0, X); x1 = Math.max(x1, X); }
   // le contour d'origine est redessiné autour de la forme étirée ; à sa place, on met la couleur voisine de l'intérieur
