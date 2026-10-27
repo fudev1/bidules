@@ -1,11 +1,11 @@
 // L'état gardé, le choix du Bidule, l'évolution, le menu du clic droit, et le démarrage (la boucle unique, voir horloge.js).
-// L'état gardé d'un lancement à l'autre (main.rs : etat.json) : l'humeur choisie, les parties, les cheveux, caché ou non, le toucher, les stats de la saison, les besoins et la collection (jeu.js), et sa place
+// L'état gardé d'un lancement à l'autre (main.rs : etat.json) : l'humeur choisie, les parties, les cheveux ou l'hélice, l'accessoire du visage, caché ou non, le toucher, les stats de la saison, les besoins et la collection (jeu.js), et sa place
 // à l'écran (il revient au sol, au même endroit). Écrit une demi-seconde après chaque changement ; sa place, toutes les 5 s si elle a changé.
 let gardeT = 0, gardeX = null;
 function garder() {
   clearTimeout(gardeT);
   gardeT = setTimeout(() => { if (mode === "walk") gardeX = Math.round(x);
-    T.core.invoke("garder_etat", {etat:JSON.stringify({humeur:moodMode, parties:partsBy, cheveux, cache:bidHidden, haptique:hapticOn, x:gardeX, stats, besoins, collection})}).catch(e => say("etat : " + e)); }, 500);
+    T.core.invoke("garder_etat", {etat:JSON.stringify({humeur:moodMode, parties:partsBy, cheveux, helice, chapeau, visage, cache:bidHidden, haptique:hapticOn, x:gardeX, stats, besoins, collection})}).catch(e => say("etat : " + e)); }, 500);
 }
 // Le Bidule choisi : chargé, affiché, et gardé pour le prochain lancement (main.rs : garder_choix).
 async function chooseStyle(s) {
@@ -59,9 +59,31 @@ function evolve(msg) {
 }
 T.event.listen("evo", async e => {
   if (e.payload === "evo:cheveux" && style === "limace") {          // des cheveux, ou plus de cheveux : l'autre feuille, et le même éclat que pour une partie
-    cheveux = !cheveux; garder();
+    cheveux = !cheveux; if (cheveux) helice = false, chapeau = null; garder();
     await hairLoad(); hair.a = hair.v = 0; hairPaint();
     say(cheveux ? "evolution : des cheveux" : "evolution : plus de cheveux"); evolve(cheveux ? "Des cheveux !" : "Adieu les cheveux");
+    return;
+  }
+  if (e.payload === "evo:helice" && style === "limace") {          // l'hélice, à la place des cheveux (la tête)
+    helice = !helice; if (helice) cheveux = false, chapeau = null; garder();
+    await heliceLoad(); hair.tour = 0; hair.pale = 0; hairPaint();
+    say(helice ? "evolution : une helice" : "evolution : plus d'helice"); evolve(helice ? "Une hélice !" : "Adieu l'hélice");
+    return;
+  }
+  // un chapeau (l'auréole) : à la place des cheveux et de l'hélice
+  const cha = CHAPEAUX.find(n => e.payload === "evo:" + n);
+  if (cha && style === "limace") {
+    chapeau = chapeau === cha ? null : cha; if (chapeau) cheveux = helice = false; garder();
+    await chapeauCharger(cha); hairPaint();
+    say("evolution : " + (chapeau || "plus de chapeau")); evolve(chapeau === "aureole" ? "Une auréole !" : "Plus de chapeau");
+    return;
+  }
+  // un accessoire du visage : un clic le pose, un second le retire
+  const acc = VISAGES.find(n => e.payload === "evo:" + n);
+  if (acc && style === "limace") {
+    visage = visage === acc ? null : acc; garder();
+    await visageCharger(); hair.cache.clear(); hairPaint(); swingParties(SHEET_DATA.limace?.tags["attrape-boule-parts"]);
+    say("evolution : " + (visage || "plus d'accessoire")); evolve(visage === "lunettes" ? "Des lunettes !" : "Plus d'accessoire");
     return;
   }
   if (SHEETS[style]) { bubble("Pas encore de parties", 1300); return; }
@@ -117,6 +139,9 @@ img.addEventListener("contextmenu", async e => {
     // ce qu'on avait choisi la dernière fois (les anciens réglages du navigateur, s'il n'y a pas encore d'état gardé)
     if (E.parties) for (const k in E.parties) partsBy[k] = E.parties[k];
     if (typeof E.cheveux === "boolean") cheveux = E.cheveux;
+    if (E.helice === true && !cheveux) { helice = true; await heliceLoad(); }
+    if (CHAPEAUX.includes(E.chapeau) && !cheveux && !helice) { chapeau = E.chapeau; await chapeauCharger(chapeau); }
+    if (VISAGES.includes(E.visage)) { visage = E.visage; await visageCharger(); }
     if (typeof E.haptique === "boolean") hapticOn = E.haptique;
     if (E.stats) stats = {...stats, ...E.stats};
     // au sol, là où il était ; la fenêtre y va tout de suite (sinon elle attendrait son premier pas, en l'air à sa place de départ)

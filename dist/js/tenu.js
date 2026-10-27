@@ -30,9 +30,16 @@ const SW_COL = {ink:[0, 0, 0], base:[99, 155, 255], shade:[69, 119, 224], light:
 const SW_GREEN = {"99,155,255":[127, 212, 106], "69,119,224":[79, 174, 69], "164,198,255":[198, 240, 176]};     // les verts de la nausée (gen.py : TO_VERT)
 // Le visage, les bras et la sueur qui suivent la boule (tag attrape-boule-parts) : aux couleurs de l'apparence (swing.parts), et d'origine
 // (swing.partsVert) pour la goutte secouée, qui verdit en entier comme la nausée de la feuille (SW_GREEN ne connaît que les bleus d'origine).
+// L'accessoire du visage (accessoires.js) y est posé sur les yeux, sur toute la boule.
 function swingParties(P) {
-  const images = src => P ? P.map(f => Object.assign(new Image(), {src:src(f)})) : null;
-  swing.parts = images(f => Apparence.affichee(f.src)); swing.partsVert = images(f => f.src); swing.durs = P ? P.map(f => f.dur) : [];
+  const avecVisage = (f, teinte) => {
+    if (!visagePret() || !f.yeux) return teinte ? Apparence.affichee(f.src) : f.src;
+    const cv = document.createElement("canvas"); cv.width = cv.height = 64; const g = cv.getContext("2d");
+    const im = teinte ? f.cv.getContext("2d").getImageData(0, 0, 64, 64) : new ImageData(new Uint8ClampedArray(f.px0), 64, 64);
+    visagePoser(im.data, f, null); g.putImageData(im, 0, 0); return cv.toDataURL();
+  };
+  const images = teinte => P ? P.map(f => Object.assign(new Image(), {src:avecVisage(f, teinte)})) : null;
+  swing.parts = images(true); swing.partsVert = images(false); swing.durs = P ? P.map(f => f.dur) : [];
 }
 Apparence.quandElleChange(() => { if (Apparence.aUneApparence(style) && SHEET_DATA[style]) swingParties(SHEET_DATA[style].tags["attrape-boule-parts"]); });
 // Les bras se débattent si vite qu'on les voit flous, comme un bras d'anime qui s'agite : à chaque image, tout l'éventail du balayage est dessiné en

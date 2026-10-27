@@ -35,9 +35,12 @@ function captureFrame(src) {          // src : l'image déjà remise dans le rep
   const shade = byFreq.find(c => ![ink, light, base].some(k => k.join() === c.join())) || base;
   const isInk = i => mask[i] && px[i * 4] === ink[0] && px[i * 4 + 1] === ink[1] && px[i * 4 + 2] === ink[2];
   const face = [];
-  // le visage : l'encre à l'intérieur, sans les marches du contour (encre collée à un pixel de bord)
+  // le visage : l'encre à l'intérieur, sans les marches du contour (encre collée à un pixel de bord), et les autres couleurs qui ne sont pas
+  // celles du corps ni du motif (pupilles, blanc des yeux, verres des lunettes, intérieur de la bouche), chacune avec sa couleur
   const nearEdge = i => [1, -1, 64, -64, 65, 63, -63, -65].some(o => i + o >= 0 && i + o < 4096 && (!mask[i + o] || edge(i + o) && isInk(i + o)));
-  for (let i = 0; i < 4096; i++) if (isInk(i) && !edge(i) && !nearEdge(i)) face.push([i % 64, Math.floor(i / 64)]);
+  const tonsDuCorps = new Set([base, shade, light].map(c => c.join()));
+  const duVisage = i => isInk(i) || mask[i] && !motif[i] && !tonsDuCorps.has(px[i * 4] + "," + px[i * 4 + 1] + "," + px[i * 4 + 2]);
+  for (let i = 0; i < 4096; i++) if (duVisage(i) && !edge(i) && !nearEdge(i)) face.push([i % 64, Math.floor(i / 64), [px[i * 4], px[i * 4 + 1], px[i * 4 + 2]]]);
   const stamps = [];
   for (const p2 of face) {
     const hits = stamps.filter(st => st.some(q => Math.abs(q[0] - p2[0]) <= 1 && Math.abs(q[1] - p2[1]) <= 1));
@@ -46,7 +49,7 @@ function captureFrame(src) {          // src : l'image déjà remise dans le rep
     for (const hh of hits.slice(1)) { hits[0].push(...hh); stamps.splice(stamps.indexOf(hh), 1); }
   }
   const faceStamps = stamps.map(st => { const cx2 = st.reduce((a, p2) => a + p2[0], 0) / st.length, cy2 = st.reduce((a, p2) => a + p2[1], 0) / st.length;
-    return {u:cx2 + .5, v:cy2 + .5, px:st.map(([a, b]) => [a - Math.round(cx2), b - Math.round(cy2)])}; });
+    return {u:cx2 + .5, v:cy2 + .5, px:st.map(([a, b, c]) => [a - Math.round(cx2), b - Math.round(cy2), c])}; });
   const fcx = faceStamps.length ? faceStamps.reduce((a, st) => a + st.u, 0) / faceStamps.length : (x0 + x1) / 2 + .5;
   const fcy = faceStamps.length ? faceStamps.reduce((a, st) => a + st.v, 0) / faceStamps.length : (top + bot) / 2;
   const rowL = new Float32Array(64).fill(NaN), rowR = new Float32Array(64).fill(NaN);
@@ -265,14 +268,15 @@ function styleRender(out, faceAt) {
     if (c !== S0.ink && dansLeMotif(X, Y)) c = Apparence.tonDuMotif([S0.light, S0.base, S0.shade].indexOf(c)) || c;
     put(X, Y, c);
   }
-  for (const st of S0.faceStamps) { const [fx2, fy2] = faceAt(st.u, st.v); for (const [a2, b2] of st.px) put(Math.floor(fx2) + a2, Math.floor(fy2) + b2, S0.ink); }
-  // les cheveux, au sommet de la goutte étirée (le milieu de sa ligne du haut), dans la pose du ressort ; jamais sur le corps
-  if (cheveux && hair.px && style === "limace") {
+  for (const st of S0.faceStamps) { const [fx2, fy2] = faceAt(st.u, st.v); for (const [a2, b2, c] of st.px) put(Math.floor(fx2) + a2, Math.floor(fy2) + b2, c); }
+  // les cheveux ou l'hélice, au sommet de la goutte étirée (le milieu de sa ligne du haut), dans la pose du ressort ; jamais sur le corps
+  const tete = style === "limace" && hairTete(hair.pose);
+  if (tete) {
     let l = CW2, r = -1; for (let X = 0; X < CW2; X++) if (out[t0 * CW2 + X]) { l = Math.min(l, X); r = X; }
     const ox = Math.floor((l + r + 1) / 2) - HAIR_RX, oy = t0 - HAIR_H;
     for (let v = 0; v < HAIR_H; v++) for (let u = 0; u < HAIR_W; u++) {
-      const i = (v * hair.pw + hair.pose * HAIR_W + u) * 4, X = ox + u, Y = oy + v;
-      if (hair.px[i + 3] && X >= 0 && Y >= 0 && X < CW2 && Y < CH2 && !out[Y * CW2 + X]) put(X, Y, [hair.px[i], hair.px[i + 1], hair.px[i + 2]]);
+      const i = (v * tete.pw + tete.pose * HAIR_W + u) * 4, X = ox + u, Y = oy + v;
+      if (tete.px[i + 3] && X >= 0 && Y >= 0 && X < CW2 && Y < CH2 && !out[Y * CW2 + X]) put(X, Y, [tete.px[i], tete.px[i + 1], tete.px[i + 2]]);
     }
   }
   pullCtx.putImageData(imd, 0, 0);

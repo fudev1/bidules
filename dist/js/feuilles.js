@@ -17,7 +17,7 @@ const nextAt = (prev, dur, now) => (now - prev > 60 ? now : prev) + dur;
 // Persos dessinés à la main dans Aseprite : on lit la feuille et ses balises (crawl, turn).
 const SHEETS = {limace:{png:"persos/limace/sheet.png", json:"persos/limace/sheet.json"}, candy:{png:"persos/candy/sheet.png", json:"persos/candy/sheet.json"}}, SHEET_DATA = {};
 // Évolution, premier essai : la limace avec trois cheveux, choisie dans le panneau et gardée sur ce Mac (hairStep, plus bas).
-let cheveux = false;
+let cheveux = false, helice = false, chapeau = null;          // l'hélice va à la place des cheveux (le même emplacement, la tête) ; chapeau : un autre accessoire de tête (CHAPEAUX, cheveux.js)
 try { cheveux = localStorage.getItem("bidule.cheveux") === "oui"; } catch (e) {}
 async function loadSheet(id) {
   const meta = await (await fetch(SHEETS[id].json)).json();
@@ -41,7 +41,7 @@ async function loadSheet(id) {
     // sommet de la tête : la première ligne non vide et le milieu de ses pixels (c'est là que la souris tient le Bidule quand il pend)
     let top = f.frame.h, tl = 0, tn = 0;
     for (let i = 3; i < px.length; i += 4) if (px[i]) { const Y = Math.floor((i >> 2) / f.frame.w), X = (i >> 2) % f.frame.w; if (Y < top) { top = Y; tl = 0; tn = 0; } if (Y === top) { tl += X; tn++; } }
-    frames.push({src:cv.toDataURL(), cv, dur:f.duration || 100, bot, cx:(l + r) / 2, tail, head, top, tipx:tn ? tl / tn : f.frame.w / 2, step:f.step});
+    frames.push({src:cv.toDataURL(), cv, dur:f.duration || 100, bot, cx:(l + r) / 2, tail, head, top, tipx:tn ? tl / tn : f.frame.w / 2, step:f.step, yeux:f.yeux, renverse:f.renverse});
   }
   const tags = {};
   for (const t of meta.meta.frameTags || []) tags[t.name] = frames.slice(t.from, Math.min(t.to, frames.length - 1) + 1);

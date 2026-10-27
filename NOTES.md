@@ -22,6 +22,20 @@ fait et ce qui reste à faire. La vision, l'installation et la stack sont dans l
   toutes les animations et sur la goutte étirée. Un ressort leur donne de l'inertie : la tête bouge (dans l'image ou la
   fenêtre entière), ils penchent de l'autre côté puis la rattrapent ; un choc les ébouriffe. Ce qui déclenche
   l'évolution reste à définir.
+- Accessoires de la limace (même menu Évolution), gardés dans l'état. Sur la tête, une hélice à la place des cheveux
+  (le même emplacement) : posée comme eux, elle tourne d'autant plus vite que la tête bouge, et vite, elle se floute
+  comme les bras de la goutte tenue (pales fantômes tramées, arcs de vitesse). Sur la tête encore, une auréole (un « chapeau » :
+  immobile, à la place des cheveux et de l'hélice ; relevée sur l'image 11 de `crawl`, `aureole.aseprite` ; des cornes de diable ont été essayées puis retirées). Sur le visage, des
+  lunettes (une moustache a été essayée puis retirée, pas convaincante). Dessinés par Thibault sur les images 10 et 12 de `crawl`, relevés une fois
+  dans `animations/accessoires/` (`helice.aseprite`, ses quatre quarts de tour tirés du dessin,
+  `lunettes.aseprite`, à retoucher à la main ; exportés
+  par `tools/accessoires.py`, lancé par `mise run publier`). `gen.py` trouve les yeux de chaque image de la feuille
+  (« yeux » dans `sheet.json`) ; les humeurs, la nausée, les versions vertes et la goutte tenue prennent ceux de leur
+  image neutre. L'app pose l'accessoire sur les yeux (`dist/js/accessoires.js`), seulement sur le corps, dans toutes
+  les animations, la goutte étirée et la goutte tenue. Les verres sont d'un blanc plein qui cache les yeux : plus de
+  regard à gérer derrière. Sans yeux reconnaissables (écrasé contre un mur, éclaboussure),
+  l'image reste sans accessoire. La goutte étirée garde maintenant toutes les couleurs du visage (verres, pupilles,
+  intérieur de la bouche), plus seulement l'encre.
 - Au lancement, le Bidule choisi la dernière fois apparaît directement (gardé dans `bidule.txt`, dossier de données de
   l'app). Au premier lancement, aucun Bidule n'apparaît : le panneau s'ouvre pour choisir le premier ; le Bidule attend
   immobile à sa place de départ ; une fois choisi, le panneau se ferme et le Bidule tombe du haut comme aux lancements
@@ -58,7 +72,8 @@ fait et ce qui reste à faire. La vision, l'installation et la stack sont dans l
     reforme ;
   - la vitesse de marche vient du dessin (plus lente qu'avant), gardée telle quelle pour l'instant.
 - Apparence de la limace (spec #57, première étape #73) : une teinte par partie (corps, cheveux, pupilles, intérieur de
-  la bouche), prise dans une liste fermée (10 corps, 6 cheveux, 5 pupilles, 4 bouches). Chaque partie est reconnue à ses
+  la bouche), prise dans une liste fermée (17 corps, 16 cheveux, 15 pupilles, 15 bouches), et les accessoires : 15 hélices (pales,
+  tige ; le flou suit), 15 auréoles et 16 lunettes (monture, verres). Chaque partie est reconnue à ses
   couleurs et recolorée ton pour ton, une fois au chargement ou au changement d'apparence (`dist/js/apparence.js`) ; le
   contour reste noir, et les verts de la nausée passent devant. Les pupilles ont leur couleur à elles dans la feuille
   (`#000001`, posée par `gen.py`), l'intérieur de la bouche aussi (`#3f3f75` : `#3f3f74` sert aussi aux éclaboussures
@@ -71,7 +86,8 @@ fait et ce qui reste à faire. La vision, l'installation et la stack sont dans l
   sur les pixels du corps, collés au corps : dessinés sur l'image de face, puis étirés, écrasés et penchés avec lui dans chaque
   image de la feuille, dans l'étirement collant et dans la goutte tenue ; fond = teinte du corps,
   dessin = deuxième teinte (une teinte du corps ; par défaut blanc, blanc, rose, noir doux), qui reprend le ton du pixel
-  recouvert. Ils restent dessus dans toutes les animations, la nausée verte et les états (malade, squelette) compris. L'icône et la goutte tenue (dessinée par le code) le montrent aussi. Chaque sous-système
+  recouvert. Seule exception : écrasée en flaque (écrasement, début de la reformation, atterrissage aplati), la limace
+  n'a plus de motif, sinon le dessin étiré ne fait qu'une grande tache à un bout. Ils restent dessus dans toutes les autres animations, la nausée verte et les états (malade, squelette) compris. L'icône et la goutte tenue (dessinée par le code) le montrent aussi. Chaque sous-système
   qui garde des images ou des couleurs de l'apparence s'y abonne (`Apparence.quandElleChange`).
 
 - Duel : un Pong entre deux collègues, en plein écran, chaque Bidule devenu raquette. Il passe par un relais sur

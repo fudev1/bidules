@@ -221,7 +221,8 @@ main{flex:1;overflow:auto;padding:0 12px 12px}
       <p class="hint" id="evoHint"></p>
       <div class="row"><button class="btn primary" id="random">Gagner une partie au hasard</button><button class="btn" id="reset">Revenir au départ</button></div>
       <div id="slots" class="slots"></div>
-      <div class="slot" id="evoCheveux" hidden><b>Tête</b><div class="chips"><button class="chip" id="cheveux">Cheveux</button></div></div>
+      <div class="slot" id="evoCheveux" hidden><b>Tête</b><div class="chips"><button class="chip" id="cheveux">Cheveux</button><button class="chip" id="helice">Hélice</button><button class="chip" id="aureole" data-chapeau="aureole">Auréole</button></div></div>
+      <div class="slot" id="evoVisage" hidden><b>Visage</b><div class="chips"><button class="chip" id="lunettes" data-visage="lunettes">Lunettes</button></div></div>
     </section>
     <section class="pane" id="p-tests" hidden>
       <p class="hint">Pour voir chaque état de Claude dans la bulle, sans attendre qu'il arrive.</p>
@@ -260,7 +261,9 @@ const SHEETS = new Set(["limace", "candy"]);
 const SLOTS = [["tete", "Tête", [["antennes", "Antennes"], ["cornes", "Cornes"]]], ["bouche", "Bouche", [["crocs", "Crocs"], ["langue", "Langue"]]],
   ["bras", "Bras", [["bras", "Petits bras"], ["pinces", "Pinces"]]], ["pattes", "Pattes", [["longues", "Longues"], ["palmees", "Palmées"]]],
   ["dos", "Dos", [["ailes", "Ailes"], ["fourrure", "Fourrure"]]], ["queue", "Queue", [["touffue", "Touffue"], ["lezard", "Lézard"]]]];
-const PARTIES = [["corps", "Corps"], ["cheveux", "Cheveux"], ["pupilles", "Pupilles"], ["bouche", "Intérieur de la bouche"]];
+const PARTIES = [["corps", "Corps"], ["cheveux", "Cheveux"], ["pupilles", "Pupilles"], ["bouche", "Intérieur de la bouche"], ["helice", "Hélice"], ["aureole", "Auréole"], ["lunettes", "Lunettes"]];
+// la pastille d'une teinte : la base du corps, la seule couleur d'une partie, ou les deux d'un accessoire (pales et tige, monture et verres) en diagonale
+const pastille = t => t.length === 3 ? t[1] : t.length === 2 ? `linear-gradient(135deg, ${t[0]} 50%, ${t[1]} 50%)` : t[0];
 const $ = id => document.getElementById(id);
 let st = {mood:null, moodMode:"auto", moodReason:"", style:"limace", partsBy:{classique:{tete:"antennes", pattes:"longues", bras:"bras", queue:"touffue"}, ...Object.fromEntries(Object.keys(MONSTRES).map(id => [id, {}])), limace:{}, candy:{}}, thumb:""};
 const send = (ev, payload) => { if (T) T.event.emit(ev, payload); else console.log(ev, payload); };
@@ -277,11 +280,13 @@ function render() {
   $("haptique").textContent = st.haptique === false ? "Coupé" : "Activé"; $("haptique").classList.toggle("on", st.haptique !== false);
   $("moods").innerHTML = MOODS.map(([id, name]) => `<button class="chip ${st.moodMode === id ? "on" : ""}" data-mood="${id}">${name}</button>`).join("");
   $("styles").innerHTML = STYLES.map(([id, name], i) => `<button class="st c${i % 4} ${id === st.style ? "on" : ""}" data-style="${id}" ${READY.has(id) ? "" : "disabled"}>${READY.has(id) ? (id === st.style && st.cache ? '<i class="soon">Caché</i>' : "") : '<i class="soon">Bientôt</i>'}<i class="spark"></i><span class="ground"><img class="mon" src="${render64(id, st.partsBy[id] || {}, READY.has(id) ? st.mood : null)}" alt=""></span><span class="nm">${name}</span></button>`).join("");
-  // la limace : un premier essai d'évolution, des cheveux ; les autres Bidules dessinés n'ont encore rien
+  // la limace : un premier essai d'évolution, des cheveux et un accessoire du visage ; les autres Bidules dessinés n'ont encore rien
   const evoLimace = st.style === "limace";
-  $("evoHint").textContent = evoLimace ? "Premier essai d'évolution : un clic lui donne trois cheveux, un second les lui retire." : noParts ? "Les parties arriveront avec les animations dessinées de ce Bidule." : "Un clic ajoute la partie, un second clic la retire. Une partie du même emplacement remplace l'ancienne.";
-  $("evoCheveux").hidden = !evoLimace; $("slots").hidden = $("random").parentElement.hidden = noParts;
-  $("cheveux").classList.toggle("on", !!st.cheveux);
+  $("evoHint").textContent = evoLimace ? "Premier essai d'évolution : un clic lui donne trois cheveux, une hélice, une auréole ou des lunettes, un second les lui retire. Sur la tête, un seul à la fois : cheveux, hélice ou auréole." : noParts ? "Les parties arriveront avec les animations dessinées de ce Bidule." : "Un clic ajoute la partie, un second clic la retire. Une partie du même emplacement remplace l'ancienne.";
+  $("evoCheveux").hidden = $("evoVisage").hidden = !evoLimace; $("slots").hidden = $("random").parentElement.hidden = noParts;
+  $("cheveux").classList.toggle("on", !!st.cheveux); $("helice").classList.toggle("on", !!st.helice);
+  for (const c of ["aureole"]) $(c).classList.toggle("on", st.chapeau === c);
+  for (const v of ["lunettes"]) $(v).classList.toggle("on", st.visage === v);
   renderSaison(); renderVie();
   $("random").disabled = $("reset").disabled = noParts;
   $("slots").innerHTML = SLOTS.map(([slot, label, opts]) => `<div class="slot"><b>${label}</b><div class="chips">${opts.map(([p, name]) =>
@@ -292,7 +297,7 @@ function render() {
   $("apercu").hidden = !st.style; if (st.style) $("apercu").src = $("thumb").src;
   $("origine").disabled = !teintes || !Object.keys(app).length;
   $("teintes").innerHTML = teintes ? PARTIES.map(([p, label]) => `<div class="slot"><b>${label}</b><div class="teintes">${Object.entries(teintes[p]).map(([nom, tons]) =>
-    `<button class="teinte ${(app[p] || st.origine[p]) === nom ? "on" : ""}" data-partie="${p}" data-teinte="${nom}" title="${nom}" aria-label="${label} : ${nom}" style="background:${tons[tons.length > 1 ? 1 : 0]}"></button>`).join("")}</div></div>`).join("") : "";
+    `<button class="teinte ${(app[p] || st.origine[p]) === nom ? "on" : ""}" data-partie="${p}" data-teinte="${nom}" title="${nom}" aria-label="${label} : ${nom}" style="background:${pastille(tons)}"></button>`).join("")}</div></div>`).join("") : "";
   // les motifs du corps (sans motif, ou l'un d'eux), puis la deuxième teinte, celle du dessin (prise parmi les teintes du corps, par défaut celle du motif)
   const motifs = teintes && st.motifs, mt = app.motif && motifs && (app.motifTeinte || motifs[app.motif]?.teinte);
   $("motifs").innerHTML = motifs ? `<div class="slot"><b>Motif</b><div class="chips">${[["", "Aucun"], ...Object.keys(motifs).map(m => [m, motifs[m].nom])].map(([m, nom]) =>
@@ -622,6 +627,9 @@ document.addEventListener("click", e => {
   else if (b.id === "random") send("evo", "evo:random");
   else if (b.id === "reset") send("evo", "evo:reset");
   else if (b.id === "cheveux") send("evo", "evo:cheveux");
+  else if (b.id === "helice") send("evo", "evo:helice");
+  else if (b.dataset.chapeau) send("evo", "evo:" + b.dataset.chapeau);
+  else if (b.dataset.visage) send("evo", "evo:" + b.dataset.visage);
   else if (b.id === "fini") T.core.invoke(finiEtat === "oui" ? "debrancher_hooks" : "brancher_hooks").then(renderFini, err => { $("finiTxt").textContent = "Pas pu le faire : " + err; });
   else if (b.id === "haptique") send("haptique", st.haptique === false);
   else if (b.id === "quit") { if (T) T.core.invoke("quit"); }

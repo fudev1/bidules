@@ -229,7 +229,7 @@ test("revenir à l'apparence d'origine rend la feuille pixel pour pixel", async 
 // Motifs : on lit les pixels d'une image affichée avec leur position
 async function pixelsAffiches(page, tag, i = 0) {
   return page.evaluate(async ([tag, i]) => {
-    Horloge.arreter(); img.src = SHEET_DATA.limace.tags[tag][i].src;
+    Horloge.arreter(); img.src = (SHEET_DATA.limace.tags[tag] || SHEET_DATA.limace.all[tag])[i].src;
     const im = new Image(); im.src = IMG_SRC.get.call(img); await im.decode();
     const cv = document.createElement("canvas"); cv.width = cv.height = 64; const g = cv.getContext("2d"); g.drawImage(im, 0, 0);
     const d = g.getImageData(0, 0, 64, 64).data, px = [];
@@ -484,6 +484,95 @@ test("les essais de l'onglet Tests sautent aux étapes sans compter dans les sta
     return o;
   });
   assert.deepEqual(r, {faim: "faim", soif: "soif", malade: ["malade", 0], gueri: ["", 0, undefined], squelette: 2, zero: ["", 100, 100, 1]});
+  assert.deepEqual(page.erreurs, []);
+  await page.close();
+});
+
+test("les lunettes se posent sur le corps, dans toutes les humeurs, et s'enlèvent", async () => {
+  const page = await sim.ouvrir();
+  await page.waitForFunction(() => SHEET_DATA.limace);
+  const envoie = async id => { await page.evaluate(id => LISTEN.evo.forEach(f => f({payload: id})), id); await page.waitForTimeout(1600); };
+  const nu = await pixelsAffiches(page, "crawl"), nuJoyeux = await pixelsAffiches(page, "crawl@guilleret");
+  await envoie("evo:lunettes");
+  assert.equal(await page.evaluate(() => visage), "lunettes");
+  for (const [tag, avant] of [["crawl", nu], ["crawl@guilleret", nuJoyeux]]) {
+    const vu = await pixelsAffiches(page, tag);
+    let verres = 0;
+    for (let k = 0; k < 64 * 64; k++) {
+      if (!avant[k]) assert.equal(vu[k], "", `${tag} : lunettes hors du corps en ${k}`);
+      if (vu[k] === "#ffffff" && avant[k] !== "#ffffff") verres++;
+    }
+    assert.ok(verres > 30, `${tag} : pas de verres (${verres})`);
+  }
+  await envoie("evo:lunettes");
+  assert.equal(await page.evaluate(() => visage), null);
+  assert.deepEqual(await pixelsAffiches(page, "crawl"), nu);
+  assert.deepEqual(page.erreurs, []);
+  await page.close();
+});
+
+test("l'auréole va sur la tête à la place de l'hélice, au-dessus du corps, et prend sa teinte", async () => {
+  const page = await sim.ouvrir();
+  await page.waitForFunction(() => SHEET_DATA.limace);
+  const envoie = async id => { await page.evaluate(id => LISTEN.evo.forEach(f => f({payload: id})), id); await page.waitForTimeout(1600); };
+  const nu = await pixelsAffiches(page, "crawl");
+  await envoie("evo:helice"); await envoie("evo:aureole");
+  assert.deepEqual(await page.evaluate(() => [chapeau, helice, cheveux]), ["aureole", false, false]);
+  const vu = await pixelsAffiches(page, "crawl");
+  assert.ok(vu.filter((c, k) => !nu[k] && c === "#fbf236").length > 15, "pas d'auréole au-dessus de la tête");
+  vu.forEach((c, k) => { if (nu[k]) assert.equal(c, nu[k], `l'auréole recouvre le corps en ${k}`); });
+  await page.evaluate(() => Apparence.appliquer({aureole: "argent"}));
+  const argent = await pixelsAffiches(page, "crawl");
+  assert.ok(argent.includes("#d8dce8") && !argent.includes("#fbf236"), "l'auréole n'a pas pris sa teinte");
+  await envoie("evo:cheveux");
+  assert.deepEqual(await page.evaluate(() => [chapeau, cheveux]), [null, true]);
+  assert.deepEqual(page.erreurs, []);
+  await page.close();
+});
+
+test("écrasée en flaque, la limace garde la teinte du corps, sans tache du motif à un bout", async () => {
+  const page = await sim.ouvrir();
+  await page.waitForFunction(() => SHEET_DATA.limace);
+  const r = await page.evaluate(async () => {
+    await Apparence.appliquer({corps: "citron", motif: "vache"});
+    const cles = Apparence.clesDuMotif;
+    const motif = f => { const d = f.cv.getContext("2d").getImageData(0, 0, 64, 64).data; let m = 0;
+      for (let k = 0; k < d.length; k += 4) if (d[k + 3] && cles.has(d[k] << 16 | d[k + 1] << 8 | d[k + 2])) m++; return m; };
+    const T = SHEET_DATA.limace.all;
+    return {flaque: T.ecrase.slice(1).map(motif), debout: motif(T.crawl[0]), mur: T["choc-bord"].map(motif)};
+  });
+  assert.ok(r.flaque.every(m => m === 0), `motif sur la flaque : ${r.flaque}`);
+  assert.ok(r.debout > 0, "plus de motif sur le corps debout");
+  assert.ok(r.mur.every(m => m > 0), `plus de motif contre le mur : ${r.mur}`);
+  assert.deepEqual(page.erreurs, []);
+  await page.close();
+});
+
+test("l'hélice va sur la tête à la place des cheveux, et se floute quand elle tourne vite", async () => {
+  const page = await sim.ouvrir();
+  await page.waitForFunction(() => SHEET_DATA.limace);
+  const envoie = async id => { await page.evaluate(id => LISTEN.evo.forEach(f => f({payload: id})), id); await page.waitForTimeout(1600); };
+  const nu = await pixelsAffiches(page, "crawl");
+  await envoie("evo:cheveux"); await envoie("evo:helice");
+  assert.deepEqual(await page.evaluate(() => [helice, cheveux]), [true, false]);
+  await page.evaluate(() => { hair.vite = 0; hair.pale = 0; });
+  const lente = await pixelsAffiches(page, "crawl");
+  const posee = lente.filter((c, k) => !nu[k] && c);
+  assert.ok(posee.includes("#fbf236") && posee.includes("#ac3232"), "pas d'hélice au-dessus de la tête");
+  lente.forEach((c, k) => { if (nu[k]) assert.equal(c, nu[k], `l'hélice recouvre le corps en ${k}`); });
+  await page.evaluate(() => { hair.vite = 14; hair.cache.clear(); });
+  const vite = await pixelsAffiches(page, "crawl");
+  assert.ok(vite.includes("#fdf99b"), "pas de flou quand elle tourne vite");
+  // sa teinte : les pales, la tige et le flou changent de couleur
+  await page.evaluate(() => Apparence.appliquer({helice: "bleu", lunettes: "soleil"}));
+  const bleue = await pixelsAffiches(page, "crawl");
+  assert.ok(bleue.includes("#7fc8ff") && bleue.includes("#2f5fd0") && !bleue.includes("#fbf236"), "l'hélice n'a pas pris sa teinte");
+  await envoie("evo:lunettes");
+  const soleil = await pixelsAffiches(page, "crawl");
+  assert.ok(soleil.includes("#2a2a34") && !soleil.includes("#ffffff"), "les lunettes n'ont pas pris leur teinte");
+  await envoie("evo:lunettes");
+  await envoie("evo:cheveux");
+  assert.deepEqual(await page.evaluate(() => [helice, cheveux]), [false, true]);
   assert.deepEqual(page.erreurs, []);
   await page.close();
 });

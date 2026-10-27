@@ -442,6 +442,57 @@ for h, (normal, alt) in HUMEURS.items():
             add(f"{n}@{h}", done["saut"][0][i:j + 1])
             if done["saut"][1]: add(f"{n}@{h}:cligne", done["saut"][1][i:j + 1])
 
+# les yeux de chaque image, pour les accessoires du visage que l'app pose dessus (les lunettes : tools/accessoires.py, dist/js/accessoires.js) :
+# [[x, y], [x, y]], l'œil de gauche puis celui de droite, x = sa colonne, y = sa ligne du bas (un œil fermé : son trait). Dans l'ordre : deux traits
+# verticaux (eyes_of), les grands yeux ouverts (le milieu et le bas de leur blanc), deux traits horizontaux (flat_eyes). Une image d'humeur, verte, la nausée,
+# la goutte secouée et les parties d'attrape-boule prennent les yeux de leur image neutre (même rang dans la balise d'origine) : leur visage
+# (joyeux, fatigué, spirales) a pris la place des yeux neutres. Les images rangées à l'envers (balancement au plafond) : les yeux de l'image
+# remise à l'endroit, dans le repère de l'image rangée (l'app retourne l'accessoire avec elle, « renverse »).
+ENVERS = ("decolle-pendule", "pendule-plafond")
+def yeux_de(f):
+    proches = lambda e: len(e) == 2 and 3 <= min(p[0] for p in e[1]) - max(p[0] for p in e[0]) <= 12      # pas deux traits des bras
+    e = eyes_of(f)
+    if proches(e): return [[round(sum(p[0] for p in c) / len(c)), max(p[1] for p in c)] for c in e]
+    e = white_eyes(f)
+    if proches(e): return [[round(sum(p[0] for p in c) / len(c)), max(p[1] for p in c)] for c in e]
+    e = flat_eyes(f)
+    if e: return [[(r[0] + r[-1]) // 2, e[0]] for r in e[1:]]
+    return taches_yeux(f)
+def taches_yeux(f):
+    """les autres yeux (en croix, plissés, ronds, de simples points sur le corps écrasé) : les deux plus hautes petites taches d'encre (ou de blanc
+    cerclé d'encre) côte à côte, à l'intérieur du corps, sans toucher son contour ; leur milieu, leur ligne du bas"""
+    body = lambda x, y: 0 <= x < 64 and 0 <= y < 64 and f[y][x][3]
+    inside = lambda x, y: all(body(x + a, y + b) for a in (-2, -1, 0, 1, 2) for b in (-2, -1, 0, 1, 2))
+    todo = {(x, y) for y in range(64) for x in range(64) if f[y][x] in (B, WHITE) and inside(x, y)}; comps = []
+    while todo:
+        c = {todo.pop()}; st = list(c)
+        while st:
+            x, y = st.pop()
+            for a in (-1, 0, 1):
+                for b in (-1, 0, 1):
+                    if (x + a, y + b) in todo: todo.remove((x + a, y + b)); c.add((x + a, y + b)); st.append((x + a, y + b))
+        xs, ys = [p[0] for p in c], [p[1] for p in c]
+        if len(c) <= 30 and max(xs) - min(xs) <= 5 and max(ys) - min(ys) <= 5: comps.append(((min(xs) + max(xs)) / 2, (min(ys) + max(ys)) / 2, max(ys)))
+    pairs = [(a, b) for a in comps for b in comps if 3 <= b[0] - a[0] <= 12 and abs(a[1] - b[1]) <= 1.5]
+    if not pairs: return None
+    a, b = min(pairs, key=lambda p: p[0][1] + p[1][1])
+    return [[round(a[0]), a[2]], [round(b[0]), b[2]]]
+def origine(name):
+    if "@" in name: return name.split("@")[0]
+    if name.endswith("-vert"): return name[:-5]
+    return {"nausee": "crawl", "secoue": "attrape-boule", "attrape-boule-parts": "attrape-boule"}.get(name)
+YEUX_DE = [None] * len(out_frames); _tg = {n: (a, b) for n, a, b in tags}
+for name, a, b in tags:
+    if origine(name): continue
+    for k in range(a, b + 1):
+        if name in ENVERS: e = yeux_de(out_frames[k][0][::-1]); YEUX_DE[k] = e and [[x, 63 - y] for x, y in e]
+        else: YEUX_DE[k] = yeux_de(out_frames[k][0])
+for name, a, b in tags:
+    o = origine(name)
+    if not o: continue
+    oa = _tg[o][0] if o in _tg and _tg[o][1] - _tg[o][0] == b - a else None
+    for k in range(a, b + 1): YEUX_DE[k] = (YEUX_DE[oa + k - a] if oa is not None else None) or yeux_de(out_frames[k][0])
+
 # les pupilles ont leur couleur à elles, presque noire (#000001), pour que l'app puisse les recolorer sans toucher au contour ni à la bouche
 # (apparence, dist/js/apparence.js) : les traits d'encre verticaux des yeux (eyes_of) et l'encre posée dans le blanc des grands yeux ouverts.
 # Les images de la nausée gardent leurs spirales d'encre.
@@ -466,7 +517,12 @@ N = len(out_frames); COLS = 32; ROWS = (N + COLS - 1) // COLS
 EMPTY = [(0, 0, 0, 0)] * 64
 sheet = [[px for c in range(COLS) for px in (out_frames[r * COLS + c][0][y] if r * COLS + c < N else EMPTY)] for r in range(ROWS) for y in range(64)]
 write(D0 + "/limace_sheet.png", sheet)
-js = {"frames":{f"limace {k}.aseprite":{"frame":{"x":k % COLS * 64, "y":k // COLS * 64, "w":64, "h":64}, "duration":out_frames[k][1]} for k in range(N)},
+def _cadre(k):
+    c = {"frame":{"x":k % COLS * 64, "y":k // COLS * 64, "w":64, "h":64}, "duration":out_frames[k][1]}
+    if YEUX_DE[k]: c["yeux"] = YEUX_DE[k]
+    if any(a <= k <= b for n, a, b in tags if n in ENVERS): c["renverse"] = 1
+    return c
+js = {"frames":{f"limace {k}.aseprite":_cadre(k) for k in range(N)},
       "meta":{"app":"bidule", "image":"limace_sheet.png", "format":"RGBA8888", "size":{"w":64 * COLS, "h":64 * ROWS}, "scale":"1",
               "frameTags":[{"name":n, "from":a, "to":b, "direction":"forward"} for n, a, b in tags]}}
 json.dump(js, open(D0 + "/limace_sheet.json", "w"), indent=1)

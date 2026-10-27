@@ -22,4 +22,5 @@ subprocess.run([sys.executable, f"{A}/limace-complete/gen.py"], check=True)
 for f in ("sheet.png", "sheet.json"):
     subprocess.run(["cp", f"{A}/limace-complete/limace_{f}", f"{ROOT}/dist/persos/limace/{f}"], check=True)
 subprocess.run([sys.executable, f"{ROOT}/tools/cheveux.py"], check=True)          # la version avec cheveux suit la feuille (évolution)
+subprocess.run([sys.executable, f"{ROOT}/tools/accessoires.py"], check=True)       # les lunettes et l'hélice
 print("copiée dans dist/persos/limace : relance l'app")
