@@ -14,6 +14,9 @@ use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent}
 use tauri::{AppHandle, Emitter, LogicalPosition, LogicalSize, Manager, PhysicalPosition, WebviewUrl, WebviewWindow, WebviewWindowBuilder, WindowEvent};
 
 #[tauri::command]
+fn version() -> &'static str { env!("BIDULE_VERSION") }
+
+#[tauri::command]
 fn log(msg: String) {
     println!("[bidule] {msg}");
 }
@@ -891,7 +894,7 @@ async fn usage() -> Vec<Releves> { a_part(usage_lire).await }
 
 fn main() {
     tauri::Builder::default()
-        .invoke_handler(tauri::generate_handler![log, quit, cadre, hide_panel, prompt_times, contexte, icone, session_active, haptique, hooks_etat, brancher_hooks, debrancher_hooks, sessions, limites, usage, prompts_semaine, depenses, montrer_bidule, ouvrir_panneau, lire_choix, garder_choix, lire_apparences, garder_apparences, lire_etat, garder_etat, bonbon_poser, bonbon_retirer, bonbon_clic,
+        .invoke_handler(tauri::generate_handler![log, version, quit, cadre, hide_panel, prompt_times, contexte, icone, session_active, haptique, hooks_etat, brancher_hooks, debrancher_hooks, sessions, limites, usage, prompts_semaine, depenses, montrer_bidule, ouvrir_panneau, lire_choix, garder_choix, lire_apparences, garder_apparences, lire_etat, garder_etat, bonbon_poser, bonbon_retirer, bonbon_clic,
             duel::duel_infos, duel::duel_creer, duel::duel_rejoindre, duel::duel_envoyer, duel::duel_quitter, duel::duel_fermer])
         .setup(|app| {
             #[cfg(target_os = "macos")]

@@ -6,6 +6,7 @@ canvas{display:block;width:100%;height:100%}
 </style></head>
 <body><canvas id="c"></canvas>
 <script src="js/duel-jeu.js"></script>
+<script src="js/decompte.js"></script>
 <script>
 // Le duel en plein écran. L'hôte (window.DUEL.hote) fait tourner DuelJeu et envoie à l'invité ce qu'il doit voir ;
 // l'invité n'envoie que la hauteur de sa raquette. Chacun se voit à gauche. Échap : quitter.
@@ -16,6 +17,8 @@ const envoyer = m => T.core.invoke("duel_envoyer", {texte: JSON.stringify(m)});
 const etat = hote ? DuelJeu.nouveau() : null;
 let vue = etat ? DuelJeu.vue(etat, 0) : {balle: {x: W / 2, y: H / 2}, moi: H / 2, lui: H / 2, score: [0, 0], gagne: null};
 let moi = H / 2, fleche = 0, fin = null;              // fin : le texte affiché à la fin, puis la fenêtre se ferme
+let pret = false;                                     // la balle ne part qu'après le décompte
+decompte(() => pret = true);
 
 // le terrain 16:9 le plus grand qui tient dans l'écran, centré
 function terrain() {
@@ -69,7 +72,7 @@ function image(t) {
   moi = Math.max(DEMI, Math.min(H - DEMI, moi + fleche * 110 * dt));
   if (hote) {
     DuelJeu.bouger(etat, 0, moi);
-    if (DuelJeu.pas(etat, dt).includes("fin") && !fin) setTimeout(() => terminer(etat.gagnant === 0 ? "Gagné !" : "Perdu"), 500);
+    if (pret && DuelJeu.pas(etat, dt).includes("fin") && !fin) setTimeout(() => terminer(etat.gagnant === 0 ? "Gagné !" : "Perdu"), 500);
     vue = DuelJeu.vue(etat, 0);
     envoyer({t: "vue", vue: DuelJeu.vue(etat, 1)});
   } else {

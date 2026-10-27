@@ -129,6 +129,8 @@ Décidé le 22 octobre 2026. La spec est l'issue #76, les étapes « Jeu 1 » à
 - Duel à distance : un défi qui attend envoie un signal au relais toutes les 20 secondes, pour que sa connexion ne
   soit pas coupée comme inactive. Celui qui relève un défi voit « La connexion a coupé. » si le duel n'a pas commencé
   au bout de 15 secondes, au lieu de rester sur « Connexion au défi… ».
+- Décompte 3, 2, 1 avant le duel, commun à tous les jeux à venir (`dist/js/decompte.js`).
+- Version en bas à gauche du panneau : `v0.<pull requests fusionnées>`, calculée à la compilation.
 - Duel, premier ticket : un duel minimal entre deux machines du même réseau local. Fenêtre transparente plein écran, raquettes en rectangles, balle carrée, premier à 5,
   Échap pour quitter. Le transport est dans `duel.rs` (testé avec `cargo test`), les règles dans `dist/js/duel-jeu.js`
   (testées avec `mise run tests`), l'affichage dans `dist/duel.html`.
