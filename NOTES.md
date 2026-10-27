@@ -129,6 +129,9 @@ Décidé le 22 octobre 2026. La spec est l'issue #76, les étapes « Jeu 1 » à
 - Duel à distance : un défi qui attend envoie un signal au relais toutes les 20 secondes, pour que sa connexion ne
   soit pas coupée comme inactive. Celui qui relève un défi voit « La connexion a coupé. » si le duel n'a pas commencé
   au bout de 15 secondes, au lieu de rester sur « Connexion au défi… ».
+- Essai du visuel du duel (#94) : la limace en raquette (reprise du choc contre un bord, elle s'aplatit à chaque
+  renvoi) et roulée en boule pour la balle (dessinée par `animations/duel/gen.py`). Les deux sont actives ;
+  `#raquette` ou `#balle` à la fin de l'adresse de `duel.html` n'en garde qu'une. Choix à faire avec Thibault.
 - Amis et invitations (#93) : chaque Bidule a un code d'ami de six lettres ; on ajoute un ami par son code, on voit
   s'il est en ligne et on l'invite au duel sans code. Le Bidule de l'invité se fige, sautille et l'annonce dans sa
   bulle ; on accepte ou refuse dans le panneau, et la bulle de celui qui invite dit le refus. Une invitation sans

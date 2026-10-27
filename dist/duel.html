@@ -18,6 +18,12 @@ const etat = hote ? DuelJeu.nouveau() : null;
 let vue = etat ? DuelJeu.vue(etat, 0) : {balle: {x: W / 2, y: H / 2}, moi: H / 2, lui: H / 2, score: [0, 0], gagne: null};
 let moi = H / 2, fleche = 0, fin = null;              // fin : le texte affiché à la fin, puis la fenêtre se ferme
 let pret = false;                                     // la balle ne part qu'après le décompte
+// Essai (#94) : la limace en raquette et en balle. #raquette ou #balle dans l'adresse n'en garde qu'une.
+const essai = location.hash.slice(1), LIMACE = {raquette: essai !== "balle", balle: essai !== "raquette"};
+const img = src => Object.assign(new Image(), {src});
+const RAQ = img("persos/limace/duel-raquette.png"), BOULE = img("persos/limace/duel-balle.png");
+const PX = .3;                                        // la taille d'un pixel des images, en unités du terrain
+let avantBalle = null, roule = 0, renvoi = [0, 0];    // renvoi : quand chaque raquette a renvoyé la balle pour la dernière fois
 decompte(() => pret = true);
 
 // le terrain 16:9 le plus grand qui tient dans l'écran, centré
@@ -54,10 +60,21 @@ function dessiner() {
   g.clearRect(x, y, W * k, H * k); g.fillStyle = "rgba(20,16,32,.3)"; r(0, 0, W, H);   // le terrain, un peu assombri
   g.fillStyle = "rgba(255,255,255,.35)";
   for (let b = 2; b < H; b += 6) r(W / 2 - .4, b, .8, 3);                              // la ligne pointillée du milieu
-  g.fillStyle = "#fff";
-  r(BORD - EPAISSEUR / 2, vue.moi - DEMI, EPAISSEUR, DEMI * 2);
-  r(W - BORD - EPAISSEUR / 2, vue.lui - DEMI, EPAISSEUR, DEMI * 2);
-  if (!fin) r(vue.balle.x - BALLE / 2, vue.balle.y - BALLE / 2, BALLE, BALLE);
+  g.fillStyle = "#fff"; g.imageSmoothingEnabled = false;
+  if (LIMACE.raquette) {
+    // collée par le dos à son bord, la face vers le terrain ; juste après un renvoi, elle s'aplatit contre le bord
+    const mur = BORD + EPAISSEUR / 2 - 14 * PX, l = 18 * PX, h = 64 * PX, t = performance.now();
+    for (const [j, yc] of [[0, vue.moi], [1, vue.lui]]) {
+      const f = t - renvoi[j] < 180 ? 1 : 0;
+      g.save(); g.translate(x + (j ? W - mur - l : mur + l) * k, y + (yc - h / 2) * k); if (!j) g.scale(-1, 1);
+      g.drawImage(RAQ, f * 18, 0, 18, 64, 0, 0, l * k, h * k); g.restore();
+    }
+  } else {
+    r(BORD - EPAISSEUR / 2, vue.moi - DEMI, EPAISSEUR, DEMI * 2);
+    r(W - BORD - EPAISSEUR / 2, vue.lui - DEMI, EPAISSEUR, DEMI * 2);
+  }
+  if (!fin && LIMACE.balle) { const c = 16 * PX; g.drawImage(BOULE, (Math.floor(roule / 1.5) % 4 + 4) % 4 * 16, 0, 16, 16, x + (vue.balle.x - c / 2) * k, y + (vue.balle.y - c / 2) * k, c * k, c * k); }
+  else if (!fin) r(vue.balle.x - BALLE / 2, vue.balle.y - BALLE / 2, BALLE, BALLE);
   g.font = `700 ${Math.round(8 * k)}px ui-monospace, Menlo, monospace`; g.textAlign = "center"; g.textBaseline = "top";
   g.fillText(vue.score[0], x + (W / 2 - 12) * k, y + 4 * k); g.fillText(vue.score[1], x + (W / 2 + 12) * k, y + 4 * k);
   g.font = `600 ${Math.round(3 * k)}px -apple-system, system-ui, sans-serif`; g.fillStyle = "rgba(255,255,255,.7)";
@@ -80,6 +97,15 @@ function image(t) {
     envoyer({t: "raquette", y: moi});
     if (vue.gagne !== null && !fin) terminer(vue.gagne ? "Gagné !" : "Perdu");
   }
+  // la boule roule dans le sens où elle va ; un demi-tour de la balle près d'un bord, c'est un renvoi de cette raquette
+  const b = vue.balle;
+  if (avantBalle) {
+    const dx = b.x - avantBalle.x;
+    roule += Math.sign(dx) * Math.hypot(dx, b.y - avantBalle.y);
+    if (avantBalle.dx < 0 && dx > 0 && b.x < W / 2) renvoi[0] = t;
+    if (avantBalle.dx > 0 && dx < 0 && b.x > W / 2) renvoi[1] = t;
+    avantBalle = {x: b.x, y: b.y, dx: dx || avantBalle.dx};
+  } else avantBalle = {x: b.x, y: b.y, dx: 0};
   dessiner();
   requestAnimationFrame(image);
 }
