@@ -27,3 +27,10 @@ run = "cargo build --release && ./target/release/bidule-desktop"
 description = "Lance les tests du Bidule dans la page de test"
 dir = "{{config_root}}"
 run = "bun install --frozen-lockfile && bunx playwright install chromium && bun test --timeout 30000"
+
+# Met en ligne le relais du duel sur Cloudflare (voir README, « Le relais du duel », pour la connexion au compte)
+[tasks.relais]
+description = "Met en ligne le relais du duel sur Cloudflare Workers"
+dir = "{{config_root}}/relais"
+tools = { node = "lts" }
+run = "npx -y wrangler@4 deploy"

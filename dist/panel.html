@@ -228,11 +228,11 @@ main{flex:1;overflow:auto;padding:0 12px 12px}
       <div class="essais" id="essais"></div>
     </section>
     <section class="pane" id="p-jouer" hidden>
-      <p class="hint">Un duel de Pong avec un collègue du même réseau : vos deux Bidules deviennent les raquettes. Rien ne se gagne, et rien de Claude ne passe par le réseau.</p>
+      <p class="hint">Un duel de Pong avec un collègue, au bureau ou à la maison : vos deux Bidules deviennent les raquettes. Rien ne se gagne, et rien de Claude ne passe par le réseau.</p>
       <p class="hint" id="jouerMoi"></p>
-      <div class="row"><input class="champ" id="adresse" placeholder="Adresse du collègue (ex. 192.168.1.42)" spellcheck="false" autocomplete="off"><button class="btn primary" id="defier">Défier</button></div>
+      <div class="row"><button class="btn primary" id="lancerDefi">Défier un collègue</button><button class="btn" id="annulerDefi" hidden>Annuler</button></div>
+      <div class="row"><input class="champ" id="codeDefi" placeholder="Code reçu d'un collègue (ex. KZPQ)" maxlength="4" spellcheck="false" autocomplete="off"><button class="btn primary" id="relever">Relever le défi</button></div>
       <p class="hint" id="jouerEtat"></p>
-      <div class="now fini"><p class="hint">Accepter les défis : ton Bidule attend les défis de tes collègues sur le réseau local. Coupé, personne ne peut te défier.</p><button class="chip" id="accepterDefis">Activé</button></div>
     </section>
     <section class="pane" id="p-humeur" hidden>
       <p class="hint">Elle suit le rythme de ta journée, toutes sessions confondues : l'heure, le temps sans vraie pause, le nombre de sessions en même temps. Jamais en lisant tes messages. Tu peux la forcer ici.</p>
@@ -625,39 +625,28 @@ document.addEventListener("click", e => {
   else if (b.id === "fini") T.core.invoke(finiEtat === "oui" ? "debrancher_hooks" : "brancher_hooks").then(renderFini, err => { $("finiTxt").textContent = "Pas pu le faire : " + err; });
   else if (b.id === "haptique") send("haptique", st.haptique === false);
   else if (b.id === "quit") { if (T) T.core.invoke("quit"); }
-  else if (b.id === "defier") defier();
-  else if (b.id === "accepterDefis") accepterDefis(localStorage.accepterDefis === "non");
+  else if (b.id === "lancerDefi") jouer("duel_creer", {}, "Connexion…");
+  else if (b.id === "relever") relever();
+  else if (b.id === "annulerDefi" && T) T.core.invoke("duel_quitter");
 });
 document.addEventListener("keydown", e => { if (e.key === "Escape" && T) T.core.invoke("hide_panel"); });
-// Onglet Jouer : défier un collègue en tapant son adresse (le duel lui-même est dans duel.html, le transport dans duel.rs)
-const DUEL_ETAT = {refuse: "Défi refusé.", occupe: "Ce collègue est déjà en duel.", injoignable: "Personne à cette adresse : son Bidule est-il lancé, avec « Accepter les défis » activé ?",
-  "sans-reponse": "Pas de réponse au défi.", coupe: "La connexion a coupé.", quitte: "", "adversaire-parti": ""};
-function defier() {
-  const a = $("adresse").value.trim(); if (!a || !T) return;
+// Onglet Jouer : lancer un défi (on reçoit un code à donner) ou relever celui d'un collègue avec son code. Le duel est dans duel.html, le transport dans duel.rs.
+const DUEL_ETAT = {injoignable: "Impossible de joindre le relais du duel : es-tu connecté à internet ?", inconnu: "Pas de défi avec ce code, ou le duel a déjà commencé.",
+  expire: "Personne n'a relevé le défi : il est annulé.", coupe: "La connexion a coupé.", quitte: "", "adversaire-parti": ""};
+function enAttente(oui) { $("lancerDefi").disabled = $("relever").disabled = oui; $("annulerDefi").hidden = !oui; }
+function jouer(commande, args, texte) {
+  if (!T) return;
   if (st.style !== "limace") { $("jouerEtat").textContent = "Pour l'instant, seule la limace sait devenir raquette."; return; }
-  localStorage.adresseDuel = a;
-  $("jouerEtat").textContent = "Défi envoyé, en attente de sa réponse…"; $("defier").disabled = true;
-  T.core.invoke("duel_defier", {adresse: a});
+  $("jouerEtat").textContent = texte; enAttente(true);
+  T.core.invoke(commande, args);
 }
-function accepterDefis(oui) {
-  localStorage.accepterDefis = oui ? "oui" : "non";
-  $("accepterDefis").textContent = oui ? "Activé" : "Coupé"; $("accepterDefis").classList.toggle("on", oui);
-  if (T) T.core.invoke("duel_ecouter", {actif: oui}).catch(err => { $("jouerEtat").textContent = "Impossible d'attendre les défis : " + err; });
-}
-$("adresse").value = localStorage.adresseDuel || "";
-$("adresse").addEventListener("keydown", e => { if (e.key === "Enter") defier(); });
-accepterDefis(localStorage.accepterDefis !== "non");
+function relever() { const code = $("codeDefi").value.trim(); if (code) jouer("duel_rejoindre", {code}, "Connexion au défi…"); }
+$("codeDefi").addEventListener("keydown", e => { if (e.key === "Enter") relever(); });
 if (T) {
-  // sur plusieurs réseaux (VPN, Wi-Fi et câble...), toutes les adresses : le collègue prend celle de son réseau ; la principale d'abord
-  const CARTE = c => /^(utun|ipsec|ppp)/.test(c) ? "VPN" : /^(bridge|vmenet|vnic)/.test(c) ? "machine virtuelle" : c;
-  T.core.invoke("duel_infos").then(i => {
-    const autres = (i.adresses || []).filter(a => a.ip !== i.adresse);
-    const liste = autres.length ? `<br>Sur plusieurs réseaux : ${(i.adresse ? [`<b>${i.adresse}</b> (principale)`] : []).concat(autres.map(a => `<b>${a.ip}</b> (${CARTE(a.carte)})`)).join(", ")}. Ton collègue prend celle de son réseau.` : "";
-    $("jouerMoi").innerHTML = `Tu apparais comme <b>${i.nom}</b>` + (i.adresse ? `, ton adresse : <b>${i.adresse}</b>` : "") + liste;
-  });
-  T.event.listen("duel-reponse", e => { $("jouerEtat").textContent = DUEL_ETAT[e.payload] || ""; $("defier").disabled = false; });
-  T.event.listen("duel-fin", e => { $("jouerEtat").textContent = DUEL_ETAT[e.payload] ?? ""; $("defier").disabled = false; });
-  T.event.listen("duel-defi", () => { $("jouerEtat").textContent = ""; });
+  T.core.invoke("duel_infos").then(i => { $("jouerMoi").innerHTML = `Tu apparais comme <b>${i.nom}</b>.`; });
+  T.event.listen("duel-code", e => { $("jouerEtat").innerHTML = `Donne ce code à ton collègue : <b>${e.payload}</b>. Le duel commence dès qu'il le relève.`; });
+  T.event.listen("duel-debut", () => { $("jouerEtat").textContent = ""; $("codeDefi").value = ""; $("annulerDefi").hidden = true; });
+  T.event.listen("duel-fin", e => { $("jouerEtat").textContent = DUEL_ETAT[e.payload] ?? ""; enAttente(false); });
 }
 // le panneau s'ouvre sur l'onglet Claude dès qu'un Bidule est choisi (au premier lancement, sur la Piste pour le choisir)
 let ongletChoisi = false;

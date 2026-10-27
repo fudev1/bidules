@@ -1,6 +1,6 @@
 # Notes du projet
 
-Mise à jour : 22 octobre 2026. Ce fichier suit l'état du projet : ce qui est décidé, ce qui reste à trancher, ce qui est
+Mise à jour : 27 octobre 2026. Ce fichier suit l'état du projet : ce qui est décidé, ce qui reste à trancher, ce qui est
 fait et ce qui reste à faire. La vision, l'installation et la stack sont dans le [README](README.md).
 
 ## Décisions
@@ -74,9 +74,11 @@ fait et ce qui reste à faire. La vision, l'installation et la stack sont dans l
   recouvert. Ils restent dessus dans toutes les animations, la nausée verte et les états (malade, squelette) compris. L'icône et la goutte tenue (dessinée par le code) le montrent aussi. Chaque sous-système
   qui garde des images ou des couleurs de l'apparence s'y abonne (`Apparence.quandElleChange`).
 
-- Duel : un Pong entre deux collègues du même réseau local, en plein écran, chaque Bidule devenu raquette. Sans
-  serveur sur internet, l'hôte (celui qui lance le défi) fait foi ; voir
-  [l'ADR 0002](docs/adr/0002-duel-en-reseau-local-avec-hote.md) et le glossaire. Sans lien avec les tokens, les pièces
+- Duel : un Pong entre deux collègues, en plein écran, chaque Bidule devenu raquette. Il passe par un relais sur
+  Cloudflare Workers (`relais/`, mis en ligne par `mise run relais`) : celui qui défie reçoit un code de quatre lettres
+  à donner, l'autre le tape. Marche au bureau comme en télétravail ; le mode réseau local est retiré (les sous-réseaux
+  du bureau ne se parlent pas). L'hôte (celui qui lance le défi) fait foi ; voir
+  [l'ADR 0003](docs/adr/0003-duel-par-un-relais-sur-internet.md) et le glossaire. Sans lien avec les tokens, les pièces
   ni l'évolution. Réservé à la limace pour la première version.
 
 ## À trancher
@@ -119,9 +121,12 @@ Décidé le 22 octobre 2026. La spec est l'issue #76, les étapes « Jeu 1 » à
 
 ## Fait
 
-- Duel, premier ticket : un duel minimal entre deux machines, en tapant l'adresse du collègue dans l'onglet « Jouer ».
-  Chaque Bidule attend les défis sur le port 47800 tant que « Accepter les défis » est activé ; la bulle du défi
-  s'affiche au-dessus du Bidule. Fenêtre transparente plein écran, raquettes en rectangles, balle carrée, premier à 5,
+- Duel par le relais : dans l'onglet « Jouer », « Défier un collègue » donne un code de quatre lettres, le collègue le
+  tape dans « Relever le défi ». Le relais (`relais/relais.js`) met les deux joueurs ensemble et fait passer les
+  messages sans les lire ; le code expire au bout de 15 minutes. Plus de port 47800, d'adresse à taper ni de bulle du
+  défi. `cargo test` passe par un faux relais ; `RELAIS_TEST=ws://127.0.0.1:8787 cargo test duel` rejoue les mêmes
+  tests contre le vrai, lancé par `npx wrangler dev` dans `relais/`.
+- Duel, premier ticket : un duel minimal entre deux machines du même réseau local. Fenêtre transparente plein écran, raquettes en rectangles, balle carrée, premier à 5,
   Échap pour quitter. Le transport est dans `duel.rs` (testé avec `cargo test`), les règles dans `dist/js/duel-jeu.js`
   (testées avec `mise run tests`), l'affichage dans `dist/duel.html`.
 

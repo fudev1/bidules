@@ -1,201 +1,136 @@
-// Le transport du duel entre deux Bidules du réseau local (voir docs/adr/0002-duel-en-reseau-local-avec-hote.md).
-// Il ne connaît pas le jeu : il reçoit les défis, se connecte, fait passer les messages du duel tels quels et dit quand c'est fini.
+// Le transport du duel entre deux Bidules, par le relais sur internet (voir docs/adr/0003-duel-par-un-relais-sur-internet.md).
+// Il ne connaît pas le jeu : il lance un défi ou le relève par son code, fait passer les messages du duel tels quels et dit quand c'est fini.
 
 use serde_json::{json, Value};
 use std::io::ErrorKind;
-use std::net::{TcpListener, TcpStream, ToSocketAddrs};
-use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::mpsc::{channel, Sender, TryRecvError};
+use std::net::{TcpStream, ToSocketAddrs};
+use std::sync::mpsc::{channel, Receiver, Sender, TryRecvError};
 use std::sync::{Arc, Mutex};
 use std::thread;
-use std::time::{Duration, Instant};
+use std::time::Duration;
+use tungstenite::stream::MaybeTlsStream;
 use tungstenite::{Message, WebSocket};
 
-// Le port où chaque Bidule attend les défis, tant que « Accepter les défis » est coché.
-pub const PORT: u16 = 47800;
-// Le temps laissé à l'autre pour accepter ou refuser un défi.
-const REPONSE: Duration = Duration::from_secs(60);
+// Le relais (relais/relais.js), mis en ligne sur le compte Cloudflare de Matteo.
+pub const RELAIS: &str = "wss://duel.bidules.workers.dev";
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Evenement {
-    // un défi reçu, en attente de repondre()
-    Defi { nom: String, bidule: String },
+    // le défi est lancé : le code à donner au collègue
+    Code(String),
     // le duel commence ; hote : c'est nous qui avons lancé le défi, nom : l'autre joueur
     Connecte { hote: bool, nom: String },
-    Refuse,
-    Occupe,
     // un message du duel, tel que l'autre l'a envoyé
     Message(String),
-    // le duel ou le défi s'arrête : "quitte" (nous), "adversaire-parti", "coupe", "injoignable", "sans-reponse"
+    // le défi ou le duel s'arrête : "quitte" (nous), "adversaire-parti", "coupe", "injoignable" (pas de relais),
+    // "inconnu" (pas de défi à ce code), "expire" (personne n'est venu)
     Fin(String),
 }
 
-type Ws = WebSocket<TcpStream>;
+type Ws = WebSocket<MaybeTlsStream<TcpStream>>;
 enum Sortie { Texte(String), Fermer }
 
 #[derive(Default)]
 struct Etat {
-    ecoute: Option<Arc<AtomicBool>>,     // le drapeau qui arrête l'écoute en cours
-    attente: Option<(Ws, String, Instant)>, // le défi reçu, le nom de celui qui l'a lancé, et quand
-    connexion: Option<Sender<Sortie>>,   // le duel en cours
-    occupe: bool,                        // un défi lancé ou un duel en cours
+    connexion: Option<Sender<Sortie>>,   // le défi en cours, en attente de l'autre ou en duel
 }
 
 #[derive(Clone)]
 pub struct Reseau {
+    relais: String,
     etat: Arc<Mutex<Etat>>,
     signaler: Arc<dyn Fn(Evenement) + Send + Sync>,
 }
 
-fn texte(ws: &mut Ws, v: Value) -> tungstenite::Result<()> { ws.send(Message::text(v.to_string())) }
-
-// le prochain message texte en JSON, en attendant au plus `delai`
-fn lire_json(ws: &mut Ws, delai: Duration) -> Option<Value> {
-    ws.get_ref().set_read_timeout(Some(delai)).ok()?;
-    loop {
-        match ws.read() {
-            Ok(Message::Text(t)) => return serde_json::from_str(t.as_str()).ok(),
-            Ok(Message::Ping(_)) | Ok(Message::Pong(_)) => continue,
-            _ => return None,
-        }
-    }
+// Se connecte au relais, en 5 secondes au plus ; rend aussi le flux, pour régler l'attente des lectures.
+fn connecter(url: &str) -> Option<(Ws, TcpStream)> {
+    let uri: tungstenite::http::Uri = url.parse().ok()?;
+    let port = uri.port_u16().unwrap_or(if uri.scheme_str() == Some("wss") { 443 } else { 80 });
+    let cible = (uri.host()?, port).to_socket_addrs().ok()?.next()?;
+    let flux = TcpStream::connect_timeout(&cible, Duration::from_secs(5)).ok()?;
+    flux.set_read_timeout(Some(Duration::from_secs(5))).ok()?;
+    flux.set_nodelay(true).ok()?;
+    let reglage = flux.try_clone().ok()?;
+    let (ws, _) = tungstenite::client_tls(url, flux).ok()?;
+    Some((ws, reglage))
 }
 
 impl Reseau {
-    pub fn new(signaler: impl Fn(Evenement) + Send + Sync + 'static) -> Self {
-        Reseau { etat: Arc::default(), signaler: Arc::new(signaler) }
+    pub fn new(relais: &str, signaler: impl Fn(Evenement) + Send + Sync + 'static) -> Self {
+        Reseau { relais: relais.to_string(), etat: Arc::default(), signaler: Arc::new(signaler) }
     }
 
     fn signaler(&self, e: Evenement) { (self.signaler)(e) }
 
-    // Ouvre ou ferme l'écoute des défis ; rend le port écouté (port 0 : un port libre, pour les tests).
-    pub fn ecouter(&self, port: u16, actif: bool) -> std::io::Result<u16> {
-        if let Some(stop) = self.etat.lock().unwrap().ecoute.take() { stop.store(true, Ordering::SeqCst); }
-        if !actif { return Ok(port); }
-        // l'écoute qu'on vient d'arrêter garde le port jusqu'à son prochain tour (50 ms au plus)
-        let mut essai = TcpListener::bind(("0.0.0.0", port));
-        for _ in 0..10 {
-            if !matches!(&essai, Err(e) if e.kind() == ErrorKind::AddrInUse) { break; }
-            thread::sleep(Duration::from_millis(30));
-            essai = TcpListener::bind(("0.0.0.0", port));
-        }
-        let ecoute = essai?;
-        ecoute.set_nonblocking(true)?;
-        let port = ecoute.local_addr()?.port();
-        let stop = Arc::new(AtomicBool::new(false));
-        self.etat.lock().unwrap().ecoute = Some(stop.clone());
-        let moi = self.clone();
-        thread::spawn(move || {
-            while !stop.load(Ordering::SeqCst) {
-                match ecoute.accept() {
-                    Ok((flux, _)) => { let moi = moi.clone(); thread::spawn(move || moi.accueillir(flux)); }
-                    Err(e) if e.kind() == ErrorKind::WouldBlock => thread::sleep(Duration::from_millis(50)),
-                    Err(_) => thread::sleep(Duration::from_millis(200)),
-                }
-            }
-        });
-        Ok(port)
+    // Lance un défi : son code arrive en Evenement::Code, le duel commence quand le collègue le relève.
+    pub fn creer(&self, mon_nom: &str) { self.lancer("/creer".into(), mon_nom, true) }
+
+    // Relève le défi d'un collègue par son code.
+    pub fn rejoindre(&self, code: &str, mon_nom: &str) {
+        let code: String = code.chars().filter(char::is_ascii_alphabetic).collect::<String>().to_uppercase();
+        self.lancer(format!("/rejoindre/{code}"), mon_nom, false)
     }
 
-    // Une connexion arrivée sur le port des défis : seul un message de défi est accepté, et seulement si on est libre.
-    fn accueillir(&self, flux: TcpStream) {
-        let _ = flux.set_nonblocking(false);
-        let _ = flux.set_read_timeout(Some(Duration::from_secs(3)));
-        let Ok(mut ws) = tungstenite::accept(flux) else { return };
-        let Some(defi) = lire_json(&mut ws, Duration::from_secs(3)) else { return };
-        if defi["t"] != "defi" { return; }
-        let nom = defi["nom"].as_str().unwrap_or("?").to_string();
-        let bidule = defi["bidule"].as_str().unwrap_or("?").to_string();
-        {
-            let mut etat = self.etat.lock().unwrap();
-            // un défi resté sans réponse plus longtemps que l'autre ne l'attend est oublié
-            if etat.attente.as_ref().is_some_and(|a| a.2.elapsed() > REPONSE) { etat.attente = None; }
-            if etat.occupe || etat.attente.is_some() { let _ = texte(&mut ws, json!({"t": "occupe"})); return; }
-            etat.attente = Some((ws, nom.clone(), Instant::now()));
-        }
-        self.signaler(Evenement::Defi { nom, bidule });
-    }
-
-    // La réponse au défi reçu ; accepté, le duel commence sur cette connexion.
-    pub fn repondre(&self, accepte: bool, mon_nom: &str) {
-        let Some((mut ws, nom, _)) = self.etat.lock().unwrap().attente.take() else { return };
-        if texte(&mut ws, json!({"t": "reponse", "ok": accepte, "nom": mon_nom})).is_err() || !accepte {
-            let _ = ws.close(None); let _ = ws.flush();
-            if accepte { self.signaler(Evenement::Fin("coupe".into())); }
-            return;
-        }
-        self.relier(ws, false, nom);
-    }
-
-    // Lance un défi à l'adresse donnée ("ip" ou "ip:port"), sans attendre : la suite arrive en événements.
-    pub fn defier(&self, adresse: &str, mon_nom: &str, bidule: &str) {
-        {
-            let mut etat = self.etat.lock().unwrap();
-            if etat.occupe { return; }
-            etat.occupe = true;
-        }
-        let adresse = if adresse.contains(':') { adresse.to_string() } else { format!("{adresse}:{PORT}") };
-        let (moi, mon_nom, bidule) = (self.clone(), mon_nom.to_string(), bidule.to_string());
-        thread::spawn(move || {
-            let connecter = || -> Option<Ws> {
-                let cible = adresse.to_socket_addrs().ok()?.next()?;
-                let flux = TcpStream::connect_timeout(&cible, Duration::from_secs(3)).ok()?;
-                flux.set_read_timeout(Some(Duration::from_secs(3))).ok()?;
-                let (ws, _) = tungstenite::client(format!("ws://{adresse}/"), flux).ok()?;
-                Some(ws)
-            };
-            let Some(mut ws) = connecter() else { return moi.finir("injoignable") };
-            if texte(&mut ws, json!({"t": "defi", "nom": mon_nom, "bidule": bidule})).is_err() { return moi.finir("injoignable"); }
-            match lire_json(&mut ws, REPONSE) {
-                Some(r) if r["t"] == "reponse" && r["ok"] == true => {
-                    let nom = r["nom"].as_str().unwrap_or("?").to_string();
-                    moi.relier(ws, true, nom);
-                }
-                Some(r) if r["t"] == "reponse" => { moi.etat.lock().unwrap().occupe = false; moi.signaler(Evenement::Refuse); }
-                Some(r) if r["t"] == "occupe" => { moi.etat.lock().unwrap().occupe = false; moi.signaler(Evenement::Occupe); }
-                _ => moi.finir("sans-reponse"),
-            }
-        });
-    }
-
-    fn finir(&self, raison: &str) {
-        let mut etat = self.etat.lock().unwrap();
-        etat.occupe = false; etat.connexion = None;
-        drop(etat);
-        self.signaler(Evenement::Fin(raison.into()));
-    }
-
-    // Le duel en cours : un fil garde la connexion, lit les messages de l'autre et envoie les nôtres.
-    fn relier(&self, mut ws: Ws, hote: bool, nom: String) {
+    // Un défi, sans attendre : un fil garde la connexion au relais, lit les messages de l'autre et envoie les nôtres.
+    fn lancer(&self, chemin: String, mon_nom: &str, hote: bool) {
         let (tx, rx) = channel();
         {
             let mut etat = self.etat.lock().unwrap();
-            etat.occupe = true; etat.connexion = Some(tx);
+            if etat.connexion.is_some() { return; }
+            etat.connexion = Some(tx);
         }
-        let _ = ws.get_ref().set_read_timeout(Some(Duration::from_millis(4)));
-        let _ = ws.get_ref().set_nodelay(true);
-        self.signaler(Evenement::Connecte { hote, nom });
-        let moi = self.clone();
-        thread::spawn(move || loop {
+        let (moi, url, mon_nom) = (self.clone(), format!("{}{chemin}", self.relais), mon_nom.to_string());
+        thread::spawn(move || {
+            let Some((mut ws, flux)) = connecter(&url) else { return moi.finir("injoignable") };
+            if ws.send(Message::text(json!({"t": "nom", "nom": mon_nom}).to_string())).is_err() { return moi.finir("injoignable"); }
+            moi.suivre(ws, flux, rx, hote);
+        });
+    }
+
+    fn suivre(&self, mut ws: Ws, flux: TcpStream, rx: Receiver<Sortie>, hote: bool) {
+        // en attente de l'autre, les messages viennent du relais ; une fois le duel lancé, de l'autre joueur
+        let mut en_duel = false;
+        let _ = flux.set_read_timeout(Some(Duration::from_millis(50)));
+        loop {
             loop {
                 match rx.try_recv() {
-                    Ok(Sortie::Texte(t)) => { if ws.send(Message::text(t)).is_err() { return moi.finir("coupe"); } }
+                    Ok(Sortie::Texte(t)) => { if en_duel && ws.send(Message::text(t)).is_err() { return self.finir("coupe"); } }
                     Ok(Sortie::Fermer) | Err(TryRecvError::Disconnected) => {
                         let _ = ws.close(None); let _ = ws.flush();
-                        return moi.finir("quitte");
+                        return self.finir("quitte");
                     }
                     Err(TryRecvError::Empty) => break,
                 }
             }
             match ws.read() {
-                Ok(Message::Text(t)) => moi.signaler(Evenement::Message(t.as_str().to_string())),
-                Ok(Message::Close(_)) => return moi.finir("adversaire-parti"),
+                Ok(Message::Text(t)) if en_duel => self.signaler(Evenement::Message(t.as_str().to_string())),
+                Ok(Message::Text(t)) => {
+                    let v: Value = serde_json::from_str(t.as_str()).unwrap_or_default();
+                    match v["t"].as_str() {
+                        Some("code") => self.signaler(Evenement::Code(v["code"].as_str().unwrap_or("").to_string())),
+                        Some("go") => {
+                            en_duel = true;
+                            let _ = flux.set_read_timeout(Some(Duration::from_millis(4)));
+                            self.signaler(Evenement::Connecte { hote, nom: v["nom"].as_str().unwrap_or("?").to_string() });
+                        }
+                        Some("inconnu") => return self.finir("inconnu"),
+                        Some("expire") => return self.finir("expire"),
+                        _ => {}
+                    }
+                }
+                Ok(Message::Close(_)) => return self.finir(if en_duel { "adversaire-parti" } else { "coupe" }),
                 Ok(_) => {}
                 Err(tungstenite::Error::Io(e)) if matches!(e.kind(), ErrorKind::WouldBlock | ErrorKind::TimedOut) => {}
-                Err(tungstenite::Error::ConnectionClosed) | Err(tungstenite::Error::AlreadyClosed) => return moi.finir("adversaire-parti"),
-                Err(_) => return moi.finir("coupe"),
+                Err(tungstenite::Error::ConnectionClosed) | Err(tungstenite::Error::AlreadyClosed) =>
+                    return self.finir(if en_duel { "adversaire-parti" } else { "coupe" }),
+                Err(_) => return self.finir("coupe"),
             }
-        });
+        }
+    }
+
+    fn finir(&self, raison: &str) {
+        self.etat.lock().unwrap().connexion = None;
+        self.signaler(Evenement::Fin(raison.into()));
     }
 
     // Un message du duel pour l'autre joueur ; rien s'il n'y a pas de duel.
@@ -203,12 +138,9 @@ impl Reseau {
         if let Some(tx) = &self.etat.lock().unwrap().connexion { let _ = tx.send(Sortie::Texte(texte)); }
     }
 
-    // Quitte le duel en cours, ou refuse le défi en attente.
+    // Quitte le duel en cours, ou le défi qui attend l'autre joueur.
     pub fn quitter(&self) {
-        let etat = self.etat.lock().unwrap();
-        if let Some(tx) = &etat.connexion { let _ = tx.send(Sortie::Fermer); }
-        drop(etat);
-        self.repondre(false, "");
+        if let Some(tx) = &self.etat.lock().unwrap().connexion { let _ = tx.send(Sortie::Fermer); }
     }
 }
 
@@ -224,43 +156,15 @@ fn mon_nom() -> String {
         .or_else(|| lire("hostname", &[])).unwrap_or_else(|| "Bidule".into())
 }
 
-// L'adresse de cette machine sur le réseau local, à donner au collègue (aucun paquet ne part : connect() choisit seulement l'interface).
-fn mon_adresse() -> Option<String> {
-    let s = std::net::UdpSocket::bind("0.0.0.0:0").ok()?;
-    s.connect("8.8.8.8:80").ok()?;
-    Some(s.local_addr().ok()?.ip().to_string())
-}
-
-// Toutes les adresses IPv4 de cette machine, avec leur carte réseau (lues dans ifconfig) : sur plusieurs réseaux à la fois (VPN, Wi-Fi et câble,
-// machine virtuelle), celle de mon_adresse n'est pas toujours celle que le collègue peut joindre. Sans 127.x ni 169.254.x (jamais joignables).
-fn mes_adresses() -> Vec<(String, String)> {
-    let Ok(o) = std::process::Command::new("ifconfig").output() else { return vec![] };
-    lire_ifconfig(&String::from_utf8_lossy(&o.stdout))
-}
-
-fn lire_ifconfig(texte: &str) -> Vec<(String, String)> {
-    let (mut carte, mut adresses) = (String::new(), vec![]);
-    for ligne in texte.lines() {
-        if !ligne.starts_with(char::is_whitespace) { carte = ligne.split(':').next().unwrap_or("").to_string(); continue; }
-        let mut mots = ligne.split_whitespace();
-        if mots.next() != Some("inet") { continue; }
-        let Some(ip) = mots.next() else { continue };
-        if ip.starts_with("127.") || ip.starts_with("169.254.") { continue; }
-        adresses.push((ip.to_string(), carte.clone()));
-    }
-    adresses
-}
-
 pub fn brancher(app: &AppHandle) {
     let h = app.clone();
-    let reseau = Reseau::new(move |e| match e {
-        Evenement::Defi { nom, bidule } => { let _ = h.emit("duel-defi", json!({"nom": nom, "bidule": bidule})); }
+    let reseau = Reseau::new(RELAIS, move |e| match e {
+        Evenement::Code(code) => { let _ = h.emit("duel-code", code); }
         Evenement::Connecte { hote, nom } => {
+            let _ = h.emit("duel-debut", ());
             let h2 = h.clone();
             let _ = h.run_on_main_thread(move || ouvrir_terrain(&h2, hote, &nom));
         }
-        Evenement::Refuse => { let _ = h.emit("duel-reponse", "refuse"); }
-        Evenement::Occupe => { let _ = h.emit("duel-reponse", "occupe"); }
         Evenement::Message(t) => { let _ = h.emit_to("duel", "duel-msg", t); }
         Evenement::Fin(raison) => { let _ = h.emit("duel-fin", raison); }
     });
@@ -298,19 +202,13 @@ fn ouvrir_terrain(app: &AppHandle, hote: bool, nom: &str) {
 }
 
 #[tauri::command]
-pub fn duel_infos() -> Value { json!({"nom": mon_nom(), "adresse": mon_adresse(),
-    "adresses": mes_adresses().into_iter().map(|(ip, carte)| json!({"ip": ip, "carte": carte})).collect::<Vec<_>>()}) }
+pub fn duel_infos() -> Value { json!({"nom": mon_nom()}) }
 
 #[tauri::command]
-pub fn duel_ecouter(reseau: tauri::State<Reseau>, actif: bool) -> Result<(), String> {
-    reseau.ecouter(PORT, actif).map(|_| ()).map_err(|e| e.to_string())
-}
+pub fn duel_creer(reseau: tauri::State<Reseau>) { reseau.creer(&mon_nom()) }
 
 #[tauri::command]
-pub fn duel_defier(reseau: tauri::State<Reseau>, adresse: String) { reseau.defier(adresse.trim(), &mon_nom(), "limace") }
-
-#[tauri::command]
-pub fn duel_repondre(reseau: tauri::State<Reseau>, accepte: bool) { reseau.repondre(accepte, &mon_nom()) }
+pub fn duel_rejoindre(reseau: tauri::State<Reseau>, code: String) { reseau.rejoindre(&code, &mon_nom()) }
 
 #[tauri::command]
 pub fn duel_envoyer(reseau: tauri::State<Reseau>, texte: String) { reseau.envoyer(texte) }
@@ -328,25 +226,72 @@ pub fn duel_fermer(app: AppHandle) {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::sync::mpsc::Receiver;
+    use std::net::TcpListener;
 
-    fn reseau() -> (Reseau, Receiver<Evenement>) {
+    // Un faux relais sur la machine, qui fait comme relais/relais.js ; RELAIS_TEST=ws://... pour essayer le vrai (wrangler dev).
+    fn relais() -> String {
+        if let Ok(url) = std::env::var("RELAIS_TEST") { return url; }
+        let ecoute = TcpListener::bind("127.0.0.1:0").unwrap();
+        let port = ecoute.local_addr().unwrap().port();
+        let attente: Arc<Mutex<Option<(WebSocket<TcpStream>, String)>>> = Arc::default();
+        thread::spawn(move || for flux in ecoute.incoming().flatten() {
+            let attente = attente.clone();
+            thread::spawn(move || {
+                let mut chemin = String::new();
+                let Ok(mut ws) = tungstenite::accept_hdr(flux, |req: &tungstenite::handshake::server::Request, r| {
+                    chemin = req.uri().path().to_string(); Ok(r)
+                }) else { return };
+                let Ok(Message::Text(t)) = ws.read() else { return };
+                let nom = serde_json::from_str::<Value>(t.as_str()).unwrap()["nom"].as_str().unwrap().to_string();
+                if chemin == "/creer" {
+                    ws.send(Message::text(r#"{"t":"code","code":"KZPQ"}"#)).unwrap();
+                    *attente.lock().unwrap() = Some((ws, nom));
+                    return;
+                }
+                let Some((mut a, nom_a)) = attente.lock().unwrap().take().filter(|_| chemin == "/rejoindre/KZPQ") else {
+                    let _ = ws.send(Message::text(r#"{"t":"inconnu"}"#)); return;
+                };
+                a.send(Message::text(json!({"t": "go", "nom": nom}).to_string())).unwrap();
+                ws.send(Message::text(json!({"t": "go", "nom": nom_a}).to_string())).unwrap();
+                // fait passer les messages dans les deux sens, et ferme l'autre quand l'un part
+                for w in [&a, &ws] { w.get_ref().set_read_timeout(Some(Duration::from_millis(5))).unwrap(); }
+                let mut paire = [a, ws];
+                loop {
+                    for i in 0..2 {
+                        match paire[i].read() {
+                            Ok(Message::Text(t)) => { let _ = paire[1 - i].send(Message::Text(t)); }
+                            Err(tungstenite::Error::Io(_)) | Ok(_) => {}
+                            Err(_) => { let _ = paire[1 - i].close(None); let _ = paire[1 - i].flush(); return; }
+                        }
+                    }
+                }
+            });
+        });
+        format!("ws://127.0.0.1:{port}")
+    }
+
+    fn reseau(relais: &str) -> (Reseau, Receiver<Evenement>) {
         let (tx, rx) = channel();
-        let tx = std::sync::Mutex::new(tx);
-        (Reseau::new(move |e| { let _ = tx.lock().unwrap().send(e); }), rx)
+        let tx = Mutex::new(tx);
+        (Reseau::new(relais, move |e| { let _ = tx.lock().unwrap().send(e); }), rx)
     }
     fn attendre(rx: &Receiver<Evenement>) -> Evenement { rx.recv_timeout(Duration::from_secs(5)).expect("aucun événement") }
 
-    #[test]
-    fn un_defi_accepte_relie_les_deux_bidules_dans_les_deux_sens() {
-        let (invite, rx_i) = reseau();
-        let (hote, rx_h) = reseau();
-        let port = invite.ecouter(0, true).unwrap();
-        hote.defier(&format!("127.0.0.1:{port}"), "Thibault", "limace");
-        assert_eq!(attendre(&rx_i), Evenement::Defi { nom: "Thibault".into(), bidule: "limace".into() });
-        invite.repondre(true, "Matteo");
-        assert_eq!(attendre(&rx_i), Evenement::Connecte { hote: false, nom: "Thibault".into() });
+    // lance un défi chez l'hôte, le fait relever par l'invité, et attend que le duel commence des deux côtés
+    fn duel() -> (Reseau, Receiver<Evenement>, Reseau, Receiver<Evenement>) {
+        let url = relais();
+        let ((hote, rx_h), (invite, rx_i)) = (reseau(&url), reseau(&url));
+        hote.creer("Thibault");
+        let Evenement::Code(code) = attendre(&rx_h) else { panic!("pas de code") };
+        invite.rejoindre(&code.to_lowercase(), "Matteo");
         assert_eq!(attendre(&rx_h), Evenement::Connecte { hote: true, nom: "Matteo".into() });
+        assert_eq!(attendre(&rx_i), Evenement::Connecte { hote: false, nom: "Thibault".into() });
+        (hote, rx_h, invite, rx_i)
+    }
+
+    #[test]
+    fn un_defi_releve_relie_les_deux_bidules_dans_les_deux_sens() {
+        let (hote, rx_h, invite, rx_i) = duel();
         hote.envoyer("depuis l'hôte".into());
         assert_eq!(attendre(&rx_i), Evenement::Message("depuis l'hôte".into()));
         invite.envoyer("depuis l'invité".into());
@@ -354,69 +299,37 @@ mod tests {
     }
 
     #[test]
-    fn un_defi_refuse_ne_relie_rien() {
-        let (invite, rx_i) = reseau();
-        let (hote, rx_h) = reseau();
-        let port = invite.ecouter(0, true).unwrap();
-        hote.defier(&format!("127.0.0.1:{port}"), "Thibault", "limace");
-        attendre(&rx_i);
-        invite.repondre(false, "Matteo");
-        assert_eq!(attendre(&rx_h), Evenement::Refuse);
-    }
-
-    #[test]
     fn quitter_previent_l_autre() {
-        let (invite, rx_i) = reseau();
-        let (hote, rx_h) = reseau();
-        let port = invite.ecouter(0, true).unwrap();
-        hote.defier(&format!("127.0.0.1:{port}"), "Thibault", "limace");
-        attendre(&rx_i);
-        invite.repondre(true, "Matteo");
-        attendre(&rx_i); attendre(&rx_h);
+        let (hote, rx_h, _invite, rx_i) = duel();
         hote.quitter();
         assert_eq!(attendre(&rx_h), Evenement::Fin("quitte".into()));
         assert_eq!(attendre(&rx_i), Evenement::Fin("adversaire-parti".into()));
     }
 
     #[test]
-    fn un_bidule_qui_n_accepte_pas_les_defis_est_injoignable() {
-        let (invite, _rx_i) = reseau();
-        let (hote, rx_h) = reseau();
-        let port = invite.ecouter(0, true).unwrap();
-        invite.ecouter(0, false).unwrap();
-        std::thread::sleep(Duration::from_millis(200));
-        hote.defier(&format!("127.0.0.1:{port}"), "Thibault", "limace");
+    fn un_code_sans_defi_est_inconnu() {
+        let (invite, rx_i) = reseau(&relais());
+        invite.rejoindre("ZZZZ", "Matteo");
+        assert_eq!(attendre(&rx_i), Evenement::Fin("inconnu".into()));
+    }
+
+    #[test]
+    fn quitter_un_defi_qui_attend_libere_pour_la_suivante() {
+        let (hote, rx_h) = reseau(&relais());
+        hote.creer("Thibault");
+        assert!(matches!(attendre(&rx_h), Evenement::Code(_)));
+        hote.creer("Thibault");
+        hote.quitter();
+        assert_eq!(attendre(&rx_h), Evenement::Fin("quitte".into()));
+        hote.creer("Thibault");
+        assert!(matches!(attendre(&rx_h), Evenement::Code(_)));
+    }
+
+    #[test]
+    fn sans_relais_c_est_injoignable() {
+        let port = TcpListener::bind("127.0.0.1:0").unwrap().local_addr().unwrap().port();
+        let (hote, rx_h) = reseau(&format!("ws://127.0.0.1:{port}"));
+        hote.creer("Thibault");
         assert_eq!(attendre(&rx_h), Evenement::Fin("injoignable".into()));
-    }
-
-    #[test]
-    fn un_bidule_deja_en_duel_repond_occupe() {
-        let (invite, rx_i) = reseau();
-        let (hote, rx_h) = reseau();
-        let (troisieme, rx_t) = reseau();
-        let port = invite.ecouter(0, true).unwrap();
-        hote.defier(&format!("127.0.0.1:{port}"), "Thibault", "limace");
-        attendre(&rx_i);
-        invite.repondre(true, "Matteo");
-        attendre(&rx_i); attendre(&rx_h);
-        troisieme.defier(&format!("127.0.0.1:{port}"), "Léa", "limace");
-        assert_eq!(attendre(&rx_t), Evenement::Occupe);
-    }
-
-    #[test]
-    fn couper_puis_rallumer_aussitot_l_ecoute_reprend_le_meme_port() {
-        let (invite, rx_i) = reseau();
-        let (hote, _rx_h) = reseau();
-        let port = invite.ecouter(0, true).unwrap();
-        invite.ecouter(port, false).unwrap();
-        assert_eq!(invite.ecouter(port, true).unwrap(), port);
-        hote.defier(&format!("127.0.0.1:{port}"), "Thibault", "limace");
-        assert!(matches!(attendre(&rx_i), Evenement::Defi { .. }));
-    }
-
-    #[test]
-    fn les_adresses_de_toutes_les_cartes_sauf_la_boucle_locale() {
-        let texte = "lo0: flags=8049<UP,LOOPBACK>\n\tinet 127.0.0.1 netmask 0xff000000\nen0: flags=8863<UP>\n\tinet6 fe80::1%en0\n\tinet 192.168.1.42 netmask 0xffffff00\nen7: flags=8863<UP>\n\tinet 169.254.3.4 netmask 0xffff0000\nutun4: flags=8051<UP>\n\tinet 10.8.0.5 --> 10.8.0.5\n";
-        assert_eq!(lire_ifconfig(texte), vec![("192.168.1.42".into(), "en0".into()), ("10.8.0.5".into(), "utun4".into())]);
     }
 }

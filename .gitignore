@@ -15,3 +15,6 @@ mise.local.toml
 
 # tests (bun install)
 node_modules/
+
+# relais du duel (wrangler)
+relais/.wrangler/

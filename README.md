@@ -224,6 +224,18 @@ Garder les étapes 1 à 3 dans la même session jusqu'à `/to-tickets` : la spec
 
 Ce qu'ils produisent est écrit en français, et quand ils parlent de `main` on lit `test` (voir `CLAUDE.md` et `.claude/rules/git-flux.md`). Mise à jour : recopier leurs dossiers depuis le dépôt de Matt Pocock, sans les modifier.
 
+## Le relais du duel
+
+Le duel passe par un petit relais sur Cloudflare Workers (dossier `relais/`), qui met ensemble les deux joueurs d'un défi grâce à son code de quatre lettres. Une fois en ligne, rien à faire pour jouer. Pour le mettre en ligne, la première fois ou après une modification (compte Cloudflare de Matteo) :
+
+```bash
+cd relais && mise exec node@lts -- npx -y wrangler@4 login   # la première fois seulement, puis revenir à la racine
+cd ..
+mise run relais
+```
+
+Pour l'essayer sans le mettre en ligne : `mise exec node@lts -- npx -y wrangler@4 dev` dans `relais/`, puis `RELAIS_TEST=ws://127.0.0.1:8787 cargo test duel` dans `src-tauri/`. L'adresse du relais utilisée par l'app est `RELAIS` dans `src-tauri/src/duel.rs`.
+
 ## Tester sans l'app
 
 ```bash
