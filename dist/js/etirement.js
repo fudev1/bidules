@@ -22,8 +22,11 @@ function captureFrame(src) {          // src : l'image déjà remise dans le rep
     if (n !== undefined) for (let k = 0; k < 4; k++) col[i * 4 + k] = px[n * 4 + k];
   }
   // palette du perso (encre, couleur de base, ombre, reflet) et visage découpé en tampons de pixels
+  // le motif : ses pixels sont notés à part (motif), et ne comptent pas dans la palette ; la forme étirée le redessine, déformé avec elle
+  const clesMotif = Apparence.aUneApparence(style) ? Apparence.clesDuMotif : new Set(), motif = new Uint8Array(4096);
+  for (let i = 0; i < 4096; i++) if (mask[i] && clesMotif.has(px[i * 4] << 16 | px[i * 4 + 1] << 8 | px[i * 4 + 2])) motif[i] = 1;
   const count = new Map();
-  for (let i = 0; i < 4096; i++) if (mask[i]) { const k = px[i * 4] + "," + px[i * 4 + 1] + "," + px[i * 4 + 2]; count.set(k, (count.get(k) || 0) + 1); }
+  for (let i = 0; i < 4096; i++) if (mask[i] && !motif[i]) { const k = px[i * 4] + "," + px[i * 4 + 1] + "," + px[i * 4 + 2]; count.set(k, (count.get(k) || 0) + 1); }
   const cols = [...count.keys()].map(k => k.split(",").map(Number)), lum = c => c[0] * .3 + c[1] * .59 + c[2] * .11;
   // le reflet : la couleur la plus claire, sans le blanc (blanc de l'œil fatigué, dents) qui la remplacerait sinon
   const tons = cols.filter(c => lum(c) < 250), ink = cols.reduce((a, b) => lum(b) < lum(a) ? b : a), light = (tons.length ? tons : cols).reduce((a, b) => lum(b) > lum(a) ? b : a);
@@ -49,7 +52,7 @@ function captureFrame(src) {          // src : l'image déjà remise dans le rep
   const rowL = new Float32Array(64).fill(NaN), rowR = new Float32Array(64).fill(NaN);
   for (let Y = 0; Y < 64; Y++) for (let X = 0; X < 64; X++) if (mask[Y * 64 + X]) { if (isNaN(rowL[Y])) rowL[Y] = X; rowR[Y] = X + 1; }
   const faceBot = face.length ? Math.max(...face.map(p2 => p2[1])) + 1 : (top + bot) / 2;
-  return {col, mask, top, bot, cx:(x0 + x1) / 2, w:x1 - x0 + 1, ink, base, shade, light, faceStamps, fcx, fcy, rowL, rowR, faceBot};
+  return {col, mask, motif, top, bot, cx:(x0 + x1) / 2, w:x1 - x0 + 1, ink, base, shade, light, faceStamps, fcx, fcy, rowL, rowR, faceBot};
 }
 // La taille et la position de la fenêtre changent en deux temps : on vide d'abord l'affichage,
 // pour que l'image ne se montre jamais au mauvais endroit entre les deux (au pire un blanc très court).
@@ -241,6 +244,17 @@ function styleRender(out, faceAt) {
   const inner = (X, Y) => inn(X, Y) && inn(X + 1, Y) && inn(X - 1, Y) && inn(X, Y + 1) && inn(X, Y - 1);
   let t0 = CH2, b0 = 0, xa = CW2, xb = 0;
   for (let i = 0; i < CW2 * CH2; i++) if (out[i]) { const X = i % CW2, Y = (i - X) / CW2; t0 = Math.min(t0, Y); b0 = Math.max(b0, Y); xa = Math.min(xa, X); xb = Math.max(xb, X); }
+  // le motif suit la forme : chaque ligne de la forme étirée va chercher la ligne de l'image d'origine à la même hauteur relative,
+  // et chaque pixel la même position relative entre les deux bords de sa ligne
+  const rl = new Int16Array(CH2).fill(-1), rr = new Int16Array(CH2);
+  for (let Y = t0; Y <= b0; Y++) for (let X = xa; X <= xb; X++) if (out[Y * CW2 + X]) { if (rl[Y] < 0) rl[Y] = X; rr[Y] = X; }
+  const dansLeMotif = (X, Y) => {
+    if (!S0.motif || rl[Y] < 0) return false;
+    const sy = Math.round(S0.top + (Y - t0) / Math.max(1, b0 - t0) * (S0.bot - S0.top));
+    if (isNaN(S0.rowL[sy])) return false;
+    const sx = Math.floor(S0.rowL[sy] + (X - rl[Y] + .5) / (rr[Y] - rl[Y] + 1) * (S0.rowR[sy] - S0.rowL[sy]));
+    return !!S0.motif[sy * 64 + sx];
+  };
   const c0 = (xa + xb) / 2, put = (X, Y, c) => { if (X < 0 || Y < 0 || X >= CW2 || Y >= CH2) return; const i = (Y * CW2 + X) * 4; d[i] = c[0]; d[i + 1] = c[1]; d[i + 2] = c[2]; d[i + 3] = 255; };
   for (let Y = t0; Y <= b0; Y++) for (let X = xa; X <= xb; X++) {
     if (!out[Y * CW2 + X]) continue;
@@ -248,6 +262,7 @@ function styleRender(out, faceAt) {
     if (!inner(X, Y)) c = S0.ink;
     else if (!inner(X, Y + 3) || !inner(X + 2, Y)) c = S0.shade;
     else if ((!inner(X - 3, Y - 1) && X < c0 && Y < b0 - 7) || (!inner(X - 1, Y - 3) && X < c0 + 3 && Y < t0 + 6)) c = S0.light;
+    if (c !== S0.ink && dansLeMotif(X, Y)) c = Apparence.tonDuMotif([S0.light, S0.base, S0.shade].indexOf(c)) || c;
     put(X, Y, c);
   }
   for (const st of S0.faceStamps) { const [fx2, fy2] = faceAt(st.u, st.v); for (const [a2, b2] of st.px) put(Math.floor(fx2) + a2, Math.floor(fy2) + b2, S0.ink); }

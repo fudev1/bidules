@@ -142,9 +142,15 @@ function swingDraw() {
   let t0 = N, b0 = 0, xa = N, xb = 0;
   for (let i = 0; i < N * N; i++) if (mask[i]) { const X = i % N, Y = (i - X) / N; t0 = Math.min(t0, Y); b0 = Math.max(b0, Y); xa = Math.min(xa, X); xb = Math.max(xb, X); }
   const c0 = (xa + xb) / 2, green = !!(drag && drag.shaken);
-  // les tons du corps : ceux de l'apparence et son motif (fixe dans l'image 64 x 64 de la goutte, qui suit la boule), ou les bleus d'origine si elle va verdir
-  const ox = Math.round(B[0] - SW_B0[0]), oy = Math.round(B[1] - SW_B0[1]);
-  const ton = (k, X, Y) => green ? [SW_COL.light, SW_COL.base, SW_COL.shade][k] : Apparence.tonDuCorps(k, X === undefined ? X : X - ox, Y === undefined ? Y : Y - oy);
+  // les tons du corps : ceux de l'apparence et son motif (fixe dans l'image 64 x 64 de la goutte, qui suit la boule), ou les bleus d'origine si elle va verdir ;
+  // le motif reste dessus quand elle verdit (ses pixels, notés dans dessus, ne passent pas au vert)
+  const ox = Math.round(B[0] - SW_B0[0]), oy = Math.round(B[1] - SW_B0[1]), dessus = new Set();
+  const ton = (k, X, Y) => {
+    const x = X === undefined ? X : X - ox, y = Y === undefined ? Y : Y - oy;
+    if (!green) return Apparence.tonDuCorps(k, x, y);
+    const m = X !== undefined && Apparence.tonDuMotif(k, x, y); if (m) { dessus.add(Y * N + X); return m; }
+    return [SW_COL.light, SW_COL.base, SW_COL.shade][k];
+  };
   const cv = swing.cv || (swing.cv = document.createElement("canvas")); cv.width = cv.height = N;
   const g = cv.getContext("2d", {willReadFrequently:true}), imd = g.createImageData(N, N), d = imd.data;
   swingArms(d, B, Date.now(), ton);                                    // les bras d'abord : ils passent derrière la boule
@@ -164,7 +170,7 @@ function swingDraw() {
   }
   if (green) {      // secoué : il verdit
     const o = g.getImageData(0, 0, N, N), od = o.data;
-    for (let i = 0; i < od.length; i += 4) { const v = SW_GREEN[od[i] + "," + od[i + 1] + "," + od[i + 2]]; if (v) { od[i] = v[0]; od[i + 1] = v[1]; od[i + 2] = v[2]; } }
+    for (let i = 0; i < od.length; i += 4) { if (dessus.has(i / 4)) continue; const v = SW_GREEN[od[i] + "," + od[i + 1] + "," + od[i + 2]]; if (v) { od[i] = v[0]; od[i + 1] = v[1]; od[i + 2] = v[2]; } }
     g.putImageData(o, 0, 0);
   }
   img.src = cv.toDataURL();
