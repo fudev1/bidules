@@ -43,7 +43,7 @@ pub struct Reseau {
 }
 
 // Se connecte au relais, en 5 secondes au plus ; rend aussi le flux, pour régler l'attente des lectures.
-fn connecter(url: &str) -> Option<(Ws, TcpStream)> {
+pub fn connecter(url: &str) -> Option<(Ws, TcpStream)> {
     let uri: tungstenite::http::Uri = url.parse().ok()?;
     let port = uri.port_u16().unwrap_or(if uri.scheme_str() == Some("wss") { 443 } else { 80 });
     let cible = (uri.host()?, port).to_socket_addrs().ok()?.next()?;
@@ -160,7 +160,7 @@ impl Reseau {
 use tauri::{AppHandle, Emitter, Manager, WebviewUrl, WebviewWindowBuilder};
 
 // Le nom que les autres voient : le prénom de `git config user.name`, sinon le nom de la machine.
-fn mon_nom() -> String {
+pub fn mon_nom() -> String {
     let lire = |cmd: &str, args: &[&str]| std::process::Command::new(cmd).args(args).output().ok()
         .map(|o| String::from_utf8_lossy(&o.stdout).trim().to_string()).filter(|s| !s.is_empty());
     lire("git", &["config", "--global", "user.name"]).and_then(|n| n.split_whitespace().next().map(str::to_string))

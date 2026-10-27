@@ -27,8 +27,24 @@ Un Pong entre deux joueurs, sur internet, en plein écran, où chaque Bidule dev
 _À éviter_ : partie (c'est une zone du Bidule), match
 
 **Défi** :
-L'invitation à un duel : celui qui défie reçoit un code de quatre lettres, qu'il donne à son collègue ; le collègue relève le défi en tapant ce code. Sans code, personne ne peut te défier.
+L'invitation à un duel : celui qui défie reçoit un code de quatre lettres, qu'il donne à son collègue ; le collègue relève le défi en tapant ce code. Entre amis, l'invitation remplace le code.
 _À éviter_ : partie, salle, appairage, pairing
+
+**Ami** :
+Un collègue ajouté par son code d'ami. On voit s'il est en ligne et on l'invite au duel sans code.
+_À éviter_ : contact, abonné
+
+**Code d'ami** :
+Six lettres propres à chaque Bidule, affichées dans l'onglet « Jouer », qu'on donne une fois pour devenir amis.
+_À éviter_ : identifiant, pseudo
+
+**Invitation** :
+Un défi envoyé à un ami : son Bidule se fige, sautille et l'annonce dans sa bulle ; il accepte ou refuse dans le panneau. Sans réponse, elle tombe au bout de 10 minutes.
+_À éviter_ : notification, demande
+
+**Ne pas déranger** :
+Le réglage de l'onglet Claude qui refuse de lui-même les invitations des amis.
+_À éviter_ : silencieux, mode avion
 
 **Relais** :
 Le petit service sur internet qui met ensemble les deux joueurs d'un défi et fait passer leurs messages sans les lire.

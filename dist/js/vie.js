@@ -134,6 +134,10 @@ function tickBody() {
     return;
   }
   if (mode === "waking") { if (now > reactUntil) toWalk(); return; }
+  if (mode === "invite") {          // invité à jouer : figé de face, il sautille et le redit toutes les 3 s, jusqu'à la réponse dans le panneau
+    if (!invite) toWalk(); else if (now > nextFx) { bubble(`${invite} t'invite au Pong !`, 2600); nextFx = now + 3000; }
+    return;
+  }
   if (mode === "nausea") {
     if (now > reactUntil) {          // remis : un perso dessiné se secoue la tête (remis, de profil, jouée une fois) ; les autres tremblent
       setMode("recover"); bubble("Ça va mieux", 1000);
@@ -174,6 +178,7 @@ function tickBody() {
       return;
     }
   }
+  if (invite && mode === "walk" && !sheetOnce && !faceSeq && !feeding && !airborne()) { react("invite", 0, FR.normal, "invite"); nextFx = 0; return; }
   if (burpAt && now > burpAt && isSheet() && !sheetOnce) { burpAt = 0; playInPlace("rot"); bubble("Burp !", 900); return; }
   if (!feeding && wanted.length && mode === "walk" && !sheetOnce) { feeding = {s:wanted.shift(), stage:"go", until:Date.now() + 90000}; idleUntil = 0; }
   if (feeding && feeding.stage === "face" && Date.now() > feeding.until) { feeding = null; idleUntil = 0; }

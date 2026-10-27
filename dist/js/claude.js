@@ -1,8 +1,10 @@
 // Ce que fait Claude (métadonnées seulement, jamais le texte) : la bulle de pensée, l'état des sessions, l'humeur devinée.
 let bidHidden = false;          // caché par un clic droit (main.rs : montrer_bidule)
+let calme = false;          // Ne pas déranger : les invitations des amis sont refusées d'elles-mêmes (le panneau s'en charge)
+let invite = null;          // le nom de l'ami qui l'invite à jouer, tant que l'invitation attend une réponse dans le panneau
 let chosen = false;          // un Bidule a été choisi (au premier lancement, pas encore)
 let claudeJ = null;          // la dernière jauge lue (contexte), envoyée au panneau
-function sendState(avecClaude = true) { T.event.emit("etat", {style:chosen ? style : null, partsBy, cheveux, thumb:hairComposite(FR.normal, 2), mood, moodMode, moodReason, cache:bidHidden, haptique:hapticOn, apparence:apparences[style] || {}, aUneApparence:Apparence.aUneApparence(style), teintes:Apparence.TEINTES, origine:Apparence.ORIGINE, motifs:Object.fromEntries(Object.entries(Apparence.MOTIFS).map(([m, d]) => [m, {nom:d.nom, teinte:d.teinte}])), jeu:{stats, plein:REGLAGES.plein, fin:saisonFin().getTime(), besoins, etape:etapeBesoins(), reglages:REGLAGES.besoins, collection:collection.length}}); if (avecClaude) T.event.emit("claude", claudeJ); }
+function sendState(avecClaude = true) { T.event.emit("etat", {style:chosen ? style : null, partsBy, cheveux, thumb:hairComposite(FR.normal, 2), mood, moodMode, moodReason, cache:bidHidden, haptique:hapticOn, calme, apparence:apparences[style] || {}, aUneApparence:Apparence.aUneApparence(style), teintes:Apparence.TEINTES, origine:Apparence.ORIGINE, motifs:Object.fromEntries(Object.entries(Apparence.MOTIFS).map(([m, d]) => [m, {nom:d.nom, teinte:d.teinte}])), jeu:{stats, plein:REGLAGES.plein, fin:saisonFin().getTime(), besoins, etape:etapeBesoins(), reglages:REGLAGES.besoins, collection:collection.length}}); if (avecClaude) T.event.emit("claude", claudeJ); }
 function refreshSprite() {
   const cur = {sleep:"dort", carried:"dort", dizzy:"d1", nausea:"n1", pet:"content", laugh:"rire", angry:"fache",
     sulk:"fache", eat:"rire", ooh:"ooh", drowsy:"baille", waking:"baille", fly:"p1", held:"p1"}[mode];

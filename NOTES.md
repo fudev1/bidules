@@ -129,6 +129,12 @@ Décidé le 22 octobre 2026. La spec est l'issue #76, les étapes « Jeu 1 » à
 - Duel à distance : un défi qui attend envoie un signal au relais toutes les 20 secondes, pour que sa connexion ne
   soit pas coupée comme inactive. Celui qui relève un défi voit « La connexion a coupé. » si le duel n'a pas commencé
   au bout de 15 secondes, au lieu de rester sur « Connexion au défi… ».
+- Amis et invitations (#93) : chaque Bidule a un code d'ami de six lettres ; on ajoute un ami par son code, on voit
+  s'il est en ligne et on l'invite au duel sans code. Le Bidule de l'invité se fige, sautille et l'annonce dans sa
+  bulle ; on accepte ou refuse dans le panneau, et la bulle de celui qui invite dit le refus. Une invitation sans
+  réponse tombe au bout de 10 minutes. « Ne pas déranger » (onglet Claude) refuse les invitations d'office. La
+  présence passe par le relais (`Annuaire`, voir [l'ADR 0004](docs/adr/0004-amis-et-invitations-par-le-relais.md)) ;
+  le défi par code reste en secours.
 - Décompte 3, 2, 1 avant le duel, commun à tous les jeux à venir (`dist/js/decompte.js`).
 - Version en bas à gauche du panneau : `v0.<pull requests fusionnées>`, calculée à la compilation.
 - Duel, premier ticket : un duel minimal entre deux machines du même réseau local. Fenêtre transparente plein écran, raquettes en rectangles, balle carrée, premier à 5,

@@ -7,6 +7,14 @@ compatibility_date = "2025-09-01"
 name = "DEFIS"
 class_name = "Defi"
 
+[[durable_objects.bindings]]
+name = "ANNUAIRE"
+class_name = "Annuaire"
+
 [[migrations]]
 tag = "v1"
 new_sqlite_classes = ["Defi"]
+
+[[migrations]]
+tag = "v2"
+new_sqlite_classes = ["Annuaire"]

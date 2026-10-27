@@ -5,7 +5,7 @@ Compagnon de bureau pour les utilisateurs de Claude Code. La vision et l'install
 ## Où est quoi
 
 - `dist/index.html` et `dist/js/` : le comportement du Bidule (JavaScript sans framework, sans étape de build), un fichier par sous-système. `horloge.js` : la seule boucle (chaque tâche régulière y a sa cadence) ; `fenetre.js` : tous les déplacements de la fenêtre ; le mode ne change que par `setMode` (`corps.js`).
-- Le duel (Pong entre collègues, voir `GLOSSARY.md` et `docs/adr/0001-…`) : `src-tauri/src/duel.rs` (le transport réseau et la fenêtre plein écran), `dist/js/duel-jeu.js` (les règles, sans fenêtre ni réseau), `dist/duel.html` (la fenêtre du duel, qui a sa propre boucle d'images : elle ne passe pas par `horloge.js`), l'onglet Jouer du panneau, et `dist/js/decompte.js` (le décompte 3, 2, 1 que toute page de jeu lance à son ouverture).
+- Le duel (Pong entre collègues, voir `GLOSSARY.md` et `docs/adr/0001-…`) : `src-tauri/src/duel.rs` (le transport réseau et la fenêtre plein écran), `src-tauri/src/presence.rs` (les amis, leur présence et les invitations, par le relais), `dist/js/duel-jeu.js` (les règles, sans fenêtre ni réseau), `dist/duel.html` (la fenêtre du duel, qui a sa propre boucle d'images : elle ne passe pas par `horloge.js`), l'onglet Jouer du panneau, et `dist/js/decompte.js` (le décompte 3, 2, 1 que toute page de jeu lance à son ouverture).
 - `dist/panel.html` : le panneau de la barre de menus. `dist/monstre64.js` et `dist/bidule64.js` : les monstres générés par le code.
 - `dist/persos/limace/` : la feuille d'images de la limace, recopiée depuis `animations/limace-complete/`.
 - `src-tauri/src/main.rs` : l'app de bureau en Rust (fenêtre, icône, lecture des journaux de Claude Code).
